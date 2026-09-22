@@ -136,6 +136,9 @@ select option { background-color: var(--c-surface-alt); }
 }
 .mk input:focus, .mk select:focus, .mk textarea:focus { border-color: var(--mk-blue); outline: none; }
 .mk input::placeholder, .mk textarea::placeholder { color: #8A8A87; }
+.mk { color-scheme: light; }
+.mk select option { background-color: #FFFFFF; color: #111111; }
+.mk select option:disabled { color: #8A8A87; }
 .mk a { color: inherit; text-decoration: none; }
 .mk .mono { font-family: 'IBM Plex Mono', monospace; }
 .mk .dk { position: relative; display: flex; }

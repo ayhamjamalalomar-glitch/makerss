@@ -54,7 +54,7 @@ export default function StatusPage() {
             <Step state="todo" title="نشر صفحتك في الدليل" />
           </Card>
           <div className="flex gap-2.5">
-            <Link to={`/${profile.username}`} className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#F3F3F2' }}>معاينة صفحتي</Link>
+            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#F3F3F2' }}>معاينة صفحتي</Link>
             <Link to="/me" className="text-sm px-5 py-3 rounded-full" style={{ color: '#2563EB' }}>تعديل الصفحة</Link>
           </div>
         </>
@@ -95,7 +95,7 @@ export default function StatusPage() {
             {inviteError && <span className="text-xs" style={{ color: '#B42318' }}>{inviteError}</span>}
           </Card>
           <div className="flex gap-2.5">
-            <Link to={`/${profile.username}`} className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#F3F3F2' }}>افتح صفحتي</Link>
+            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#F3F3F2' }}>افتح صفحتي</Link>
             <Link to="/" className="text-sm px-5 py-3 rounded-full" style={{ color: '#2563EB' }}>تصفّح الدليل</Link>
           </div>
         </>

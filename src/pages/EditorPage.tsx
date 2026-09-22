@@ -7,7 +7,7 @@ import { roleLine, useSpecialties } from '../lib/specialties'
 import { computeProgress } from '../lib/progress'
 import { Btn, Card, Chip, Corners, Field, Modal, Notice, PageShell, Pill, SelectInput, Spinner, TextArea, TextInput } from '../components/mk'
 
-type ModalKind = null | 'spec' | 'work' | 'award' | 'photo'
+type ModalKind = null | 'spec' | 'work' | 'award' | 'photo' | 'username'
 const WORK_TONES = ['#232220', '#5E4A38', '#37414C', '#4A3F52', '#3F4A3C', '#52463A']
 const SOCIALS = [
   { key: 'instagram', label: 'Instagram', followers: true },
@@ -96,7 +96,10 @@ export default function EditorPage() {
         <div className="flex flex-wrap justify-between items-center gap-3 md:px-2">
           <span className="flex flex-wrap items-center gap-2.5">
             <span className="text-sm font-semibold">صفحتي</span>
-            <span className="mono text-xs" style={{ color: '#5C5C59' }} dir="ltr">{SITE_URL.replace('https://', '')}/{profile.username}</span>
+            <button type="button" onClick={() => setModal('username')} className="mono text-xs bg-transparent border-0 p-0 cursor-pointer flex items-center gap-1.5" style={{ color: '#5C5C59' }} dir="ltr">
+              {SITE_URL.replace('https://', '')}/{profile.username || '…'}
+              <span className="text-[11px]" style={{ color: '#2563EB', fontFamily: 'inherit' }}>تعديل</span>
+            </button>
             {statusPill}
           </span>
           <span className="flex gap-2">
@@ -104,7 +107,7 @@ export default function EditorPage() {
               <span className="w-2 h-2 rounded-full" style={{ background: profile.available ? '#16A34A' : '#9A9A97' }} />
               {profile.available ? 'متاح للعمل' : 'غير متاح حالياً'}
             </button>
-            <Link to={`/${profile.username}`} className="text-[13px] px-4 py-2 rounded-full" style={{ background: '#F3F3F2' }}>معاينة</Link>
+            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-[13px] px-4 py-2 rounded-full" style={{ background: '#F3F3F2' }}>معاينة</Link>
           </span>
         </div>
 
@@ -216,7 +219,7 @@ export default function EditorPage() {
             <span className="mono text-xs" style={{ color: '#A3A3A0' }}>{progress.count} من 5</span>
           </span>
           {status === 'approved' ? (
-            <Link to={`/${profile.username}`} className="text-[13px] font-semibold px-5 py-2.5 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>افتح صفحتي</Link>
+            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-[13px] font-semibold px-5 py-2.5 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>افتح صفحتي</Link>
           ) : status === 'pending' ? (
             <Link to="/me/status" className="text-[13px]" style={{ color: '#A3A3A0' }}>قيد المراجعة</Link>
           ) : progress.count === 5 ? (
@@ -237,6 +240,7 @@ export default function EditorPage() {
       </div>
 
       {modal === 'spec' && <SpecModal profile={profile} onClose={() => setModal(null)} onSave={async (patch) => { if (await update(patch)) setModal(null) }} />}
+      {modal === 'username' && <UsernameModal profile={profile} onClose={() => setModal(null)} onSaved={async () => { await refreshProfile(); setModal(null) }} />}
       {modal === 'photo' && <PhotoModal profile={profile} onClose={() => setModal(null)} onSaved={async () => { await refreshProfile(); setModal(null) }} />}
       {modal === 'work' && <WorkModal ownerId={profile.id} count={works.length} onClose={() => { setModal(null); history.replaceState(null, '', '/me') }} onSaved={() => { loadLists(); setModal(null) }} />}
       {modal === 'award' && <AwardModal ownerId={profile.id} onClose={() => setModal(null)} onSaved={() => { loadLists(); setModal(null) }} />}
@@ -314,14 +318,20 @@ function PhotoModal({ profile, onClose, onSaved }: { profile: Profile; onClose: 
 
   const save = async () => {
     if (!file) return onClose()
-    if (file.size > 5 * 1024 * 1024) return setError('حجم الصورة أكبر من 5 ميغابايت.')
     setBusy(true)
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-    const path = `${profile.id}/avatar-${Date.now()}.${ext}`
-    const up = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
+    setError(null)
+    let blob: Blob
+    try {
+      blob = await toJpeg(file, 1000)
+    } catch {
+      setBusy(false)
+      return setError('لم نتمكن من قراءة هذه الصورة. جرّب صورة أخرى بصيغة JPG أو PNG.')
+    }
+    const path = `${profile.id}/avatar-${Date.now()}.jpg`
+    const up = await supabase.storage.from('avatars').upload(path, blob, { contentType: 'image/jpeg' })
     if (up.error) {
       setBusy(false)
-      return setError('تعذّر رفع الصورة. استخدم JPG أو PNG أو WebP.')
+      return setError('تعذّر رفع الصورة. تحقق من الاتصال وحاول مرة أخرى.')
     }
     const url = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
     await supabase.from('profiles').update({ avatar_url: url }).eq('id', profile.id)
@@ -343,6 +353,76 @@ function PhotoModal({ profile, onClose, onSaved }: { profile: Profile; onClose: 
         </label>
         {error && <Notice tone="error">{error}</Notice>}
       </div>
+    </Modal>
+  )
+}
+
+// Resize any browser-readable image to a JPEG so uploads stay small and in an allowed format.
+async function toJpeg(file: File, max: number): Promise<Blob> {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = await new Promise<HTMLImageElement>((res, rej) => {
+      const i = new Image()
+      i.onload = () => res(i)
+      i.onerror = rej
+      i.src = url
+    })
+    const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(img.naturalWidth * scale)
+    canvas.height = Math.round(img.naturalHeight * scale)
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('no canvas')
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+    return await new Promise<Blob>((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error('encode'))), 'image/jpeg', 0.88))
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
+function UsernameModal({ profile, onClose, onSaved }: { profile: Profile; onClose: () => void; onSaved: () => void }) {
+  const [value, setValue] = useState(profile.username || '')
+  const [available, setAvailable] = useState<boolean | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const same = value === (profile.username || '')
+
+  useEffect(() => {
+    if (same || value.length < 3) return setAvailable(null)
+    const t = setTimeout(async () => {
+      const { data } = await supabase.rpc('username_available', { p_username: value })
+      setAvailable(!!data)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [value, same])
+
+  const save = async () => {
+    if (same) return onClose()
+    if (!available) return setError('هذا الرابط غير متاح، جرّب رابطاً آخر.')
+    setBusy(true)
+    const { error } = await supabase.from('profiles').update({ username: value }).eq('id', profile.id)
+    setBusy(false)
+    if (error) return setError('تعذّر حفظ الرابط. جرّب رابطاً آخر.')
+    onSaved()
+  }
+
+  return (
+    <Modal title="رابط صفحتك" onClose={onClose} footer={<><Btn onClick={save} disabled={busy}>{busy ? 'لحظة…' : 'حفظ'}</Btn><Btn variant="soft" onClick={onClose}>إلغاء</Btn></>}>
+      <div dir="ltr" className="flex items-center h-[50px] px-5 rounded-full mono text-[15px]" style={{ background: '#F7F7F6' }}>
+        <span style={{ color: '#8C8C89' }}>makerss.net/</span>
+        <input
+          value={value}
+          onChange={(e) => { setError(null); setValue(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 30)) }}
+          className="flex-1 min-w-0"
+          style={{ background: 'transparent', border: 'none', padding: 0, height: 'auto', fontFamily: 'inherit', fontSize: 'inherit' }}
+        />
+      </div>
+      <span className="text-xs" style={{ color: available === false ? '#B42318' : available ? '#166534' : '#5C5C59' }}>
+        {available === false ? 'هذا الرابط محجوز أو غير صالح.' : available ? 'الرابط متاح.' : 'حروف إنجليزية صغيرة وأرقام وشرطات فقط. إذا غيّرت الرابط، يتوقف الرابط القديم عن العمل.'}
+      </span>
+      {error && <Notice tone="error">{error}</Notice>}
     </Modal>
   )
 }

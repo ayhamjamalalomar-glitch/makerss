@@ -21,7 +21,7 @@ export default function LoginPage() {
     if (mode !== 'update' && session && profile) {
       if (next && next.startsWith('/')) go(next)
       else if (profile.role === 'admin' || profile.role === 'reviewer') go('/admin')
-      else go(profile.status === 'approved' ? `/${profile.username}` : profile.status === 'pending' ? '/me/status' : '/me')
+      else go(profile.status === 'approved' && profile.username ? `/${profile.username}` : profile.status === 'pending' ? '/me/status' : '/me')
     }
   }, [session, profile, mode, next, go])
 

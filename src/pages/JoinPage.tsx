@@ -59,6 +59,11 @@ export default function JoinPage() {
       setError(error.message.includes('registered') ? 'هذا البريد مسجّل مسبقاً. سجّل الدخول بدلاً من ذلك.' : 'تعذّر إنشاء الحساب. تحقق من البيانات وحاول مرة أخرى.')
       return
     }
+    // Supabase returns a user with no identities when the email already exists (no email is sent).
+    if (data.user && (data.user.identities?.length ?? 0) === 0) {
+      setError('هذا البريد مسجّل مسبقاً. سجّل الدخول، أو استخدم «نسيت كلمة المرور» من صفحة الدخول.')
+      return
+    }
     if (data.session) go('/me')
     else setSentTo(email)
   }
