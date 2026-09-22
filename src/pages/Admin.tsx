@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { Navigate } from '../App'
+import type { Navigate } from '../lib/legacyNav'
 import { useAuth } from '../lib/auth'
 import { supabase, type MemberRole, type MemberStatus, type Profile, type Specialty } from '../lib/supabase'
 import { Button, Card, Input, Label, Notice, Select, StatusBadge, Textarea, ORANGE } from '../components/ui'
@@ -350,6 +350,9 @@ function MemberDrawer({ member: m, specName, isAdmin, onClose, onChanged }: {
               </Select>
               <Button variant="ghost" disabled={busy} onClick={() => setFounding(!m.is_founding)}>
                 {m.is_founding ? 'Remove founding badge' : 'Mark as founding member'}
+              </Button>
+              <Button variant="ghost" disabled={busy} onClick={() => run(() => supabase.rpc('admin_set_featured', { p_id: m.id, p_value: !m.is_featured }))}>
+                {m.is_featured ? 'Remove pick of the week' : 'Make pick of the week'}
               </Button>
             </div>
           </div>

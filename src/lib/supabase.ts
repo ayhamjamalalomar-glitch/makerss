@@ -45,6 +45,9 @@ export interface Profile {
   reviewed_at?: string | null
   submitted_at: string | null
   created_at: string
+  start_year?: number | null
+  available?: boolean
+  is_featured?: boolean
 }
 
 export interface Specialty {
@@ -57,4 +60,39 @@ export interface Specialty {
 }
 
 export const PUBLIC_PROFILE_COLUMNS =
-  'id, full_name, name_ar, username, account_type, status, role, is_founding, avatar_url, bio, city, country, specialty_ids, other_specialty, content_types, video_length, socials, followers, work_links, invites_remaining, submitted_at, last_active_at, created_at, updated_at, referred_by'
+  'id, full_name, name_ar, username, account_type, status, role, is_founding, avatar_url, bio, city, country, specialty_ids, other_specialty, content_types, video_length, socials, followers, work_links, invites_remaining, submitted_at, last_active_at, created_at, updated_at, referred_by, start_year, available, is_featured'
+
+export interface Work {
+  id: string
+  owner_id: string
+  title: string
+  year: number | null
+  role: string | null
+  platform: string | null
+  url: string | null
+  created_at: string
+}
+
+export interface Award {
+  id: string
+  owner_id: string
+  rank: string
+  org: string | null
+  year: number | null
+}
+
+export interface ContactRequest {
+  id: string
+  to_id: string
+  sender_name: string
+  project_type: string | null
+  country: string | null
+  city: string | null
+  budget: string | null
+  start_date: string | null
+  end_date: string | null
+  details: string
+  status: 'new' | 'accepted' | 'declined' | 'expired'
+  responded_at: string | null
+  created_at: string
+}
