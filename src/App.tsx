@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Sidebar from './components/Sidebar'
 import Landing from './pages/Landing'
 import MakersPage from './pages/MakersPage'
@@ -14,6 +14,10 @@ import NewsArticle from './pages/NewsArticle'
 import TitlesPage from './pages/TitlesPage'
 import Footer from './components/Footer'
 import Logo from './components/Logo'
+import AuthPage from './pages/AuthPage'
+import Admin from './pages/Admin'
+import { useAuth } from './lib/auth'
+import { supabase } from './lib/supabase'
 
 export type Page =
   | { name: 'home' }
@@ -28,16 +32,37 @@ export type Page =
   | { name: 'news' }
   | { name: 'news-article'; id: string }
   | { name: 'titles' }
+  | { name: 'auth'; mode?: 'signin' | 'signup' | 'update'; next?: Page }
+  | { name: 'admin' }
 
 export type Navigate = (page: Page) => void
 
 export default function App() {
-  const [page, setPage] = useState<Page>({ name: 'home' })
+  const { session, profile } = useAuth()
+  const [page, setPage] = useState<Page>(() =>
+    window.location.pathname.startsWith('/admin') ? { name: 'admin' } : { name: 'home' },
+  )
 
   const navigate: Navigate = (p) => {
     setPage(p)
+    const path = p.name === 'admin' ? '/admin' : '/'
+    if (window.location.pathname !== path) window.history.pushState(null, '', path)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setPage({ name: 'auth', mode: 'update' })
+    })
+    const onPop = () => setPage(window.location.pathname.startsWith('/admin') ? { name: 'admin' } : { name: 'home' })
+    window.addEventListener('popstate', onPop)
+    return () => {
+      data.subscription.unsubscribe()
+      window.removeEventListener('popstate', onPop)
+    }
+  }, [])
+
+  const isStaff = profile?.role === 'admin' || profile?.role === 'reviewer'
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--c-bg)', color: 'var(--c-text)' }}>
@@ -49,16 +74,53 @@ export default function App() {
       >
         <Logo onClick={() => navigate({ name: 'home' })} size="sm" />
 
-        <button
-          onClick={() => navigate({ name: 'request-invite' })}
-          className="flex items-center gap-2 font-inter font-semibold text-paper px-4 py-2 rounded-full hover:opacity-90 transition-all"
-          style={{ background: '#E85D04', border: 'none', cursor: 'pointer', fontSize: 12 }}
-        >
-          Request an invitation
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 5h6M5 2l3 3-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-2">
+          {isStaff && (
+            <button
+              onClick={() => navigate({ name: 'admin' })}
+              className="font-inter font-semibold px-4 py-2 rounded-full hover:opacity-90 transition-all"
+              style={{ background: 'transparent', color: 'var(--c-text)', border: '1px solid var(--c-border-mid)', cursor: 'pointer', fontSize: 12 }}
+            >
+              Admin
+            </button>
+          )}
+          {session && (
+            <button
+              onClick={() => navigate({ name: 'request-invite' })}
+              className="font-inter font-semibold px-4 py-2 rounded-full hover:opacity-90 transition-all"
+              style={{ background: 'transparent', color: 'var(--c-text)', border: '1px solid var(--c-border-mid)', cursor: 'pointer', fontSize: 12 }}
+            >
+              My account
+            </button>
+          )}
+          {!session && (
+            <button
+              onClick={() => navigate({ name: 'auth', mode: 'signin' })}
+              className="font-inter font-semibold px-4 py-2 rounded-full hover:opacity-90 transition-all"
+              style={{ background: 'transparent', color: 'var(--c-text)', border: '1px solid var(--c-border-mid)', cursor: 'pointer', fontSize: 12 }}
+            >
+              Sign in
+            </button>
+          )}
+          {!session && (
+            <button
+              onClick={() => navigate({ name: 'request-invite' })}
+              className="flex items-center gap-2 font-inter font-semibold text-paper px-4 py-2 rounded-full hover:opacity-90 transition-all"
+              style={{ background: '#E85D04', border: 'none', cursor: 'pointer', fontSize: 12 }}
+            >
+              Request an invitation
+            </button>
+          )}
+          {session && (
+            <button
+              onClick={async () => { await supabase.auth.signOut(); navigate({ name: 'home' }) }}
+              className="font-inter px-3 py-2 text-muted hover:text-paper"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12 }}
+            >
+              Sign out
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Page content */}
@@ -76,6 +138,8 @@ export default function App() {
           {page.name === 'news' && <NewsPage navigate={navigate} />}
           {page.name === 'news-article' && <NewsArticle id={page.id} navigate={navigate} />}
           {page.name === 'titles' && <TitlesPage navigate={navigate} />}
+          {page.name === 'auth' && <AuthPage key={page.mode} navigate={navigate} mode={page.mode} next={page.next} />}
+          {page.name === 'admin' && <Admin navigate={navigate} />}
         </div>
         <Footer navigate={navigate} />
       </main>
