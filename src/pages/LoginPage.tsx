@@ -35,7 +35,7 @@ export default function LoginPage() {
       if (error) setError(error.message.includes('confirmed') ? 'فعّل بريدك أولاً من الرسالة التي وصلتك.' : 'البريد أو كلمة المرور غير صحيحة.')
     } else if (mode === 'reset') {
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/login?reset=1` })
-      if (error) setError('تعذّر إرسال الرابط. حاول مرة أخرى.')
+      if (error) setError(error.status === 429 || /rate/i.test(error.message) ? 'أُرسلت رسائل كثيرة خلال وقت قصير. انتظر قليلاً ثم حاول مرة أخرى.' : 'تعذّر إرسال الرابط. حاول مرة أخرى.')
       else setInfo('إن كان هذا البريد مسجّلاً، سيصلك رابط لتعيين كلمة مرور جديدة.')
     } else {
       const { error } = await supabase.auth.updateUser({ password })

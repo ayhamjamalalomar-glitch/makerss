@@ -56,7 +56,7 @@ export default function JoinPage() {
     })
     setBusy(false)
     if (error) {
-      setError(error.message.includes('registered') ? 'هذا البريد مسجّل مسبقاً. سجّل الدخول بدلاً من ذلك.' : 'تعذّر إنشاء الحساب. تحقق من البيانات وحاول مرة أخرى.')
+      setError(error.status === 429 || /rate/i.test(error.message) ? 'أُرسلت رسائل كثيرة خلال وقت قصير. انتظر قليلاً ثم حاول مرة أخرى.' : error.message.includes('registered') ? 'هذا البريد مسجّل مسبقاً. سجّل الدخول بدلاً من ذلك.' : 'تعذّر إنشاء الحساب. تحقق من البيانات وحاول مرة أخرى.')
       return
     }
     // Supabase returns a user with no identities when the email already exists (no email is sent).

@@ -86,7 +86,11 @@ export default function MakerPage({ username }: { username: string }) {
             </span>
           )}
           <div className="flex flex-wrap items-center gap-2 mt-2">
-            <a href="#contact" className="hidden md:inline-block text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>اطلب تعاوناً</a>
+            {isOwner ? (
+              <Link to="/me" className="hidden md:inline-block text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#111', color: '#fff' }}>تعديل الملف الشخصي</Link>
+            ) : (
+              <a href="#contact" className="hidden md:inline-block text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>اطلب تعاوناً</a>
+            )}
             <button type="button" onClick={copy} className="hidden md:flex items-center gap-2 text-[13px] font-semibold px-4 py-3 rounded-full cursor-pointer bg-white" style={{ border: '1px solid #E3E3E0' }}>
               {copied ? 'تم نسخ الرابط' : 'انسخ الرابط'}
             </button>
@@ -98,7 +102,11 @@ export default function MakerPage({ username }: { username: string }) {
             {p.is_founding && <Pill>عضو مؤسس</Pill>}
           </div>
           <div className="flex md:hidden gap-2 mt-2">
-            <a href="#contact" className="flex-1 text-center text-[15px] font-semibold py-3.5 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>اطلب تعاوناً</a>
+            {isOwner ? (
+              <Link to="/me" className="flex-1 text-center text-[15px] font-semibold py-3.5 rounded-full" style={{ background: '#111', color: '#fff' }}>تعديل الملف الشخصي</Link>
+            ) : (
+              <a href="#contact" className="flex-1 text-center text-[15px] font-semibold py-3.5 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>اطلب تعاوناً</a>
+            )}
             <button type="button" onClick={copy} className="text-[13px] font-semibold px-4 rounded-full cursor-pointer bg-white" style={{ border: '1px solid #E3E3E0' }}>{copied ? 'تم النسخ' : 'انسخ الرابط'}</button>
           </div>
           {socials.length > 0 && (
