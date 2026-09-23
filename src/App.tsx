@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { RouterProvider, useRouter } from './lib/router'
+import { LangProvider, useLang } from './lib/i18n'
 import { supabase } from './lib/supabase'
 import { RESERVED_PATHS } from './lib/constants'
 import Dock from './components/Dock'
@@ -14,6 +15,7 @@ import Admin from './pages/Admin'
 
 function Routes() {
   const { path, go } = useRouter()
+  const { lang } = useLang()
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
@@ -37,7 +39,7 @@ function Routes() {
   else page = <Directory />
 
   return (
-    <div className="mk" dir="rtl" lang="ar">
+    <div className="mk" dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang}>
       <Dock />
       {page}
     </div>
@@ -46,8 +48,10 @@ function Routes() {
 
 export default function App() {
   return (
-    <RouterProvider>
-      <Routes />
-    </RouterProvider>
+    <LangProvider>
+      <RouterProvider>
+        <Routes />
+      </RouterProvider>
+    </LangProvider>
   )
 }

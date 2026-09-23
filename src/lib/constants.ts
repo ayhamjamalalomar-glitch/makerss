@@ -1,28 +1,50 @@
-export const ARAB_COUNTRIES = [
-  'الأردن', 'الإمارات', 'البحرين', 'تونس', 'الجزائر', 'جيبوتي', 'السعودية', 'السودان', 'سوريا', 'الصومال', 'العراق',
-  'عُمان', 'فلسطين', 'قطر', 'جزر القمر', 'الكويت', 'لبنان', 'ليبيا', 'مصر', 'المغرب', 'موريتانيا', 'اليمن',
+import { getLang, t, type Pair } from './i18n'
+
+// Stored values stay Arabic (they are already in the database); labels switch with the language.
+export const COUNTRIES: Pair[] = [
+  { ar: 'الأردن', en: 'Jordan' }, { ar: 'الإمارات', en: 'UAE' }, { ar: 'البحرين', en: 'Bahrain' }, { ar: 'تونس', en: 'Tunisia' },
+  { ar: 'الجزائر', en: 'Algeria' }, { ar: 'جيبوتي', en: 'Djibouti' }, { ar: 'السعودية', en: 'Saudi Arabia' }, { ar: 'السودان', en: 'Sudan' },
+  { ar: 'سوريا', en: 'Syria' }, { ar: 'الصومال', en: 'Somalia' }, { ar: 'العراق', en: 'Iraq' }, { ar: 'عُمان', en: 'Oman' },
+  { ar: 'فلسطين', en: 'Palestine' }, { ar: 'قطر', en: 'Qatar' }, { ar: 'جزر القمر', en: 'Comoros' }, { ar: 'الكويت', en: 'Kuwait' },
+  { ar: 'لبنان', en: 'Lebanon' }, { ar: 'ليبيا', en: 'Libya' }, { ar: 'مصر', en: 'Egypt' }, { ar: 'المغرب', en: 'Morocco' },
+  { ar: 'موريتانيا', en: 'Mauritania' }, { ar: 'اليمن', en: 'Yemen' },
+]
+export const ARAB_COUNTRIES = COUNTRIES.map((c) => c.ar)
+export const REMOTE: Pair = { ar: 'تصوير عن بُعد أو بدون تصوير', en: 'Remote or no shoot' }
+
+export const PROJECT_TYPES: Pair[] = [
+  { ar: 'إعلان تجاري', en: 'Commercial' }, { ar: 'فيلم قصير', en: 'Short film' }, { ar: 'فيلم وثائقي', en: 'Documentary' },
+  { ar: 'محتوى سوشال', en: 'Social content' }, { ar: 'فيديو كليب', en: 'Music video' }, { ar: 'غير ذلك', en: 'Other' },
 ]
 
-export const PROJECT_TYPES = ['إعلان تجاري', 'فيلم قصير', 'فيلم وثائقي', 'محتوى سوشال', 'فيديو كليب', 'غير ذلك']
-
-export const BUDGETS = ['حسب الاتفاق', 'أقل من 500 دولار', 'من 500 إلى 1,500 دولار', 'من 1,500 إلى 5,000 دولار', 'أكثر من 5,000 دولار']
-
-export const VIDEO_LENGTHS: { key: 'short' | 'long' | 'both'; label: string }[] = [
-  { key: 'short', label: 'فيديو قصير' },
-  { key: 'long', label: 'فيديو طويل' },
-  { key: 'both', label: 'قصير وطويل' },
+export const BUDGETS: Pair[] = [
+  { ar: 'حسب الاتفاق', en: 'Open to discuss' }, { ar: 'أقل من 500 دولار', en: 'Under $500' },
+  { ar: 'من 500 إلى 1,500 دولار', en: '$500 to $1,500' }, { ar: 'من 1,500 إلى 5,000 دولار', en: '$1,500 to $5,000' },
+  { ar: 'أكثر من 5,000 دولار', en: 'Over $5,000' },
 ]
+
+export const VIDEO_LENGTHS: { key: 'short' | 'long' | 'both'; ar: string; en: string }[] = [
+  { key: 'short', ar: 'فيديو قصير', en: 'Short-form' },
+  { key: 'long', ar: 'فيديو طويل', en: 'Long-form' },
+  { key: 'both', ar: 'قصير وطويل', en: 'Short and long' },
+]
+export const videoLengthLabel = (key: string | null | undefined) => {
+  const v = VIDEO_LENGTHS.find((x) => x.key === key)
+  return v ? t(v.ar, v.en) : undefined
+}
 
 export const MONTHS_AR = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+export const MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+export const months = () => (getLang() === 'en' ? MONTHS_EN : MONTHS_AR)
 
 export const SITE_URL = 'https://makerss.net'
 
-export const RESERVED_PATHS = ['admin', 'join', 'login', 'me', 'inbox', 'terms', 'privacy', 'api', 'about', 'makers', 'settings', 'status', 'reset']
+export const RESERVED_PATHS = ['admin', 'join', 'login', 'me', 'inbox', 'terms', 'privacy', 'api', 'about', 'makers', 'settings', 'status', 'reset', 'en', 'ar']
 
 export function formatDateAr(iso: string | null | undefined) {
   if (!iso) return ''
   const [y, m, d] = iso.slice(0, 10).split('-').map(Number)
-  return `${d} ${MONTHS_AR[m - 1]} ${y}`
+  return getLang() === 'en' ? `${MONTHS_EN[m - 1].slice(0, 3)} ${d}, ${y}` : `${d} ${MONTHS_AR[m - 1]} ${y}`
 }
 
 export function daysBetween(a: string, b: string) {
@@ -32,10 +54,12 @@ export function daysBetween(a: string, b: string) {
 }
 
 export function durationAr(days: number) {
+  const n = days + 1
+  if (getLang() === 'en') return n === 1 ? '1 day' : `${n} days`
   if (days === 0) return 'يوم واحد'
   if (days === 1) return 'يومان'
-  if (days <= 10) return `${days + 1} أيام`
-  return `${days + 1} يوماً`
+  if (days <= 10) return `${n} أيام`
+  return `${n} يوماً`
 }
 
 export function detectPlatform(url: string) {
@@ -46,12 +70,17 @@ export function detectPlatform(url: string) {
   if (/behance/i.test(url)) return 'Behance'
   return 'رابط'
 }
+export const platformLabel = (p: string | null | undefined) => (p === 'رابط' ? t('رابط', 'Link') : p || '')
 
 export function relativeAr(iso: string) {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000
-  if (diff < 3600) return 'منذ قليل'
-  if (diff < 86400) return `منذ ${Math.max(1, Math.round(diff / 3600))} ساعة`
+  const en = getLang() === 'en'
+  if (diff < 3600) return en ? 'just now' : 'منذ قليل'
+  if (diff < 86400) {
+    const h = Math.max(1, Math.round(diff / 3600))
+    return en ? `${h}h ago` : `منذ ${h} ساعة`
+  }
   const d = Math.round(diff / 86400)
-  if (d === 1) return 'أمس'
-  return `قبل ${d} أيام`
+  if (d === 1) return en ? 'yesterday' : 'أمس'
+  return en ? `${d} days ago` : `قبل ${d} أيام`
 }

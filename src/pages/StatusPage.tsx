@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { t } from '../lib/i18n'
 import Link, { useRouter } from '../lib/router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
@@ -26,7 +27,7 @@ export default function StatusPage() {
   if (loading || !profile) return <PageShell narrow><Spinner /></PageShell>
 
   const link = `${SITE_URL}/${profile.username}`
-  const shareText = encodeURIComponent(`صفحتي على Makers: ${link}`)
+  const shareText = encodeURIComponent(t(`صفحتي على Makers: ${link}`, `My page on Makers: ${link}`))
   const copy = async () => {
     try { await navigator.clipboard.writeText(link) } catch { /* ignore */ }
     setCopied(true)
@@ -34,7 +35,7 @@ export default function StatusPage() {
   const invite = async () => {
     setInviteError(null)
     const { data, error } = await supabase.rpc('create_invite', { p_email: null })
-    if (error) return setInviteError('لا توجد دعوات متبقية.')
+    if (error) return setInviteError(t('لا توجد دعوات متبقية.', 'No invites left.'))
     setCodes([...codes, data as string])
     refreshProfile()
   }
@@ -44,18 +45,18 @@ export default function StatusPage() {
       {profile.status === 'pending' && (
         <>
           <div className="flex flex-col gap-3 pt-4 md:pt-8">
-            <span><Pill tone="blue">قيد المراجعة</Pill></span>
-            <h1 className="m-0 text-[30px] md:text-[40px] font-bold" style={{ lineHeight: 1.3 }}>وصلت صفحتك إلى فريق Makers</h1>
-            <p className="m-0 text-base" style={{ lineHeight: 1.9, color: '#3A3A38' }}>نراجع كل صفحة بعناية حتى يبقى الدليل موثوقاً. سنرسل لك رسالة على بريدك الإلكتروني فور صدور القرار.</p>
+            <span><Pill tone="blue">{t('قيد المراجعة', 'In review')}</Pill></span>
+            <h1 className="m-0 text-[30px] md:text-[40px] font-bold" style={{ lineHeight: 1.3 }}>{t('وصلت صفحتك إلى فريق Makers', 'Your page reached the Makers team')}</h1>
+            <p className="m-0 text-base" style={{ lineHeight: 1.9, color: '#3A3A38' }}>{t('نراجع كل صفحة بعناية حتى يبقى الدليل موثوقاً. سنرسل لك رسالة على بريدك الإلكتروني فور صدور القرار.', 'We review every page carefully so the directory stays trustworthy. We will email you as soon as there is a decision.')}</p>
           </div>
           <Card className="px-6 py-6 md:px-8 flex flex-col gap-4">
-            <Step state="done" title="أرسلت صفحتك" />
-            <Step state="current" title="مراجعة الفريق" sub="نراجع الصفحات حسب ترتيب وصولها" />
-            <Step state="todo" title="نشر صفحتك في الدليل" />
+            <Step state="done" title={t('أرسلت صفحتك', 'You sent your page')} />
+            <Step state="current" title={t('مراجعة الفريق', 'Team review')} sub={t('نراجع الصفحات حسب ترتيب وصولها', 'Pages are reviewed in the order they arrive')} />
+            <Step state="todo" title={t('نشر صفحتك في الدليل', 'Your page goes live in the directory')} />
           </Card>
           <div className="flex gap-2.5">
-            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#F3F3F2' }}>معاينة صفحتي</Link>
-            <Link to="/me" className="text-sm px-5 py-3 rounded-full" style={{ color: '#2563EB' }}>تعديل الصفحة</Link>
+            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#F3F3F2' }}>{t('معاينة صفحتي', 'Preview my page')}</Link>
+            <Link to="/me" className="text-sm px-5 py-3 rounded-full" style={{ color: '#2563EB' }}>{t('تعديل الصفحة', 'Edit page')}</Link>
           </div>
         </>
       )}
@@ -63,40 +64,40 @@ export default function StatusPage() {
       {profile.status === 'approved' && (
         <>
           <div className="flex flex-col gap-3 pt-4 md:pt-8">
-            <span><Pill tone="green">منشورة</Pill></span>
-            <h1 className="m-0 text-[30px] md:text-[40px] font-bold" style={{ lineHeight: 1.3 }}>أهلاً بك في Makers، صفحتك منشورة</h1>
+            <span><Pill tone="green">{t('منشورة', 'Live')}</Pill></span>
+            <h1 className="m-0 text-[30px] md:text-[40px] font-bold" style={{ lineHeight: 1.3 }}>{t('أهلاً بك في Makers، صفحتك منشورة', 'Welcome to Makers, your page is live')}</h1>
             <p className="m-0 text-base" style={{ lineHeight: 1.9, color: '#3A3A38' }}>
-              {profile.is_founding ? 'أنت الآن من الأعضاء المؤسسين. ' : ''}شارك رابط صفحتك في حساباتك حتى يصل إليك أصحاب المشاريع.
+              {profile.is_founding ? t('أنت الآن من الأعضاء المؤسسين. ', 'You are now a founding member. ') : ''}{t('شارك رابط صفحتك في حساباتك حتى يصل إليك أصحاب المشاريع.', 'Share your link on your accounts so clients can find you.')}
             </p>
           </div>
           <Card className="px-5 py-5 md:px-7 md:py-6 flex flex-col gap-3.5">
-            <span className="text-[13px] font-semibold">رابط صفحتك</span>
+            <span className="text-[13px] font-semibold">{t('رابط صفحتك', 'Your page link')}</span>
             <div className="flex flex-col md:flex-row gap-2.5">
               <span dir="ltr" className="flex-1 h-[50px] px-5 rounded-full flex items-center mono text-[15px]" style={{ background: '#F7F7F6' }}>{link.replace('https://', '')}</span>
-              <Btn onClick={copy}>{copied ? 'تم النسخ' : 'انسخ الرابط'}</Btn>
+              <Btn onClick={copy}>{copied ? t('تم النسخ', 'Copied') : t('انسخ الرابط', 'Copy link')}</Btn>
             </div>
             <div className="flex flex-wrap gap-2">
-              <a href={`https://wa.me/?text=${shareText}`} target="_blank" rel="noreferrer" className="text-[13px] px-4 py-2 rounded-full" style={{ border: '1px solid #E3E3E0' }}>مشاركة على واتساب</a>
-              <a href={`https://x.com/intent/tweet?text=${shareText}`} target="_blank" rel="noreferrer" className="text-[13px] px-4 py-2 rounded-full" style={{ border: '1px solid #E3E3E0' }}>مشاركة على X</a>
-              <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`} target="_blank" rel="noreferrer" className="text-[13px] px-4 py-2 rounded-full" style={{ border: '1px solid #E3E3E0' }}>مشاركة على لينكدإن</a>
+              <a href={`https://wa.me/?text=${shareText}`} target="_blank" rel="noreferrer" className="text-[13px] px-4 py-2 rounded-full" style={{ border: '1px solid #E3E3E0' }}>{t('مشاركة على واتساب', 'Share on WhatsApp')}</a>
+              <a href={`https://x.com/intent/tweet?text=${shareText}`} target="_blank" rel="noreferrer" className="text-[13px] px-4 py-2 rounded-full" style={{ border: '1px solid #E3E3E0' }}>{t('مشاركة على X', 'Share on X')}</a>
+              <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`} target="_blank" rel="noreferrer" className="text-[13px] px-4 py-2 rounded-full" style={{ border: '1px solid #E3E3E0' }}>{t('مشاركة على لينكدإن', 'Share on LinkedIn')}</a>
             </div>
-            <span className="text-xs" style={{ color: '#5C5C59' }}>لإنستغرام وتيك توك: الصق الرابط في خانة الرابط داخل البايو.</span>
+            <span className="text-xs" style={{ color: '#5C5C59' }}>{t('لإنستغرام وتيك توك: الصق الرابط في خانة الرابط داخل البايو.', 'For Instagram and TikTok: paste the link in your bio link field.')}</span>
           </Card>
           <Card className="px-5 py-5 md:px-7 md:py-6 flex flex-col gap-3.5">
             <div className="flex justify-between items-baseline">
-              <span className="text-[13px] font-semibold">ادعُ صنّاعاً تثق بعملهم</span>
-              <span className="text-xs" style={{ color: '#5C5C59' }}>{profile.invites_remaining > 0 ? `متبقٍّ: ${profile.invites_remaining} من 3` : 'استخدمت كل الدعوات'}</span>
+              <span className="text-[13px] font-semibold">{t('ادعُ صنّاعاً تثق بعملهم', 'Invite makers whose work you trust')}</span>
+              <span className="text-xs" style={{ color: '#5C5C59' }}>{profile.invites_remaining > 0 ? t(`متبقٍّ: ${profile.invites_remaining} من 3`, `${profile.invites_remaining} of 3 left`) : t('استخدمت كل الدعوات', 'All invites used')}</span>
             </div>
-            <span className="text-[13px]" style={{ color: '#5C5C59' }}>يمرّ المدعوون بالمراجعة نفسها. أعطِ الرمز لمن تدعوه ليكتبه عند التسجيل.</span>
+            <span className="text-[13px]" style={{ color: '#5C5C59' }}>{t('يمرّ المدعوون بالمراجعة نفسها. أعطِ الرمز لمن تدعوه ليكتبه عند التسجيل.', 'Invitees go through the same review. Give them the code to enter when they sign up.')}</span>
             <div className="flex flex-wrap gap-2">
               {codes.map((c) => <span key={c} dir="ltr" className="mono text-sm px-4 py-2 rounded-full" style={{ background: '#F3F3F2' }}>{c}</span>)}
-              {profile.invites_remaining > 0 && <Btn variant="dashed" onClick={invite} className="!py-2 !px-4 text-[13px]">+ أنشئ رمز دعوة</Btn>}
+              {profile.invites_remaining > 0 && <Btn variant="dashed" onClick={invite} className="!py-2 !px-4 text-[13px]">{t('+ أنشئ رمز دعوة', '+ Create invite code')}</Btn>}
             </div>
             {inviteError && <span className="text-xs" style={{ color: '#B42318' }}>{inviteError}</span>}
           </Card>
           <div className="flex gap-2.5">
-            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#F3F3F2' }}>افتح صفحتي</Link>
-            <Link to="/" className="text-sm px-5 py-3 rounded-full" style={{ color: '#2563EB' }}>تصفّح الدليل</Link>
+            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#F3F3F2' }}>{t('افتح صفحتي', 'Open my page')}</Link>
+            <Link to="/" className="text-sm px-5 py-3 rounded-full" style={{ color: '#2563EB' }}>{t('تصفّح الدليل', 'Browse the directory')}</Link>
           </div>
         </>
       )}
@@ -104,27 +105,27 @@ export default function StatusPage() {
       {profile.status === 'rejected' && (
         <>
           <div className="flex flex-col gap-3 pt-4 md:pt-8">
-            <span><Pill tone="red">تحتاج تعديلاً</Pill></span>
-            <h1 className="m-0 text-[30px] md:text-[40px] font-bold" style={{ lineHeight: 1.3 }}>لم تُقبل صفحتك هذه المرة</h1>
-            <p className="m-0 text-base" style={{ lineHeight: 1.9, color: '#3A3A38' }}>هذا ليس رفضاً نهائياً. عدّل صفحتك حسب ملاحظة الفريق وأرسلها مرة أخرى.</p>
+            <span><Pill tone="red">{t('تحتاج تعديلاً', 'Needs changes')}</Pill></span>
+            <h1 className="m-0 text-[30px] md:text-[40px] font-bold" style={{ lineHeight: 1.3 }}>{t('لم تُقبل صفحتك هذه المرة', 'Your page was not approved this time')}</h1>
+            <p className="m-0 text-base" style={{ lineHeight: 1.9, color: '#3A3A38' }}>{t('هذا ليس رفضاً نهائياً. عدّل صفحتك حسب ملاحظة الفريق وأرسلها مرة أخرى.', 'This is not final. Update your page based on the team note and send it again.')}</p>
           </div>
           {profile.review_note && (
             <div className="px-6 py-5 md:px-7 rounded-[28px] flex flex-col gap-2" style={{ background: '#FFF8F6', border: '1px solid #F6D6D1' }}>
-              <span className="text-[13px] font-semibold" style={{ color: '#B42318' }}>ملاحظة فريق Makers</span>
+              <span className="text-[13px] font-semibold" style={{ color: '#B42318' }}>{t('ملاحظة فريق Makers', 'Note from the Makers team')}</span>
               <p className="m-0 text-base" style={{ lineHeight: 1.9 }}>{profile.review_note}</p>
             </div>
           )}
           <div className="flex gap-2.5">
-            <Link to="/me" className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>عدّل صفحتك</Link>
+            <Link to="/me" className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>{t('عدّل صفحتك', 'Edit your page')}</Link>
           </div>
         </>
       )}
 
       {profile.status === 'suspended' && (
         <div className="flex flex-col gap-3 pt-8">
-          <span><Pill>موقوف</Pill></span>
-          <h1 className="m-0 text-[30px] font-bold">حسابك موقوف مؤقتاً</h1>
-          <p className="m-0" style={{ color: '#3A3A38' }}>تواصل مع فريق Makers إن كنت تعتقد أن هذا خطأ.</p>
+          <span><Pill>{t('موقوف', 'Suspended')}</Pill></span>
+          <h1 className="m-0 text-[30px] font-bold">{t('حسابك موقوف مؤقتاً', 'Your account is temporarily suspended')}</h1>
+          <p className="m-0" style={{ color: '#3A3A38' }}>{t('تواصل مع فريق Makers إن كنت تعتقد أن هذا خطأ.', 'Contact the Makers team if you think this is a mistake.')}</p>
         </div>
       )}
     </PageShell>

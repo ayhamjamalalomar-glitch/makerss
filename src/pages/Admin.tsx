@@ -119,9 +119,10 @@ export default function Admin() {
 
 function Wrap({ children }: { children: React.ReactNode }) {
   return (
-    <main className="md:mr-[120px] p-3 md:p-6 pb-28 md:pb-6">
+    <main className="md:ms-[120px] p-3 md:p-6 pb-28 md:pb-6">
       <Sheet className="px-4 py-6 md:px-10 md:py-12 flex justify-center min-h-[calc(100vh-48px)]">
-        <div className="w-full max-w-[1120px] flex flex-col gap-6">{children}</div>
+        {/* the admin panel stays Arabic whatever the site language */}
+        <div dir="rtl" lang="ar" className="w-full max-w-[1120px] flex flex-col gap-6">{children}</div>
       </Sheet>
     </main>
   )

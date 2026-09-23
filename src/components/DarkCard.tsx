@@ -6,7 +6,7 @@ import { LogoMark } from './Dock'
 export default function DarkCard({ children }: { children: ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: '#0B0B0B', color: '#F2F2F0' }}>
-      <Link to="/" aria-label="Makers" className="absolute top-5 right-5 w-[60px] h-[60px] md:w-[72px] md:h-[72px] rounded-full flex items-center justify-center" style={{ background: '#151514', border: '1px solid #242422' }}>
+      <Link to="/" aria-label="Makers" className="absolute top-5 start-5 w-[60px] h-[60px] md:w-[72px] md:h-[72px] rounded-full flex items-center justify-center" style={{ background: '#151514', border: '1px solid #242422' }}>
         <LogoMark size={11} color="#DCDCDC" />
       </Link>
       <div className="min-h-full flex items-center justify-center px-4 py-24">

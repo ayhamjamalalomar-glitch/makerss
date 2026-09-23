@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase, type Specialty } from './supabase'
+import { t } from './i18n'
 
 let cache: Specialty[] | null = null
 
@@ -22,11 +23,11 @@ export function useSpecialties() {
 
 export function specName(list: Specialty[], id: number) {
   const s = list.find((x) => x.id === id)
-  return s ? s.name_ar || s.name_en : ''
+  return s ? t(s.name_ar || s.name_en, s.name_en || s.name_ar || '') : ''
 }
 
 export function roleLine(list: Specialty[], ids: number[] | null | undefined, other?: string | null) {
   const names = (ids || []).map((id) => specName(list, id)).filter(Boolean)
   if (other) names.push(other)
-  return names.join(' و')
+  return names.join(t(' و', ' & '))
 }

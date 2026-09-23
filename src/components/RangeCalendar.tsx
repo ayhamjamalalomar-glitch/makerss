@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { MONTHS_AR, formatDateAr, daysBetween, durationAr } from '../lib/constants'
+import { months, formatDateAr, daysBetween, durationAr } from '../lib/constants'
+import { t } from '../lib/i18n'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const iso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`
@@ -32,26 +33,26 @@ export default function RangeCalendar({ start, end, onChange }: { start: string 
   return (
     <div className="flex flex-col gap-3.5 p-4 md:p-5 rounded-[28px]" style={{ background: '#1A1A19', border: '1px solid #2E2E2C' }}>
       <div className="grid grid-cols-2 gap-2.5">
-        <button type="button" onClick={() => setMode('start')} className="text-right px-4 py-3 rounded-[20px] cursor-pointer flex flex-col gap-0.5 text-white" style={box(mode === 'start')}>
-          <span className="text-[11px]" style={{ color: '#A3A3A0' }}>تاريخ البدء</span>
-          <span className="text-[15px] font-semibold">{start ? formatDateAr(start) : 'اختر من التقويم'}</span>
+        <button type="button" onClick={() => setMode('start')} className="text-start px-4 py-3 rounded-[20px] cursor-pointer flex flex-col gap-0.5 text-white" style={box(mode === 'start')}>
+          <span className="text-[11px]" style={{ color: '#A3A3A0' }}>{t('تاريخ البدء', 'Start date')}</span>
+          <span className="text-[15px] font-semibold">{start ? formatDateAr(start) : t('اختر من التقويم', 'Pick on the calendar')}</span>
         </button>
-        <button type="button" onClick={() => setMode('end')} className="text-right px-4 py-3 rounded-[20px] cursor-pointer flex flex-col gap-0.5 text-white" style={box(mode === 'end')}>
-          <span className="text-[11px]" style={{ color: '#A3A3A0' }}>تاريخ التسليم</span>
-          <span className="text-[15px] font-semibold">{end ? formatDateAr(end) : 'اختر من التقويم'}</span>
+        <button type="button" onClick={() => setMode('end')} className="text-start px-4 py-3 rounded-[20px] cursor-pointer flex flex-col gap-0.5 text-white" style={box(mode === 'end')}>
+          <span className="text-[11px]" style={{ color: '#A3A3A0' }}>{t('تاريخ التسليم', 'Delivery date')}</span>
+          <span className="text-[15px] font-semibold">{end ? formatDateAr(end) : t('اختر من التقويم', 'Pick on the calendar')}</span>
         </button>
       </div>
       <div className="flex items-center justify-between px-1">
-        <button type="button" aria-label="الشهر السابق" disabled={!canPrev} onClick={() => (m === 0 ? (setM(11), setY(y - 1)) : setM(m - 1))} className="w-9 h-9 rounded-full flex items-center justify-center text-white cursor-pointer disabled:opacity-30" style={{ border: '1px solid #2E2E2C', background: 'transparent' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 6l6 6-6 6" /></svg>
+        <button type="button" aria-label={t('الشهر السابق', 'Previous month')} disabled={!canPrev} onClick={() => (m === 0 ? (setM(11), setY(y - 1)) : setM(m - 1))} className="w-9 h-9 rounded-full flex items-center justify-center text-white cursor-pointer disabled:opacity-30" style={{ border: '1px solid #2E2E2C', background: 'transparent' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ltr:-scale-x-100"><path d="M10 6l6 6-6 6" /></svg>
         </button>
-        <span className="text-[15px] font-semibold text-white">{MONTHS_AR[m]} {y}</span>
-        <button type="button" aria-label="الشهر التالي" onClick={() => (m === 11 ? (setM(0), setY(y + 1)) : setM(m + 1))} className="w-9 h-9 rounded-full flex items-center justify-center text-white cursor-pointer" style={{ border: '1px solid #2E2E2C', background: 'transparent' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 6l-6 6 6 6" /></svg>
+        <span className="text-[15px] font-semibold text-white">{months()[m]} {y}</span>
+        <button type="button" aria-label={t('الشهر التالي', 'Next month')} onClick={() => (m === 11 ? (setM(0), setY(y + 1)) : setM(m + 1))} className="w-9 h-9 rounded-full flex items-center justify-center text-white cursor-pointer" style={{ border: '1px solid #2E2E2C', background: 'transparent' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ltr:-scale-x-100"><path d="M14 6l-6 6 6 6" /></svg>
         </button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center">
-        {['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'].map((w) => (
+        {(t('أحد|إثنين|ثلاثاء|أربعاء|خميس|جمعة|سبت', 'Sun|Mon|Tue|Wed|Thu|Fri|Sat').split('|')).map((w) => (
           <span key={w} className="text-[10px] md:text-[11px] py-1" style={{ color: '#8C8C89' }}>{w}</span>
         ))}
         {Array.from({ length: first }).map((_, i) => <span key={'b' + i} />)}
@@ -76,7 +77,7 @@ export default function RangeCalendar({ start, end, onChange }: { start: string 
         })}
       </div>
       <span className="text-[13px] px-1" style={{ color: '#A3A3A0' }}>
-        {dur ? `مدة المشروع: ${dur}` : mode === 'start' ? 'اختر يوم بدء المشروع.' : 'اختر الآن يوم التسليم.'}
+        {dur ? t(`مدة المشروع: ${dur}`, `Project length: ${dur}`) : mode === 'start' ? t('اختر يوم بدء المشروع.', 'Pick the start day.') : t('اختر الآن يوم التسليم.', 'Now pick the delivery day.')}
       </span>
     </div>
   )

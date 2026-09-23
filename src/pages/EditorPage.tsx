@@ -3,7 +3,8 @@ import Link, { useRouter } from '../lib/router'
 import { supabase, type Award, type Profile, type Work } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import WorkThumb from '../components/WorkThumb'
-import { ARAB_COUNTRIES, SITE_URL, VIDEO_LENGTHS, detectPlatform } from '../lib/constants'
+import { COUNTRIES, SITE_URL, VIDEO_LENGTHS, detectPlatform, platformLabel, videoLengthLabel } from '../lib/constants'
+import { isRtl, label, t } from '../lib/i18n'
 import { roleLine, useSpecialties } from '../lib/specialties'
 import { computeProgress } from '../lib/progress'
 import { fetchThumb } from '../lib/thumbs'
@@ -17,7 +18,7 @@ const SOCIALS = [
   { key: 'snapchat', label: 'Snapchat', followers: true },
   { key: 'linkedin', label: 'LinkedIn' },
   { key: 'x', label: 'X' },
-  { key: 'website', label: 'الموقع' },
+  { key: 'website', label: 'Website' },
 ]
 
 export default function EditorPage() {
@@ -62,9 +63,9 @@ export default function EditorPage() {
     const missing = works.filter((w) => w.url && !w.thumbnail_url)
     if (!missing.length) return
     Promise.all(missing.map(async (w) => {
-      const t = await fetchThumb(w.url as string)
-      if (!t) return false
-      const { error } = await supabase.from('works').update({ thumbnail_url: t }).eq('id', w.id)
+      const thumb = await fetchThumb(w.url as string)
+      if (!thumb) return false
+      const { error } = await supabase.from('works').update({ thumbnail_url: thumb }).eq('id', w.id)
       return !error
     })).then((r) => { if (r.some(Boolean)) loadLists() })
   }, [works, loadLists])
@@ -78,7 +79,7 @@ export default function EditorPage() {
   const update = async (patch: Partial<Profile>) => {
     setError(null)
     const { error } = await supabase.from('profiles').update(patch).eq('id', profile.id)
-    if (error) setError('تعذّر الحفظ. حاول مرة أخرى.')
+    if (error) setError(t('تعذّر الحفظ. حاول مرة أخرى.', 'Could not save. Try again.'))
     await refreshProfile()
     return !error
   }
@@ -86,7 +87,7 @@ export default function EditorPage() {
   const progress = computeProgress(profile, works.length)
   const hasSpec = progress.steps[2].done
   const role = roleLine(specialties, profile.specialty_ids, profile.other_specialty)
-  const vlen = VIDEO_LENGTHS.find((v) => v.key === profile.video_length)?.label
+  const vlen = videoLengthLabel(profile.video_length)
   const openFor = (key: string) => (key === 'photo' ? setModal('photo') : key === 'spec' ? setModal('spec') : key === 'works' ? setModal('work') : key === 'bio' ? document.getElementById('bio')?.focus() : null)
 
   const submit = async () => {
@@ -98,45 +99,45 @@ export default function EditorPage() {
 
   const status = profile.status
   const statusPill =
-    status === 'approved' ? <Pill tone="green">منشورة</Pill>
-      : status === 'pending' ? <Pill tone="blue">قيد المراجعة</Pill>
-        : status === 'rejected' ? <Pill tone="red">تحتاج تعديلاً</Pill>
-          : progress.count === 5 ? <Pill tone="green">جاهزة للإرسال</Pill> : <Pill tone="amber">قيد الإكمال</Pill>
+    status === 'approved' ? <Pill tone="green">{t('منشورة', 'Live')}</Pill>
+      : status === 'pending' ? <Pill tone="blue">{t('قيد المراجعة', 'In review')}</Pill>
+        : status === 'rejected' ? <Pill tone="red">{t('تحتاج تعديلاً', 'Needs changes')}</Pill>
+          : progress.count === 5 ? <Pill tone="green">{t('جاهزة للإرسال', 'Ready to send')}</Pill> : <Pill tone="amber">{t('قيد الإكمال', 'In progress')}</Pill>
 
   return (
     <>
       <PageShell>
         <div className="flex flex-wrap justify-between items-center gap-3 md:px-2">
           <span className="flex flex-wrap items-center gap-2.5">
-            <span className="text-sm font-semibold">صفحتي</span>
+            <span className="text-sm font-semibold">{t('صفحتي', 'My page')}</span>
             <button type="button" onClick={() => setModal('username')} className="mono text-xs bg-transparent border-0 p-0 cursor-pointer flex items-center gap-1.5" style={{ color: '#5C5C59' }} dir="ltr">
               {SITE_URL.replace('https://', '')}/{profile.username || '…'}
-              <span className="text-[11px]" style={{ color: '#2563EB', fontFamily: 'inherit' }}>تعديل</span>
+              <span className="text-[11px]" style={{ color: '#2563EB', fontFamily: 'inherit' }}>{t('تعديل', 'Edit')}</span>
             </button>
             {statusPill}
           </span>
           <span className="flex gap-2">
             <button type="button" onClick={() => update({ available: !profile.available })} className="flex items-center gap-2 text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ background: '#F3F3F2', border: 'none' }}>
               <span className="w-2 h-2 rounded-full" style={{ background: profile.available ? '#16A34A' : '#9A9A97' }} />
-              {profile.available ? 'متاح للعمل' : 'غير متاح حالياً'}
+              {profile.available ? t('متاح للعمل', 'Available for work') : t('غير متاح حالياً', 'Not available right now')}
             </button>
-            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-[13px] px-4 py-2 rounded-full" style={{ background: '#F3F3F2' }}>معاينة</Link>
+            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-[13px] px-4 py-2 rounded-full" style={{ background: '#F3F3F2' }}>{t('معاينة', 'Preview')}</Link>
           </span>
         </div>
 
-        {status === 'rejected' && <Notice tone="error">راجع ملاحظة الفريق في <Link to="/me/status" className="underline font-semibold">صفحة الحالة</Link>، ثم عدّل صفحتك وأرسلها مجدداً.</Notice>}
+        {status === 'rejected' && <Notice tone="error">{t('راجع ملاحظة الفريق في', 'Read the team note on the')} <Link to="/me/status" className="underline font-semibold">{t('صفحة الحالة', 'status page')}</Link>{t('، ثم عدّل صفحتك وأرسلها مجدداً.', ', then update your page and send it again.')}</Notice>}
         {error && <Notice tone="error">{error}</Notice>}
 
         <Card className="p-5 md:p-10 flex flex-col-reverse md:flex-row gap-6 md:gap-10 md:items-center">
           <div className="flex-1 flex flex-col gap-3">
             {hasSpec ? (
-              <button type="button" onClick={() => setModal('spec')} className="self-start text-right text-sm bg-transparent border-0 p-0 cursor-pointer" style={{ color: '#3A3A38' }}>
-                {role}{vlen ? ` · ${vlen}` : ''} · {[profile.city, profile.country].filter(Boolean).join('، ')} <span className="text-xs" style={{ color: '#2563EB' }}>تعديل</span>
+              <button type="button" onClick={() => setModal('spec')} className="self-start text-start text-sm bg-transparent border-0 p-0 cursor-pointer" style={{ color: '#3A3A38' }}>
+                {role}{vlen ? ` · ${vlen}` : ''} · {[profile.city, label(COUNTRIES, profile.country)].filter(Boolean).join(t('، ', ', '))} <span className="text-xs" style={{ color: '#2563EB' }}>{t('تعديل', 'Edit')}</span>
               </button>
             ) : (
-              <Btn variant="dashed" onClick={() => setModal('spec')} className="self-start !px-3.5 !py-1.5 text-[13px]">+ التخصص والدولة</Btn>
+              <Btn variant="dashed" onClick={() => setModal('spec')} className="self-start !px-3.5 !py-1.5 text-[13px]">{t('+ التخصص والدولة', '+ Role & country')}</Btn>
             )}
-            <label className="sr-only" htmlFor="fullname">الاسم</label>
+            <label className="sr-only" htmlFor="fullname">{t('الاسم', 'Name')}</label>
             <input
               id="fullname"
               value={name}
@@ -146,48 +147,49 @@ export default function EditorPage() {
               style={{ background: 'transparent', border: 'none', padding: 0, lineHeight: 1.15, letterSpacing: '-0.02em', height: 'auto' }}
             />
             <span className="mono text-[13px]" style={{ color: profile.start_year ? '#3A3A38' : '#8A8A87' }}>
-              {profile.start_year ? `يعمل في المجال منذ ${profile.start_year}` : 'أضف سنة البدء من «التخصص والدولة»'}
+              {profile.start_year ? t(`يعمل في المجال منذ ${profile.start_year}`, `In the industry since ${profile.start_year}`) : t('أضف سنة البدء من «التخصص والدولة»', 'Add your start year under Role & country')}
             </span>
           </div>
-          <button type="button" onClick={() => setModal('photo')} aria-label="الصورة" className="relative w-full md:w-[200px] h-[300px] md:h-[250px] shrink-0 rounded-[28px] overflow-hidden flex items-center justify-center cursor-pointer" style={profile.avatar_url ? { border: 'none', background: '#DADADA' } : { border: '1.5px dashed #CFCFCB', background: 'transparent', color: '#5C5C59' }}>
+          <button type="button" onClick={() => setModal('photo')} aria-label={t('الصورة', 'Photo')} className="relative w-full md:w-[200px] h-[300px] md:h-[250px] shrink-0 rounded-[28px] overflow-hidden flex items-center justify-center cursor-pointer" style={profile.avatar_url ? { border: 'none', background: '#DADADA' } : { border: '1.5px dashed #CFCFCB', background: 'transparent', color: '#5C5C59' }}>
             {profile.avatar_url ? (
               <>
                 <img src={profile.avatar_url} alt="" className="bw w-full h-full object-cover" />
                 <Corners size={18} inset={12} color="#FFFFFF" />
               </>
             ) : (
-              <span className="text-[13px]">+ صورتك</span>
+              <span className="text-[13px]">{t('+ صورتك', '+ Your photo')}</span>
             )}
           </button>
         </Card>
 
         <Card className="px-5 py-6 md:px-10 md:py-8 flex flex-col gap-3">
           <span className="flex items-center justify-between text-[13px] font-semibold">
-            <span className="flex items-center gap-2">نبذة {!progress.steps[3].done && <Pill tone="amber">فارغ</Pill>}</span>
+            <span className="flex items-center gap-2">{t('نبذة', 'About')} {!progress.steps[3].done && <Pill tone="amber">{t('فارغ', 'Empty')}</Pill>}</span>
             <span className="font-normal text-xs" style={{ color: '#5C5C59' }}>{bio.length}/400</span>
           </span>
           <TextArea
             id="bio"
+            dir="auto"
             rows={4}
             value={bio}
             maxLength={400}
             onChange={(e) => setBio(e.target.value)}
             onBlur={() => bio !== (profile.bio || '') && update({ bio: bio.trim() })}
-            placeholder="عرّف بنفسك في سطرين: ما الذي تقدّمه، ولماذا يطلبك الناس؟"
+            placeholder={t('عرّف بنفسك في سطرين: ما الذي تقدّمه، ولماذا يطلبك الناس؟', 'Introduce yourself in two lines: what you do, and why people hire you.')}
             style={{ background: 'transparent', border: 'none', padding: 0, fontSize: 17, lineHeight: 1.95 }}
           />
         </Card>
 
         <Card className="px-5 py-6 md:px-10 md:py-8 flex flex-col gap-5">
           <div className="flex justify-between items-baseline">
-            <span className="text-[13px] font-semibold">أعمال مختارة</span>
-            <span className="mono text-xs" style={{ color: '#5C5C59' }}>{Math.min(works.length, 3)} من 3 على الأقل</span>
+            <span className="text-[13px] font-semibold">{t('أعمال مختارة', 'Selected work')}</span>
+            <span className="mono text-xs" style={{ color: '#5C5C59' }}>{t(`${Math.min(works.length, 3)} من 3 على الأقل`, `${Math.min(works.length, 3)} of at least 3`)}</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
             {works.map((w, i) => (
               <div key={w.id} className="flex md:flex-col gap-3 items-center md:items-stretch">
                 <WorkThumb work={w} index={i} className="w-28 h-[72px] md:w-auto md:h-[150px] rounded-[18px] md:rounded-[24px]">
-                  <button type="button" aria-label="حذف العمل" onClick={async () => { await supabase.from('works').delete().eq('id', w.id); loadLists() }} className="absolute top-2 left-2 z-10 w-7 h-7 rounded-full text-sm cursor-pointer" style={{ background: 'rgba(255,255,255,0.9)', border: 'none' }}>×</button>
+                  <button type="button" aria-label={t('حذف العمل', 'Delete work')} onClick={async () => { await supabase.from('works').delete().eq('id', w.id); loadLists() }} className="absolute top-2 end-2 z-10 w-7 h-7 rounded-full text-sm cursor-pointer" style={{ background: 'rgba(255,255,255,0.9)', border: 'none' }}>×</button>
                 </WorkThumb>
                 <span className="flex flex-col gap-0.5 px-1">
                   <span className="text-sm font-semibold">{w.title}</span>
@@ -196,24 +198,24 @@ export default function EditorPage() {
               </div>
             ))}
             {works.length < 6 && (
-              <button type="button" onClick={() => setModal('work')} className="h-[72px] md:h-[150px] rounded-[24px] text-[13px] cursor-pointer" style={{ border: '1.5px dashed #CFCFCB', background: 'transparent', color: '#5C5C59' }}>+ أضف عملاً</button>
+              <button type="button" onClick={() => setModal('work')} className="h-[72px] md:h-[150px] rounded-[24px] text-[13px] cursor-pointer" style={{ border: '1.5px dashed #CFCFCB', background: 'transparent', color: '#5C5C59' }}>{t('+ أضف عملاً', '+ Add work')}</button>
             )}
           </div>
-          <span className="text-xs" style={{ color: '#5C5C59' }}>أضف روابط لأعمال تظهر فيها مساهمتك، واكتب دورك تحت كل عمل.</span>
+          <span className="text-xs" style={{ color: '#5C5C59' }}>{t('أضف روابط لأعمال تظهر فيها مساهمتك، واكتب دورك تحت كل عمل.', 'Add links to work that shows your contribution, and write your role under each one.')}</span>
         </Card>
 
         <Card className="px-5 py-5 md:px-10 md:py-7 flex flex-col gap-1">
           <div className="flex justify-between items-baseline pb-2">
-            <span className="text-[13px] font-semibold">الجوائز والاعتمادات <span className="font-normal" style={{ color: '#5C5C59' }}>(اختياري)</span></span>
-            <button type="button" onClick={() => setModal('award')} className="text-[13px] bg-transparent border-0 cursor-pointer" style={{ color: '#2563EB' }}>+ أضف</button>
+            <span className="text-[13px] font-semibold">{t('الجوائز والاعتمادات', 'Awards & credits')} <span className="font-normal" style={{ color: '#5C5C59' }}>{t('(اختياري)', '(optional)')}</span></span>
+            <button type="button" onClick={() => setModal('award')} className="text-[13px] bg-transparent border-0 cursor-pointer" style={{ color: '#2563EB' }}>{t('+ أضف', '+ Add')}</button>
           </div>
-          {awards.length === 0 && <span className="text-sm py-1.5" style={{ color: '#8A8A87' }}>أضف جوائزك أو اعتماداتك إن وُجدت، وستظهر في صفحتك تلقائياً.</span>}
+          {awards.length === 0 && <span className="text-sm py-1.5" style={{ color: '#8A8A87' }}>{t('أضف جوائزك أو اعتماداتك إن وُجدت، وستظهر في صفحتك تلقائياً.', 'Add any awards or credits, and they will appear on your page automatically.')}</span>}
           {awards.map((a) => (
             <div key={a.id} className="flex items-center gap-3 py-3.5" style={{ borderBottom: '1px solid #F0F0EE' }}>
               <span className="text-[15px] font-semibold">{a.rank}</span>
               <span className="flex-1 text-sm" style={{ color: '#3A3A38' }}>{a.org}</span>
               <span className="mono text-xs" style={{ color: '#5C5C59' }}>{a.year || ''}</span>
-              <button type="button" aria-label="حذف" onClick={async () => { await supabase.from('awards').delete().eq('id', a.id); loadLists() }} className="w-7 h-7 rounded-full cursor-pointer" style={{ background: '#F3F3F2', border: 'none' }}>×</button>
+              <button type="button" aria-label={t('حذف', 'Delete')} onClick={async () => { await supabase.from('awards').delete().eq('id', a.id); loadLists() }} className="w-7 h-7 rounded-full cursor-pointer" style={{ background: '#F3F3F2', border: 'none' }}>×</button>
             </div>
           ))}
         </Card>
@@ -223,30 +225,30 @@ export default function EditorPage() {
       </PageShell>
 
       {/* progress bar */}
-      <div className="fixed z-30 bottom-[100px] md:bottom-6 right-3 left-3 md:right-[144px] md:left-12 p-4 md:px-7 md:py-5 flex flex-col gap-3.5 rounded-[28px] md:rounded-[32px]" style={{ background: '#141414', color: '#F2F2F0' }}>
+      <div className="fixed z-30 bottom-[100px] md:bottom-6 start-3 end-3 md:start-[144px] md:end-12 p-4 md:px-7 md:py-5 flex flex-col gap-3.5 rounded-[28px] md:rounded-[32px]" style={{ background: '#141414', color: '#F2F2F0' }}>
         <div className="flex justify-between items-center gap-3">
           <span className="flex items-baseline gap-3">
-            <span className="text-[15px] font-bold">{status === 'approved' ? 'صفحتك منشورة' : 'أكمل صفحتك'}</span>
-            <span className="mono text-xs" style={{ color: '#A3A3A0' }}>{progress.count} من 5</span>
+            <span className="text-[15px] font-bold">{status === 'approved' ? t('صفحتك منشورة', 'Your page is live') : t('أكمل صفحتك', 'Complete your page')}</span>
+            <span className="mono text-xs" style={{ color: '#A3A3A0' }}>{t(`${progress.count} من 5`, `${progress.count} of 5`)}</span>
           </span>
           {status === 'approved' ? (
-            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-[13px] font-semibold px-5 py-2.5 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>افتح صفحتي</Link>
+            <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-[13px] font-semibold px-5 py-2.5 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>{t('افتح صفحتي', 'Open my page')}</Link>
           ) : status === 'pending' ? (
-            <Link to="/me/status" className="text-[13px]" style={{ color: '#A3A3A0' }}>قيد المراجعة</Link>
+            <Link to="/me/status" className="text-[13px]" style={{ color: '#A3A3A0' }}>{t('قيد المراجعة', 'In review')}</Link>
           ) : progress.count === 5 ? (
-            <Btn onClick={submit} disabled={saving} className="!py-2.5 !px-5 text-[13px]">{saving ? 'جارٍ الإرسال…' : 'أرسل للمراجعة'}</Btn>
+            <Btn onClick={submit} disabled={saving} className="!py-2.5 !px-5 text-[13px]">{saving ? t('جارٍ الإرسال…', 'Sending…') : t('أرسل للمراجعة', 'Send for review')}</Btn>
           ) : (
-            <span className="hidden md:inline text-[13px]" style={{ color: '#A3A3A0' }}>أكمل الخطوات الخمس لإرسال صفحتك للمراجعة</span>
+            <span className="hidden md:inline text-[13px]" style={{ color: '#A3A3A0' }}>{t('أكمل الخطوات الخمس لإرسال صفحتك للمراجعة', 'Complete the five steps to send your page for review')}</span>
           )}
         </div>
         <div className="relative grid grid-cols-5 gap-1.5 pt-2.5">
           {progress.steps.map((s, i) => (
-            <button key={s.key} type="button" onClick={() => openFor(s.key)} className="h-12 md:h-[54px] rounded-2xl text-[11px] md:text-xs cursor-pointer flex flex-col items-start justify-center gap-0.5 px-2 md:px-3.5 text-right" style={s.done ? { background: '#3B3B39', color: '#F2F2F0', border: 'none', fontWeight: 600 } : { background: 'transparent', color: '#A3A3A0', border: '1.5px dashed #4A4A47' }}>
-              <span className="hidden md:inline text-[10px]" style={{ color: '#8C8C89' }}>الخطوة {i + 1}</span>
+            <button key={s.key} type="button" onClick={() => openFor(s.key)} className="h-12 md:h-[54px] rounded-2xl text-[11px] md:text-xs cursor-pointer flex flex-col items-start justify-center gap-0.5 px-2 md:px-3.5 text-start" style={s.done ? { background: '#3B3B39', color: '#F2F2F0', border: 'none', fontWeight: 600 } : { background: 'transparent', color: '#A3A3A0', border: '1.5px dashed #4A4A47' }}>
+              <span className="hidden md:inline text-[10px]" style={{ color: '#8C8C89' }}>{t('الخطوة', 'Step')} {i + 1}</span>
               {s.label}
             </button>
           ))}
-          <span className="absolute top-0 -bottom-1.5 w-0.5" style={{ right: `${progress.ratio * 100}%`, background: '#D92D20' }} />
+          <span className="absolute top-0 -bottom-1.5 w-0.5" style={{ insetInlineStart: `${progress.ratio * 100}%`, background: '#D92D20' }} />
         </div>
       </div>
 
@@ -286,36 +288,36 @@ function SpecModal({ profile, onClose, onSave }: { profile: Profile; onClose: ()
   }
 
   return (
-    <Modal title="التخصص والدولة" onClose={onClose} footer={<><Btn onClick={save}>حفظ</Btn><Btn variant="soft" onClick={onClose}>إلغاء</Btn></>}>
+    <Modal title={t('التخصص والدولة', 'Role & country')} onClose={onClose} footer={<><Btn onClick={save}>{t('حفظ', 'Save')}</Btn><Btn variant="soft" onClick={onClose}>{t('إلغاء', 'Cancel')}</Btn></>}>
       <div className="flex flex-col gap-2.5">
-        <span className="flex justify-between text-[13px] font-semibold">التخصص <span className="font-normal" style={{ color: '#5C5C59' }}>{ids.length} من 2</span></span>
+        <span className="flex justify-between text-[13px] font-semibold">{t('التخصص', 'Role')} <span className="font-normal" style={{ color: '#5C5C59' }}>{t(`${ids.length} من 2`, `${ids.length} of 2`)}</span></span>
         <div className="flex flex-wrap gap-1.5">
           {specialties.map((s) => (
             <Chip key={s.id} on={ids.includes(s.id)} onClick={() => toggle(s.id)} style={{ opacity: !ids.includes(s.id) && ids.length >= 2 ? 0.45 : 1 }}>{s.name_ar || s.name_en}</Chip>
           ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-1">
-          <TextInput value={other} onChange={(e) => setOther(e.target.value)} placeholder="تخصص آخر (اكتبه هنا)" />
-          <TextInput value={suggest} onChange={(e) => setSuggest(e.target.value)} placeholder="اقترح تخصصاً لإضافته للقائمة" />
+          <TextInput value={other} onChange={(e) => setOther(e.target.value)} placeholder={t('تخصص آخر (اكتبه هنا)', 'Another role (type it here)')} />
+          <TextInput value={suggest} onChange={(e) => setSuggest(e.target.value)} placeholder={t('اقترح تخصصاً لإضافته للقائمة', 'Suggest a role to add to the list')} />
         </div>
       </div>
       {isVideo && (
         <div className="flex flex-col gap-2.5">
-          <span className="text-[13px] font-semibold">نوع الفيديو</span>
+          <span className="text-[13px] font-semibold">{t('نوع الفيديو', 'Video type')}</span>
           <div className="flex gap-1.5">
-            {VIDEO_LENGTHS.map((v) => <Chip key={v.key} on={vlen === v.key} onClick={() => setVlen(v.key)}>{v.label}</Chip>)}
+            {VIDEO_LENGTHS.map((v) => <Chip key={v.key} on={vlen === v.key} onClick={() => setVlen(v.key)}>{t(v.ar, v.en)}</Chip>)}
           </div>
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Field label="الدولة">
+        <Field label={t('الدولة', 'Country')}>
           <SelectInput value={country} onChange={(e) => setCountry(e.target.value)}>
-            <option value="">اختر الدولة</option>
-            {ARAB_COUNTRIES.map((c) => <option key={c}>{c}</option>)}
+            <option value="">{t('اختر الدولة', 'Choose a country')}</option>
+            {COUNTRIES.map((c) => <option key={c.ar} value={c.ar}>{t(c.ar, c.en)}</option>)}
           </SelectInput>
         </Field>
-        <Field label="المدينة"><TextInput value={city} onChange={(e) => setCity(e.target.value)} placeholder="مثال: عمّان" /></Field>
-        <Field label="سنة البدء في المجال"><TextInput inputMode="numeric" value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="2017" /></Field>
+        <Field label={t('المدينة', 'City')}><TextInput value={city} onChange={(e) => setCity(e.target.value)} placeholder={t('مثال: عمّان', 'e.g. Amman')} /></Field>
+        <Field label={t('سنة البدء في المجال', 'Year you started')}><TextInput inputMode="numeric" value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="2017" /></Field>
       </div>
     </Modal>
   )
@@ -336,13 +338,13 @@ function PhotoModal({ profile, onClose, onSaved }: { profile: Profile; onClose: 
       blob = await toJpeg(file, 1000)
     } catch {
       setBusy(false)
-      return setError('لم نتمكن من قراءة هذه الصورة. جرّب صورة أخرى بصيغة JPG أو PNG.')
+      return setError(t('لم نتمكن من قراءة هذه الصورة. جرّب صورة أخرى بصيغة JPG أو PNG.', 'We could not read this image. Try another JPG or PNG.'))
     }
     const path = `${profile.id}/avatar-${Date.now()}.jpg`
     const up = await supabase.storage.from('avatars').upload(path, blob, { contentType: 'image/jpeg' })
     if (up.error) {
       setBusy(false)
-      return setError('تعذّر رفع الصورة. تحقق من الاتصال وحاول مرة أخرى.')
+      return setError(t('تعذّر رفع الصورة. تحقق من الاتصال وحاول مرة أخرى.', 'Upload failed. Check your connection and try again.'))
     }
     const url = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
     await supabase.from('profiles').update({ avatar_url: url }).eq('id', profile.id)
@@ -351,15 +353,15 @@ function PhotoModal({ profile, onClose, onSaved }: { profile: Profile; onClose: 
   }
 
   return (
-    <Modal title="صورتك" onClose={onClose} footer={<><Btn onClick={save} disabled={busy}>{busy ? 'جارٍ الرفع…' : 'حفظ'}</Btn><Btn variant="soft" onClick={onClose}>إلغاء</Btn></>}>
+    <Modal title={t('صورتك', 'Your photo')} onClose={onClose} footer={<><Btn onClick={save} disabled={busy}>{busy ? t('جارٍ الرفع…', 'Uploading…') : t('حفظ', 'Save')}</Btn><Btn variant="soft" onClick={onClose}>{t('إلغاء', 'Cancel')}</Btn></>}>
       <div className="flex flex-col items-center gap-3.5">
         <div className="relative w-[220px] h-[270px] rounded-[28px] overflow-hidden flex items-center justify-center" style={{ background: '#DADADA' }}>
           {preview ? <img src={preview} alt="" className="bw w-full h-full object-cover" /> : <span className="text-6xl font-semibold" style={{ color: '#A8A8A8' }}>{(profile.full_name || 'م').charAt(0)}</span>}
           <Corners size={18} inset={12} color={preview ? '#FFFFFF' : '#111111'} />
         </div>
-        <span className="text-[13px] text-center" style={{ color: '#5C5C59' }}>صورة واضحة لوجهك. تظهر الصور في الدليل بالأبيض والأسود.</span>
+        <span className="text-[13px] text-center" style={{ color: '#5C5C59' }}>{t('صورة واضحة لوجهك. تظهر الصور في الدليل بالأبيض والأسود.', 'A clear photo of your face. Photos appear in black and white in the directory.')}</span>
         <label className="text-[13px] font-semibold px-5 py-2.5 rounded-full cursor-pointer" style={{ background: '#F3F3F2' }}>
-          اختر صورة من جهازك
+          {t('اختر صورة من جهازك', 'Choose a photo')}
           <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
         </label>
         {error && <Notice tone="error">{error}</Notice>}
@@ -411,16 +413,16 @@ function UsernameModal({ profile, onClose, onSaved }: { profile: Profile; onClos
 
   const save = async () => {
     if (same) return onClose()
-    if (!available) return setError('هذا الرابط غير متاح، جرّب رابطاً آخر.')
+    if (!available) return setError(t('هذا الرابط غير متاح، جرّب رابطاً آخر.', 'This link is not available, try another.'))
     setBusy(true)
     const { error } = await supabase.from('profiles').update({ username: value }).eq('id', profile.id)
     setBusy(false)
-    if (error) return setError('تعذّر حفظ الرابط. جرّب رابطاً آخر.')
+    if (error) return setError(t('تعذّر حفظ الرابط. جرّب رابطاً آخر.', 'Could not save the link. Try another.'))
     onSaved()
   }
 
   return (
-    <Modal title="رابط صفحتك" onClose={onClose} footer={<><Btn onClick={save} disabled={busy}>{busy ? 'لحظة…' : 'حفظ'}</Btn><Btn variant="soft" onClick={onClose}>إلغاء</Btn></>}>
+    <Modal title={t('رابط صفحتك', 'Your page link')} onClose={onClose} footer={<><Btn onClick={save} disabled={busy}>{busy ? t('لحظة…', 'One moment…') : t('حفظ', 'Save')}</Btn><Btn variant="soft" onClick={onClose}>{t('إلغاء', 'Cancel')}</Btn></>}>
       <div dir="ltr" className="flex items-center h-[50px] px-5 rounded-full mono text-[15px]" style={{ background: '#F7F7F6' }}>
         <span style={{ color: '#8C8C89' }}>makerss.net/</span>
         <input
@@ -431,7 +433,7 @@ function UsernameModal({ profile, onClose, onSaved }: { profile: Profile; onClos
         />
       </div>
       <span className="text-xs" style={{ color: available === false ? '#B42318' : available ? '#166534' : '#5C5C59' }}>
-        {available === false ? 'هذا الرابط محجوز أو غير صالح.' : available ? 'الرابط متاح.' : 'حروف إنجليزية صغيرة وأرقام وشرطات فقط. إذا غيّرت الرابط، يتوقف الرابط القديم عن العمل.'}
+        {available === false ? t('هذا الرابط محجوز أو غير صالح.', 'This link is taken or invalid.') : available ? t('الرابط متاح.', 'Link available.') : t('حروف إنجليزية صغيرة وأرقام وشرطات فقط. إذا غيّرت الرابط، يتوقف الرابط القديم عن العمل.', 'Lowercase letters, numbers and dashes only. If you change it, the old link stops working.')}
       </span>
       {error && <Notice tone="error">{error}</Notice>}
     </Modal>
@@ -447,8 +449,8 @@ function WorkModal({ ownerId, count, onClose, onSaved }: { ownerId: string; coun
   const [busy, setBusy] = useState(false)
 
   const save = async () => {
-    if (!/^https?:\/\//i.test(url.trim())) return setError('الصق رابطاً يبدأ بـ https://')
-    if (!title.trim()) return setError('اكتب اسم العمل.')
+    if (!/^https?:\/\//i.test(url.trim())) return setError(t('الصق رابطاً يبدأ بـ https://', 'Paste a link starting with https://'))
+    if (!title.trim()) return setError(t('اكتب اسم العمل.', 'Write the name of the work.'))
     const y = parseInt(year, 10)
     setBusy(true)
     const thumb = await fetchThumb(url.trim())
@@ -463,20 +465,20 @@ function WorkModal({ ownerId, count, onClose, onSaved }: { ownerId: string; coun
       sort: count,
     })
     setBusy(false)
-    if (error) return setError('تعذّر الحفظ. حاول مرة أخرى.')
+    if (error) return setError(t('تعذّر الحفظ. حاول مرة أخرى.', 'Could not save. Try again.'))
     onSaved()
   }
 
   return (
-    <Modal title="أضف عملاً" onClose={onClose} footer={<><Btn onClick={save} disabled={busy}>{busy ? 'لحظة…' : 'حفظ'}</Btn><Btn variant="soft" onClick={onClose}>إلغاء</Btn></>}>
-      <Field label="رابط العمل" hint={url ? detectPlatform(url) : undefined}>
-        <TextInput type="url" dir="ltr" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://vimeo.com/..." style={{ textAlign: 'right' }} />
+    <Modal title={t('أضف عملاً', 'Add work')} onClose={onClose} footer={<><Btn onClick={save} disabled={busy}>{busy ? t('لحظة…', 'One moment…') : t('حفظ', 'Save')}</Btn><Btn variant="soft" onClick={onClose}>{t('إلغاء', 'Cancel')}</Btn></>}>
+      <Field label={t('رابط العمل', 'Work link')} hint={url ? platformLabel(detectPlatform(url)) : undefined}>
+        <TextInput type="url" dir="ltr" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://vimeo.com/..." style={{ textAlign: isRtl() ? 'right' : 'left' }} />
       </Field>
-      <span className="text-xs -mt-2" style={{ color: '#5C5C59' }}>يقبل روابط Vimeo وYouTube وInstagram وTikTok وBehance.</span>
-      <Field label="اسم العمل"><TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثال: فيلم قصير عن المدينة" /></Field>
+      <span className="text-xs -mt-2" style={{ color: '#5C5C59' }}>{t('يقبل روابط Vimeo وYouTube وInstagram وTikTok وBehance.', 'Accepts Vimeo, YouTube, Instagram, TikTok and Behance links.')}</span>
+      <Field label={t('اسم العمل', 'Title')}><TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('مثال: فيلم قصير عن المدينة', 'e.g. A short film about the city')} /></Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="دورك في العمل"><TextInput value={role} onChange={(e) => setRole(e.target.value)} placeholder="مثال: إخراج" /></Field>
-        <Field label="السنة"><TextInput inputMode="numeric" value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="2025" /></Field>
+        <Field label={t('دورك في العمل', 'Your role')}><TextInput value={role} onChange={(e) => setRole(e.target.value)} placeholder={t('مثال: إخراج', 'e.g. Director')} /></Field>
+        <Field label={t('السنة', 'Year')}><TextInput inputMode="numeric" value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="2025" /></Field>
       </div>
       {error && <Notice tone="error">{error}</Notice>}
     </Modal>
@@ -489,18 +491,18 @@ function AwardModal({ ownerId, onClose, onSaved }: { ownerId: string; onClose: (
   const [year, setYear] = useState('')
   const [error, setError] = useState<string | null>(null)
   const save = async () => {
-    if (!rank.trim()) return setError('اكتب اسم الجائزة أو الاعتماد.')
+    if (!rank.trim()) return setError(t('اكتب اسم الجائزة أو الاعتماد.', 'Write the award or credit name.'))
     const y = parseInt(year, 10)
     const { error } = await supabase.from('awards').insert({ owner_id: ownerId, rank: rank.trim(), org: org.trim() || null, year: y > 1950 ? y : null })
-    if (error) return setError('تعذّر الحفظ.')
+    if (error) return setError(t('تعذّر الحفظ.', 'Could not save.'))
     onSaved()
   }
   return (
-    <Modal title="أضف جائزة أو اعتماداً" onClose={onClose} footer={<><Btn onClick={save}>حفظ</Btn><Btn variant="soft" onClick={onClose}>إلغاء</Btn></>}>
-      <Field label="الجائزة أو الاعتماد"><TextInput value={rank} onChange={(e) => setRank(e.target.value)} placeholder="مثال: المركز الأول" /></Field>
+    <Modal title={t('أضف جائزة أو اعتماداً', 'Add an award or credit')} onClose={onClose} footer={<><Btn onClick={save}>{t('حفظ', 'Save')}</Btn><Btn variant="soft" onClick={onClose}>{t('إلغاء', 'Cancel')}</Btn></>}>
+      <Field label={t('الجائزة أو الاعتماد', 'Award or credit')}><TextInput value={rank} onChange={(e) => setRank(e.target.value)} placeholder={t('مثال: المركز الأول', 'e.g. First place')} /></Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="الجهة أو المسابقة"><TextInput value={org} onChange={(e) => setOrg(e.target.value)} placeholder="اسم المهرجان أو الجهة" /></Field>
-        <Field label="السنة"><TextInput inputMode="numeric" value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="2024" /></Field>
+        <Field label={t('الجهة أو المسابقة', 'Organizer or festival')}><TextInput value={org} onChange={(e) => setOrg(e.target.value)} placeholder={t('اسم المهرجان أو الجهة', 'Festival or organizer name')} /></Field>
+        <Field label={t('السنة', 'Year')}><TextInput inputMode="numeric" value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="2024" /></Field>
       </div>
       {error && <Notice tone="error">{error}</Notice>}
     </Modal>
@@ -520,15 +522,15 @@ function SocialsCard({ profile, onSave }: { profile: Profile; onSave: (s: Record
   }
   return (
     <Card className="px-5 py-6 md:px-10 md:py-8 flex flex-col gap-3">
-      <span className="text-[13px] font-semibold">حساباتك <span className="font-normal" style={{ color: '#5C5C59' }}>(اختياري، أدخل عدد المتابعين يدوياً)</span></span>
+      <span className="text-[13px] font-semibold">{t('حساباتك', 'Your accounts')} <span className="font-normal" style={{ color: '#5C5C59' }}>{t('(اختياري، أدخل عدد المتابعين يدوياً)', '(optional, enter follower counts manually)')}</span></span>
       {SOCIALS.map((s) => (
         <div key={s.key} className="flex gap-2 items-center">
           <span className="text-xs w-20 shrink-0" style={{ color: '#5C5C59' }}>{s.label}</span>
-          <TextInput dir="ltr" value={socials[s.key] || ''} onChange={(e) => setSocials({ ...socials, [s.key]: e.target.value })} placeholder="https://" style={{ textAlign: 'right', height: 44 }} />
-          {s.followers && <TextInput inputMode="numeric" value={followers[s.key] || ''} onChange={(e) => setFollowers({ ...followers, [s.key]: e.target.value.replace(/\D/g, '') })} placeholder="المتابعون" style={{ maxWidth: 120, height: 44 }} />}
+          <TextInput dir="ltr" value={socials[s.key] || ''} onChange={(e) => setSocials({ ...socials, [s.key]: e.target.value })} placeholder="https://" style={{ textAlign: isRtl() ? 'right' : 'left', height: 44 }} />
+          {s.followers && <TextInput inputMode="numeric" value={followers[s.key] || ''} onChange={(e) => setFollowers({ ...followers, [s.key]: e.target.value.replace(/\D/g, '') })} placeholder={t('المتابعون', 'Followers')} style={{ maxWidth: 120, height: 44 }} />}
         </div>
       ))}
-      <Btn variant="soft" onClick={save} className="self-start mt-1">{saved ? 'تم الحفظ' : 'حفظ الحسابات'}</Btn>
+      <Btn variant="soft" onClick={save} className="self-start mt-1">{saved ? t('تم الحفظ', 'Saved') : t('حفظ الحسابات', 'Save accounts')}</Btn>
     </Card>
   )
 }

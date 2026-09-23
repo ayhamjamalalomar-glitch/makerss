@@ -3,6 +3,7 @@ import Link, { useRouter } from '../lib/router'
 import { useAuth } from '../lib/auth'
 import { computeProgress, useMyCounts } from '../lib/progress'
 import { Avatar, Ring } from './mk'
+import { t, useLang } from '../lib/i18n'
 import { LOGO_PATH, LOGO_VIEWBOX } from './logoPath'
 
 // Makers MK wordmark. `size` is the rendered height; width follows the logo's 1295:363 ratio.
@@ -28,7 +29,28 @@ const UserIcon = () => (
 function Badge({ n }: { n: number }) {
   if (!n) return null
   return (
-    <span className="absolute -top-1 -left-1 min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold text-white flex items-center justify-center" style={{ background: '#2563EB' }}>{n}</span>
+    <span className="absolute -top-1 -end-1 min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold text-white flex items-center justify-center" style={{ background: '#2563EB' }}>{n}</span>
+  )
+}
+
+function LangToggle({ mobile }: { mobile?: boolean }) {
+  const { lang, setLang } = useLang()
+  const next = lang === 'ar' ? 'en' : 'ar'
+  const text = lang === 'ar' ? 'EN' : 'ع'
+  const tip = lang === 'ar' ? 'English' : 'العربية'
+  if (mobile) {
+    return (
+      <button type="button" onClick={() => setLang(next)} aria-label={tip} className="flex flex-col items-center gap-0.5 w-12 bg-transparent border-0 cursor-pointer" style={{ color: '#5C5C59' }}>
+        <span className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold" style={{ background: '#F3F3F2', color: '#111' }}>{text}</span>
+        <span className="text-[10px] font-medium">{tip}</span>
+      </button>
+    )
+  }
+  return (
+    <button type="button" onClick={() => setLang(next)} aria-label={tip} className="dk w-12 h-12 rounded-full items-center justify-center text-[13px] font-bold cursor-pointer" style={{ background: '#F3F3F2', color: '#111', border: 'none' }}>
+      {text}
+      <span className="tip">{tip}</span>
+    </button>
   )
 }
 
@@ -40,18 +62,18 @@ export default function Dock() {
   const signedIn = !!session
 
   const meTip = !signedIn
-    ? 'تسجيل الدخول'
+    ? t('تسجيل الدخول', 'Sign in')
     : profile?.status === 'approved'
-      ? 'صفحتي'
+      ? t('صفحتي', 'My page')
       : progress.count === 5
-        ? 'صفحتك جاهزة للإرسال'
-        : `${progress.count} من 5 · أكمل صفحتك`
+        ? t('صفحتك جاهزة للإرسال', 'Your page is ready to send')
+        : t(`${progress.count} من 5 · أكمل صفحتك`, `${progress.count} of 5 · Complete your page`)
 
   const items: { to: string; label: string; icon: ReactNode; key: string; badge?: number; show: boolean }[] = [
-    { to: '/', label: 'الدليل', icon: <LogoMark />, key: 'dir', show: true },
-    { to: signedIn ? '/me#add' : '/join', label: signedIn ? 'أضف عملاً' : 'انضم', icon: <PlusIcon />, key: 'add', show: true },
-    { to: '/inbox', label: 'الطلبات', icon: <InboxIcon />, key: 'inbox', badge: counts.newRequests, show: signedIn && profile?.status === 'approved' },
-    { to: '/admin', label: 'الإدارة', icon: <ShieldIcon />, key: 'admin', show: signedIn && (profile?.role === 'admin' || profile?.role === 'reviewer') },
+    { to: '/', label: t('الدليل', 'Directory'), icon: <LogoMark />, key: 'dir', show: true },
+    { to: signedIn ? '/me#add' : '/join', label: signedIn ? t('أضف عملاً', 'Add work') : t('انضم', 'Join'), icon: <PlusIcon />, key: 'add', show: true },
+    { to: '/inbox', label: t('الطلبات', 'Requests'), icon: <InboxIcon />, key: 'inbox', badge: counts.newRequests, show: signedIn && profile?.status === 'approved' },
+    { to: '/admin', label: t('الإدارة', 'Admin'), icon: <ShieldIcon />, key: 'admin', show: signedIn && (profile?.role === 'admin' || profile?.role === 'reviewer') },
   ]
 
   const me = signedIn ? (
@@ -68,7 +90,7 @@ export default function Dock() {
   return (
     <>
       {/* desktop: floating vertical pill */}
-      <nav aria-label="التنقل" className="hidden md:flex fixed top-6 right-6 z-40 flex-col items-center gap-3.5 p-3 bg-white" style={{ width: 72, borderRadius: 36, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+      <nav aria-label={t('التنقل', 'Navigation')} className="hidden md:flex fixed top-6 start-6 z-40 flex-col items-center gap-3.5 p-3 bg-white" style={{ width: 72, borderRadius: 36, boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
         {items.filter((i) => i.show).map((i) => (
           <Link key={i.key} to={i.to} aria-label={i.label} className="dk w-12 h-12 rounded-full items-center justify-center" style={{ background: active(i.key) ? '#E9E9E7' : '#F3F3F2', color: '#111' }}>
             {i.icon}
@@ -76,6 +98,7 @@ export default function Dock() {
             <span className="tip">{i.label}</span>
           </Link>
         ))}
+        <LangToggle />
         <Link to={meTo} aria-label={meTip} className="dk items-center justify-center">
           {me}
           <span className="tip">{meTip}</span>
@@ -83,7 +106,7 @@ export default function Dock() {
       </nav>
 
       {/* mobile: bottom capsule with labels */}
-      <nav aria-label="التنقل" className="md:hidden fixed bottom-4 right-4 left-4 z-40 h-[72px] px-2 bg-white flex items-center justify-around" style={{ borderRadius: 36, boxShadow: '0 8px 28px rgba(0,0,0,0.12)' }}>
+      <nav aria-label={t('التنقل', 'Navigation')} className="md:hidden fixed bottom-4 right-4 left-4 z-40 h-[72px] px-2 bg-white flex items-center justify-around" style={{ borderRadius: 36, boxShadow: '0 8px 28px rgba(0,0,0,0.12)' }}>
         {items.filter((i) => i.show).map((i) => (
           <Link key={i.key} to={i.to} className="relative flex flex-col items-center gap-0.5 w-16" style={{ color: active(i.key) ? '#111' : '#5C5C59' }}>
             <span className="relative w-9 h-9 rounded-full flex items-center justify-center" style={{ background: '#F3F3F2' }}>
@@ -93,6 +116,7 @@ export default function Dock() {
             <span className="text-[10px]" style={{ fontWeight: active(i.key) ? 600 : 500 }}>{i.label}</span>
           </Link>
         ))}
+        <LangToggle mobile />
         <Link to={meTo} className="flex flex-col items-center gap-0.5 w-16" style={{ color: '#5C5C59' }}>
           {signedIn ? (
             <Ring value={profile?.status === 'approved' ? 1 : progress.ratio} size={38} stroke={2.5}>
@@ -101,7 +125,7 @@ export default function Dock() {
           ) : (
             <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: '#F3F3F2' }}><UserIcon /></span>
           )}
-          <span className="text-[10px] font-medium">{signedIn ? 'صفحتي' : 'دخول'}</span>
+          <span className="text-[10px] font-medium">{signedIn ? t('صفحتي', 'My page') : t('دخول', 'Sign in')}</span>
         </Link>
       </nav>
     </>

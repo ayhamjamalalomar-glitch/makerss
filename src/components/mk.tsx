@@ -1,3 +1,4 @@
+import { t } from '../lib/i18n'
 import type { ButtonHTMLAttributes, CSSProperties, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
 export const BLUE = '#2563EB'
@@ -147,7 +148,7 @@ export function Notice({ tone = 'info', children }: { tone?: 'info' | 'error' | 
 }
 
 export function Spinner() {
-  return <div className="py-24 text-center text-sm" style={{ color: '#5C5C59' }}>جارٍ التحميل…</div>
+  return <div className="py-24 text-center text-sm" style={{ color: '#5C5C59' }}>{t('جارٍ التحميل…', 'Loading…')}</div>
 }
 
 export function Modal({ title, onClose, children, footer }: { title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
@@ -163,7 +164,7 @@ export function Modal({ title, onClose, children, footer }: { title: string; onC
       >
         <div className="flex justify-between items-center">
           <span className="text-xl font-bold">{title}</span>
-          <button type="button" onClick={onClose} aria-label="إغلاق" className="w-9 h-9 rounded-full text-lg cursor-pointer" style={{ background: '#F3F3F2', border: 'none', color: '#3A3A38' }}>×</button>
+          <button type="button" onClick={onClose} aria-label={t('إغلاق', 'Close')} className="w-9 h-9 rounded-full text-lg cursor-pointer" style={{ background: '#F3F3F2', border: 'none', color: '#3A3A38' }}>×</button>
         </div>
         {children}
         {footer && <div className="flex gap-2">{footer}</div>}
@@ -174,7 +175,7 @@ export function Modal({ title, onClose, children, footer }: { title: string; onC
 
 export function PageShell({ children, narrow }: { children: ReactNode; narrow?: boolean }) {
   return (
-    <main className="md:mr-[120px] p-3 md:p-6 pb-28 md:pb-6">
+    <main className="md:ms-[120px] p-3 md:p-6 pb-28 md:pb-6">
       <Sheet className="px-4 py-6 md:px-8 md:py-16 flex justify-center min-h-[calc(100vh-48px)]">
         <div className={`w-full ${narrow ? 'max-w-[620px]' : 'max-w-[860px]'} flex flex-col gap-5 md:gap-7`}>{children}</div>
       </Sheet>
