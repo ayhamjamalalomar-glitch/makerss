@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { supabase, PUBLIC_PROFILE_COLUMNS, type Profile } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { t, getLang } from '../lib/i18n'
+import { t, getLang, isRtl } from '../lib/i18n'
 import { formatDateAr, relativeAr } from '../lib/constants'
 import { roleLine, useSpecialties } from '../lib/specialties'
 import { splitLinks, type Conversation, type Message } from '../lib/messages'
@@ -143,6 +143,7 @@ export default function MessagesPage() {
 
 function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me: string; other?: Profile; onBack: () => void; onChanged: () => void }) {
   const specialties = useSpecialties()
+  const rtl = isRtl()
   const [msgs, setMsgs] = useState<Message[] | null>(null)
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -250,16 +251,22 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
           return (
             <div key={m.id} className="flex flex-col">
               {newDay && <span className="self-center text-[11px] px-3 py-1 rounded-full my-3" style={{ background: '#F0F0EE', color: MUTED }}>{formatDateAr(localDay(m.created_at))}</span>}
-              <div className={`flex ${grouped ? '' : 'mt-1.5'}`}>
+              <div className={`flex w-full ${mine ? 'justify-end' : 'justify-start'} ${grouped ? '' : 'mt-1.5'}`}>
                 <div
-                  dir="auto"
-                  className="max-w-[78%] md:max-w-[65%] px-4 py-2.5 text-[15px] whitespace-pre-wrap break-words"
-                  style={mine
-                    ? { background: '#2563EB', color: '#fff', borderRadius: 20, borderStartEndRadius: grouped ? 20 : 6, marginInlineStart: 'auto' }
-                    : { background: '#FFFFFF', color: '#111', border: '1px solid #ECECEA', borderRadius: 20, borderStartStartRadius: grouped ? 20 : 6, marginInlineEnd: 'auto' }}
+                  className="max-w-[78%] md:max-w-[65%] px-4 py-2.5 text-[15px]"
+                  style={{
+                    ...(mine
+                      ? { background: '#2563EB', color: '#fff' }
+                      : { background: '#FFFFFF', color: '#111', border: '1px solid #ECECEA' }),
+                    borderRadius: 20,
+                    // Tail corner sits on the sender's outer edge, computed from the page direction (not the text's).
+                    ...(grouped ? {} : (mine === rtl ? { borderTopLeftRadius: 6 } : { borderTopRightRadius: 6 })),
+                  }}
                 >
-                  {splitLinks(m.body).map((p, k) => (p.href ? <a key={k} href={p.href} target="_blank" rel="noreferrer noopener" className="underline" style={{ color: 'inherit' }}>{p.text}</a> : <span key={k}>{p.text}</span>))}
-                  <span className="block text-[10px] mt-1 opacity-70" dir="ltr" style={{ textAlign: 'end' }}>{timeOf(m.created_at)}</span>
+                  <div dir="auto" className="whitespace-pre-wrap break-words" style={{ textAlign: 'start', unicodeBidi: 'plaintext' }}>
+                    {splitLinks(m.body).map((p, k) => (p.href ? <a key={k} href={p.href} target="_blank" rel="noreferrer noopener" className="underline" dir="ltr" style={{ color: 'inherit' }}>{p.text}</a> : <span key={k}>{p.text}</span>))}
+                  </div>
+                  <span className="block text-[10px] mt-1 opacity-70" dir="ltr" style={{ textAlign: mine === rtl ? 'left' : 'right' }}>{timeOf(m.created_at)}</span>
                 </div>
               </div>
               {mine && lastMineRead?.id === m.id && m.read_at && <span className="text-[11px] mt-1 self-end" style={{ color: MUTED }}>{t('تمت القراءة', 'Seen')}</span>}
