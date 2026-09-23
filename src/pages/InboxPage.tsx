@@ -24,6 +24,8 @@ export default function InboxPage() {
   const [filter, setFilter] = useState<Filter>('all')
   const [sel, setSel] = useState<string | null>(null)
   const [email, setEmail] = useState<string | null>(null)
+  const [member, setMember] = useState<string | null>(null)
+  const [chatBusy, setChatBusy] = useState(false)
 
   useEffect(() => {
     if (!loading && !session) go('/login?next=/inbox')
@@ -50,7 +52,11 @@ export default function InboxPage() {
 
   useEffect(() => {
     setEmail(null)
-    if (current?.status === 'accepted') supabase.rpc('contact_request_email', { p_id: current.id }).then(({ data }) => setEmail((data as string) || null))
+    setMember(null)
+    if (current?.status === 'accepted') {
+      supabase.rpc('contact_request_email', { p_id: current.id }).then(({ data }) => setEmail((data as string) || null))
+      supabase.rpc('contact_request_sender_member', { p_id: current.id }).then(({ data }) => setMember((data as string) || null))
+    }
   }, [current?.id, current?.status])
 
   const setStatus = async (status: 'accepted' | 'declined') => {
@@ -134,9 +140,26 @@ export default function InboxPage() {
                     <span>{t('قبلت هذا الطلب. تواصل مع المرسل على بريده:', 'You accepted this request. Reach the sender at:')}</span>
                     <span dir="ltr" className="mono text-[13px]">{email || '…'}</span>
                   </div>
-                  {email && (
-                    <a href={`mailto:${email}?subject=${encodeURIComponent(t('بخصوص طلب التعاون عبر Makers', 'About your collaboration request on Makers'))}`} className="self-start text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>{t('اكتب رداً عبر البريد', 'Reply by email')}</a>
-                  )}
+                  <div className="flex flex-wrap gap-2.5">
+                    {member && (
+                      <button type="button" disabled={chatBusy} onClick={async () => {
+                        setChatBusy(true)
+                        const { data } = await supabase.rpc('start_conversation', { p_other: member })
+                        setChatBusy(false)
+                        if (data) go(`/messages?c=${data}`)
+                      }} className="flex items-center gap-2 text-sm font-semibold px-6 py-3 rounded-full cursor-pointer disabled:opacity-60" style={{ background: '#2563EB', color: '#fff', border: 'none' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 01-11.6 7.1L4 20l1-4A8 8 0 1120 12z" /></svg>
+                        {t('رُدّ برسالة', 'Reply by message')}
+                      </button>
+                    )}
+                    {email && (
+                      <a href={`mailto:${email}?subject=${encodeURIComponent(t('بخصوص طلب التعاون عبر Makers', 'About your collaboration request on Makers'))}`} className="flex items-center gap-2 text-sm font-semibold px-6 py-3 rounded-full" style={member ? { background: '#fff', color: '#111', border: '1px solid #111' } : { background: '#2563EB', color: '#fff' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></svg>
+                        {t('رُدّ عبر البريد', 'Reply by email')}
+                      </a>
+                    )}
+                  </div>
+                  {email && !member && <span className="text-xs" style={{ color: '#5C5C59' }}>{t('المرسل ليس عضواً منشوراً في Makers، لذلك الرد متاح عبر البريد فقط.', 'The sender is not a live Makers member, so you can reply by email only.')}</span>}
                 </div>
               )}
               {current.status === 'declined' && <div className="px-5 py-4 rounded-[22px] text-sm" style={{ background: '#F7F7F6', color: '#5C5C59' }}>{t('اعتذرت عن هذا الطلب.', 'You declined this request.')}</div>}
