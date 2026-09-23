@@ -3,9 +3,13 @@ import Link, { useRouter } from '../lib/router'
 import { useAuth } from '../lib/auth'
 import { computeProgress, useMyCounts } from '../lib/progress'
 import { Avatar, Ring } from './mk'
+import { LOGO_PATH, LOGO_VIEWBOX } from './logoPath'
 
-const LogoMark = ({ size = 24 }: { size?: number }) => (
-  <span className="flex items-center justify-center text-white font-bold" style={{ width: size, height: size, borderRadius: size * 0.3, background: '#FF4500', fontSize: size * 0.54 }}>M</span>
+// Makers MK wordmark. `size` is the rendered height; width follows the logo's 1295:363 ratio.
+const LogoMark = ({ size = 9, color = '#181818' }: { size?: number; color?: string }) => (
+  <svg viewBox={LOGO_VIEWBOX} height={size} width={(size * 1295) / 363} role="img" aria-label="Makers">
+    <g transform="translate(0,363) scale(0.1,-0.1)" fill={color}><path d={LOGO_PATH} /></g>
+  </svg>
 )
 
 const PlusIcon = () => (
@@ -83,7 +87,7 @@ export default function Dock() {
         {items.filter((i) => i.show).map((i) => (
           <Link key={i.key} to={i.to} className="relative flex flex-col items-center gap-0.5 w-16" style={{ color: active(i.key) ? '#111' : '#5C5C59' }}>
             <span className="relative w-9 h-9 rounded-full flex items-center justify-center" style={{ background: '#F3F3F2' }}>
-              {i.key === 'dir' ? <LogoMark size={20} /> : i.icon}
+              {i.key === 'dir' ? <LogoMark size={9} /> : i.icon}
               <Badge n={i.badge || 0} />
             </span>
             <span className="text-[10px]" style={{ fontWeight: active(i.key) ? 600 : 500 }}>{i.label}</span>
