@@ -2,13 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { supabase, type Award, type Profile, type Work } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
+import WorkThumb from '../components/WorkThumb'
 import { ARAB_COUNTRIES, SITE_URL, VIDEO_LENGTHS, detectPlatform } from '../lib/constants'
 import { roleLine, useSpecialties } from '../lib/specialties'
 import { computeProgress } from '../lib/progress'
+import { fetchThumb } from '../lib/thumbs'
 import { Btn, Card, Chip, Corners, Field, Modal, Notice, PageShell, Pill, SelectInput, Spinner, TextArea, TextInput } from '../components/mk'
 
 type ModalKind = null | 'spec' | 'work' | 'award' | 'photo' | 'username'
-const WORK_TONES = ['#232220', '#5E4A38', '#37414C', '#4A3F52', '#3F4A3C', '#52463A']
 const SOCIALS = [
   { key: 'instagram', label: 'Instagram', followers: true },
   { key: 'youtube', label: 'YouTube', followers: true },
@@ -55,6 +56,18 @@ export default function EditorPage() {
   useEffect(() => {
     loadLists()
   }, [loadLists])
+
+  // Fill in thumbnails for works added before thumbnails existed
+  useEffect(() => {
+    const missing = works.filter((w) => w.url && !w.thumbnail_url)
+    if (!missing.length) return
+    Promise.all(missing.map(async (w) => {
+      const t = await fetchThumb(w.url as string)
+      if (!t) return false
+      const { error } = await supabase.from('works').update({ thumbnail_url: t }).eq('id', w.id)
+      return !error
+    })).then((r) => { if (r.some(Boolean)) loadLists() })
+  }, [works, loadLists])
 
   useEffect(() => {
     if (window.location.hash === '#add') setModal('work')
@@ -173,11 +186,9 @@ export default function EditorPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
             {works.map((w, i) => (
               <div key={w.id} className="flex md:flex-col gap-3 items-center md:items-stretch">
-                <span className="relative w-24 h-[72px] md:w-auto md:h-[150px] rounded-[18px] md:rounded-[24px] shrink-0 flex items-end p-2 md:p-4" style={{ background: WORK_TONES[i % WORK_TONES.length] }}>
-                  <Corners size={12} inset={10} color="#FFFFFF" w={1.5} />
-                  <span className="mono text-[11px] text-white px-1" dir="ltr">{[w.platform, w.year].filter(Boolean).join(' · ')}</span>
-                  <button type="button" aria-label="حذف العمل" onClick={async () => { await supabase.from('works').delete().eq('id', w.id); loadLists() }} className="absolute top-2 left-2 w-7 h-7 rounded-full text-sm cursor-pointer" style={{ background: 'rgba(255,255,255,0.9)', border: 'none' }}>×</button>
-                </span>
+                <WorkThumb work={w} index={i} className="w-28 h-[72px] md:w-auto md:h-[150px] rounded-[18px] md:rounded-[24px]">
+                  <button type="button" aria-label="حذف العمل" onClick={async () => { await supabase.from('works').delete().eq('id', w.id); loadLists() }} className="absolute top-2 left-2 z-10 w-7 h-7 rounded-full text-sm cursor-pointer" style={{ background: 'rgba(255,255,255,0.9)', border: 'none' }}>×</button>
+                </WorkThumb>
                 <span className="flex flex-col gap-0.5 px-1">
                   <span className="text-sm font-semibold">{w.title}</span>
                   {w.role && <span className="text-xs" style={{ color: '#5C5C59' }}>{w.role}</span>}
@@ -433,11 +444,14 @@ function WorkModal({ ownerId, count, onClose, onSaved }: { ownerId: string; coun
   const [role, setRole] = useState('')
   const [year, setYear] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
   const save = async () => {
     if (!/^https?:\/\//i.test(url.trim())) return setError('الصق رابطاً يبدأ بـ https://')
     if (!title.trim()) return setError('اكتب اسم العمل.')
     const y = parseInt(year, 10)
+    setBusy(true)
+    const thumb = await fetchThumb(url.trim())
     const { error } = await supabase.from('works').insert({
       owner_id: ownerId,
       url: url.trim(),
@@ -445,14 +459,16 @@ function WorkModal({ ownerId, count, onClose, onSaved }: { ownerId: string; coun
       role: role.trim() || null,
       year: y > 1950 && y <= new Date().getFullYear() + 1 ? y : null,
       platform: detectPlatform(url),
+      thumbnail_url: thumb,
       sort: count,
     })
+    setBusy(false)
     if (error) return setError('تعذّر الحفظ. حاول مرة أخرى.')
     onSaved()
   }
 
   return (
-    <Modal title="أضف عملاً" onClose={onClose} footer={<><Btn onClick={save}>حفظ</Btn><Btn variant="soft" onClick={onClose}>إلغاء</Btn></>}>
+    <Modal title="أضف عملاً" onClose={onClose} footer={<><Btn onClick={save} disabled={busy}>{busy ? 'لحظة…' : 'حفظ'}</Btn><Btn variant="soft" onClick={onClose}>إلغاء</Btn></>}>
       <Field label="رابط العمل" hint={url ? detectPlatform(url) : undefined}>
         <TextInput type="url" dir="ltr" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://vimeo.com/..." style={{ textAlign: 'right' }} />
       </Field>

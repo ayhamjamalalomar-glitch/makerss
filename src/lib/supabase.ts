@@ -70,6 +70,7 @@ export interface Work {
   role: string | null
   platform: string | null
   url: string | null
+  thumbnail_url?: string | null
   created_at: string
 }
 

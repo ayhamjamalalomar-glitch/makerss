@@ -4,10 +4,10 @@ import { supabase, PUBLIC_PROFILE_COLUMNS, type Award, type Profile, type Work }
 import { ARAB_COUNTRIES, BUDGETS, PROJECT_TYPES, SITE_URL, formatDateAr, VIDEO_LENGTHS } from '../lib/constants'
 import { roleLine, useSpecialties } from '../lib/specialties'
 import { useAuth } from '../lib/auth'
+import WorkThumb from '../components/WorkThumb'
 import { Avatar, Btn, Card, Chip, Corners, Field, Notice, PageShell, Pill, SelectInput, Spinner, TextArea, TextInput } from '../components/mk'
 import RangeCalendar from '../components/RangeCalendar'
 
-const WORK_TONES = ['#232220', '#5E4A38', '#37414C', '#4A3F52', '#3F4A3C', '#52463A']
 
 export default function MakerPage({ username }: { username: string }) {
   const specialties = useSpecialties()
@@ -144,10 +144,7 @@ export default function MakerPage({ username }: { username: string }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
             {works.map((w, i) => (
               <a key={w.id} href={w.url || '#'} target="_blank" rel="noreferrer" className="flex md:flex-col gap-3.5 md:gap-3 items-center md:items-stretch">
-                <span className="relative w-24 h-[72px] md:w-auto md:h-[170px] rounded-[18px] md:rounded-[24px] shrink-0 flex items-end p-2 md:p-4" style={{ background: WORK_TONES[i % WORK_TONES.length] }}>
-                  <Corners size={12} inset={10} color="#FFFFFF" w={1.5} />
-                  <span className="mono text-[10px] md:text-[11px] text-white px-1 md:px-2" dir="ltr">{[w.platform, w.year].filter(Boolean).join(' · ')}</span>
-                </span>
+                <WorkThumb work={w} index={i} className="w-28 h-[72px] md:w-auto md:h-[170px] rounded-[18px] md:rounded-[24px]" />
                 <span className="flex flex-col gap-1 px-1">
                   <span className="text-[15px] font-semibold">{w.title}</span>
                   {w.role && <span className="text-[13px]" style={{ color: '#5C5C59' }}>{w.role}</span>}
