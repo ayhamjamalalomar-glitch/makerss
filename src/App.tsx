@@ -11,7 +11,6 @@ import EditorPage from './pages/EditorPage'
 import StatusPage from './pages/StatusPage'
 import InboxPage from './pages/InboxPage'
 import Admin from './pages/Admin'
-import type { Navigate } from './lib/legacyNav'
 
 function Routes() {
   const { path, go } = useRouter()
@@ -26,9 +25,6 @@ function Routes() {
   const seg = path.replace(/^\/+|\/+$/g, '').split('/')
   const first = decodeURIComponent(seg[0] || '')
 
-  // Admin still uses the earlier navigate() API
-  const legacyNavigate: Navigate = (p) => go(p.name === 'admin' ? '/admin' : p.name === 'auth' ? '/login?next=/admin' : '/')
-
   let page
   if (!first) page = <Directory />
   else if (first === 'join') page = <JoinPage />
@@ -36,7 +32,7 @@ function Routes() {
   else if (first === 'me' && seg[1] === 'status') page = <StatusPage />
   else if (first === 'me') page = <EditorPage />
   else if (first === 'inbox') page = <InboxPage />
-  else if (first === 'admin') page = <div className="md:mr-[120px] p-3 md:p-6"><div className="rounded-[40px] overflow-hidden" dir="ltr" style={{ background: "var(--c-bg)", color: "var(--c-text)" }}><Admin navigate={legacyNavigate} /></div></div>
+  else if (first === 'admin') page = <Admin />
   else if (!RESERVED_PATHS.includes(first)) page = <MakerPage username={first} />
   else page = <Directory />
 

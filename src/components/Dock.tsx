@@ -14,6 +14,9 @@ const PlusIcon = () => (
 const InboxIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 13l2.5-7h11L20 13" /><path d="M4 13v5h16v-5h-5l-1 2h-4l-1-2z" /></svg>
 )
+const ShieldIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z" /><path d="M9 12l2 2 4-4" /></svg>
+)
 const UserIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" /></svg>
 )
@@ -44,6 +47,7 @@ export default function Dock() {
     { to: '/', label: 'الدليل', icon: <LogoMark />, key: 'dir', show: true },
     { to: signedIn ? '/me#add' : '/join', label: signedIn ? 'أضف عملاً' : 'انضم', icon: <PlusIcon />, key: 'add', show: true },
     { to: '/inbox', label: 'الطلبات', icon: <InboxIcon />, key: 'inbox', badge: counts.newRequests, show: signedIn && profile?.status === 'approved' },
+    { to: '/admin', label: 'الإدارة', icon: <ShieldIcon />, key: 'admin', show: signedIn && (profile?.role === 'admin' || profile?.role === 'reviewer') },
   ]
 
   const me = signedIn ? (
@@ -55,7 +59,7 @@ export default function Dock() {
   )
   const meTo = !signedIn ? '/login' : profile?.status === 'approved' ? `/${profile?.username || 'me'}` : '/me'
   const active = (key: string) =>
-    (key === 'dir' && path === '/') || (key === 'inbox' && path.startsWith('/inbox')) || (key === 'add' && path.startsWith('/me'))
+    (key === 'dir' && path === '/') || (key === 'inbox' && path.startsWith('/inbox')) || (key === 'add' && path.startsWith('/me')) || (key === 'admin' && path.startsWith('/admin'))
 
   return (
     <>
