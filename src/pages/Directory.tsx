@@ -4,7 +4,7 @@ import { supabase, PUBLIC_PROFILE_COLUMNS, type Profile } from '../lib/supabase'
 import { COUNTRIES } from '../lib/constants'
 import { label, t } from '../lib/i18n'
 import { roleLine, useSpecialties } from '../lib/specialties'
-import { Avatar, Card, Chip, PageShell } from '../components/mk'
+import { Avatar, Card, Chip, PageShell, VerifiedBadge } from '../components/mk'
 
 const LENS = [
   { key: 'any', ar: 'أي نوع فيديو', en: 'any kind of video' },
@@ -127,13 +127,13 @@ export default function Directory() {
             <span className="hidden md:block mono text-xs w-10 shrink-0" style={{ color: '#8A8A87' }}>{String(i + 1).padStart(2, '0')}</span>
             <Avatar url={m.avatar_url} name={m.full_name} size={52} />
             <span className="flex flex-col gap-1 min-w-0 flex-1 md:flex-none">
-              <span className="text-[17px] md:text-2xl font-bold truncate">{m.full_name}</span>
+              <span className="text-[17px] md:text-2xl font-bold md:truncate">{m.full_name}{m.is_founding && <span className="inline-block align-middle ms-1.5 -mt-1"><VerifiedBadge size={20} title={t('عضو مؤسس', 'Founding member')} /></span>}</span>
               <span className="md:hidden text-[13px]" style={{ color: '#3A3A38' }}>{roleLine(specialties, m.specialty_ids, m.other_specialty)} · {label(COUNTRIES, m.country)}</span>
               {m.is_featured && <span className="self-start text-[11px] font-semibold px-1.5 rounded-full" style={{ color: '#B42318', border: '1.5px solid #D92D20' }}>{t('اختيار الأسبوع', 'Pick of the week')}</span>}
             </span>
             <span className="hidden md:block flex-1 h-0 mt-2.5" style={{ borderBottom: '2px dotted #C9C9C5' }} />
             <span className="hidden md:block text-[17px] whitespace-nowrap">{roleLine(specialties, m.specialty_ids, m.other_specialty)}</span>
-            <span className="hidden md:block text-[13px] whitespace-nowrap w-[96px] truncate" style={{ color: '#5C5C59' }}>{label(COUNTRIES, m.country)}</span>
+            <span className="hidden md:block text-[13px] whitespace-nowrap w-[96px] shrink-0 truncate" style={{ color: '#5C5C59' }}>{label(COUNTRIES, m.country)}</span>
             <span className="flex items-center gap-1.5 text-xs w-auto md:w-20 whitespace-nowrap" style={{ color: m.available ? '#166534' : '#6F6F6C' }}>
               <span className="w-[7px] h-[7px] rounded-full" style={{ background: m.available ? '#16A34A' : '#BDBDB9' }} />
               {m.available ? t('متاح', 'Available') : t('مشغول', 'Busy')}

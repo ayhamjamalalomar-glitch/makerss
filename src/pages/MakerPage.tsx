@@ -6,7 +6,7 @@ import { isRtl, label, t } from '../lib/i18n'
 import { roleLine, useSpecialties } from '../lib/specialties'
 import { useAuth } from '../lib/auth'
 import WorkThumb from '../components/WorkThumb'
-import { Avatar, Btn, Card, Chip, Corners, Field, Notice, PageShell, Pill, SelectInput, Spinner, TextArea, TextInput } from '../components/mk'
+import { Avatar, Btn, Card, Chip, Corners, Field, Notice, PageShell, Pill, SelectInput, Spinner, TextArea, TextInput, VerifiedBadge } from '../components/mk'
 import RangeCalendar from '../components/RangeCalendar'
 
 
@@ -80,7 +80,7 @@ export default function MakerPage({ username }: { username: string }) {
       <Card className="p-4 md:p-10 flex flex-col-reverse md:flex-row gap-5 md:gap-10 md:items-center">
         <div className="flex-1 flex flex-col gap-3 md:gap-3.5 px-1.5 md:px-0">
           <span className="text-[13px]" style={{ color: '#5C5C59' }}>{[role, place].filter(Boolean).join(' · ')}</span>
-          <h1 className="m-0 text-[38px] md:text-[60px] font-bold" style={{ lineHeight: 1.15, letterSpacing: '-0.02em' }}>{p.full_name}</h1>
+          <h1 className="m-0 text-[38px] md:text-[60px] font-bold" style={{ lineHeight: 1.15, letterSpacing: '-0.02em' }}>{p.full_name}{p.is_founding && <span className="inline-block align-middle ms-2 md:ms-3"><VerifiedBadge size={30} title={t('عضو مؤسس', 'Founding member')} /></span>}</h1>
           {(p.start_year || vlen) && (
             <span className="text-[13px] mono" style={{ color: '#3A3A38' }}>
               {[p.start_year ? t(`يعمل في المجال منذ ${p.start_year}`, `In the industry since ${p.start_year}`) : '', vlen || ''].filter(Boolean).join(' · ')}
