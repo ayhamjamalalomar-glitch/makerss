@@ -71,7 +71,6 @@ export default function Directory() {
   return (
     <PageShell>
       <div className="flex flex-col gap-4 md:gap-5 md:px-2">
-        <span className="text-xs md:text-[13px]" style={{ color: '#5C5C59' }}>{t('دليل صنّاع الإنتاج في العالم العربي', 'The directory of production talent across the Arab world')}</span>
         <h1 className="m-0 font-semibold text-[28px] md:text-[44px]" style={{ lineHeight: 1.6, letterSpacing: '-0.01em' }}>
           {t('أبحث عن', "I'm looking for")}{' '}
           <button type="button" aria-expanded={specOpen} onClick={() => { setSpecOpen(!specOpen); setCountryOpen(false) }} className={tokenStyle} style={{ color: '#2563EB', borderColor: '#BFD0F7', fontSize: 'inherit' }}>{specLabel} ▾</button>{' '}
@@ -166,6 +165,17 @@ export default function Directory() {
             <button type="button" onClick={() => setLimit(limit + 30)} className="text-sm font-semibold cursor-pointer bg-transparent border-0" style={{ color: '#2563EB' }}>{t('عرض المزيد', 'Show more')}</button>
           </div>
         )}
+      </Card>
+
+      <Card className="p-7 md:px-12 md:py-12 flex flex-col gap-4">
+        <span className="text-xs md:text-[13px] font-semibold" style={{ color: '#2563EB' }}>{t('من هي Makers؟', 'Who is Makers?')}</span>
+        <h2 className="m-0 font-semibold text-[24px] md:text-[34px]" style={{ lineHeight: 1.4, letterSpacing: '-0.01em' }}>{t('دليل صنّاع الإنتاج في العالم العربي', 'The directory of production talent across the Arab world')}</h2>
+        <div className="flex flex-col gap-3 max-w-[640px] text-[15px] md:text-[17px]" style={{ lineHeight: 1.9, color: '#3A3A38' }}>
+          <p className="m-0 font-semibold" style={{ color: '#111' }}>{t('كل صورة رأيتها صنعها أحد.', "Every image you've ever seen was made by someone.")}</p>
+          <p className="m-0">{t('ضوءٌ ضبطه شخص، ولقطةٌ اختارها آخر، وإيقاعٌ قرّره ثالث في غرفة المونتاج.', 'Light set by one person, a shot chosen by another, a rhythm decided by a third in the edit room.')}</p>
+          <p className="m-0">{t('Makers دليل مواهب الإنتاج في العالم العربي، مساحة تتعرّف فيها على من يقف خلف الصورة، وتصل إليه مباشرة.', 'Makers is the talent directory for production across the Arab world, a place to meet the people behind the image and reach them directly.')}</p>
+          <p className="m-0" style={{ color: '#5C5C59' }}>{t('كل ملف فيه يراجعه فريقنا بعناية.', 'Every profile here is carefully reviewed by our team.')}</p>
+        </div>
       </Card>
 
       <Card dark className="p-6 md:px-9 md:py-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
