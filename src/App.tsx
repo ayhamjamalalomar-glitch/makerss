@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage'
 import EditorPage from './pages/EditorPage'
 import StatusPage from './pages/StatusPage'
 import InboxPage from './pages/InboxPage'
+import MessagesPage from './pages/MessagesPage'
 import Admin from './pages/Admin'
 
 function Routes() {
@@ -34,6 +35,7 @@ function Routes() {
   else if (first === 'me' && seg[1] === 'status') page = <StatusPage />
   else if (first === 'me') page = <EditorPage />
   else if (first === 'inbox') page = <InboxPage />
+  else if (first === 'messages') page = <MessagesPage />
   else if (first === 'admin') page = <Admin />
   else if (!RESERVED_PATHS.includes(first)) page = <MakerPage username={first} />
   else page = <Directory />

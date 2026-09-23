@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import Link from '../lib/router'
+import Link, { useRouter } from '../lib/router'
 import { supabase, PUBLIC_PROFILE_COLUMNS, type Award, type Profile, type Work } from '../lib/supabase'
 import { COUNTRIES, BUDGETS, cityLabel, PROJECT_TYPES, REMOTE, SITE_URL, formatDateAr, videoLengthLabel } from '../lib/constants'
 import { isRtl, label, t } from '../lib/i18n'
@@ -12,7 +12,9 @@ import RangeCalendar from '../components/RangeCalendar'
 
 export default function MakerPage({ username }: { username: string }) {
   const specialties = useSpecialties()
-  const { session } = useAuth()
+  const { session, profile: viewer } = useAuth()
+  const { go } = useRouter()
+  const [msgBusy, setMsgBusy] = useState(false)
   const [p, setP] = useState<Profile | null | undefined>(undefined)
   const [works, setWorks] = useState<Work[]>([])
   const [awards, setAwards] = useState<Award[]>([])
@@ -54,6 +56,18 @@ export default function MakerPage({ username }: { username: string }) {
   }
 
   const isOwner = session?.user.id === p.id
+  const canMessage = !isOwner && viewer?.status === 'approved' && p.status === 'approved'
+  const startChat = async () => {
+    setMsgBusy(true)
+    const { data, error } = await supabase.rpc('start_conversation', { p_other: p.id })
+    setMsgBusy(false)
+    if (!error && data) go(`/messages?c=${data}`)
+  }
+  const msgBtn = (cls: string) => (
+    <button type="button" onClick={startChat} disabled={msgBusy} className={`${cls} font-semibold rounded-full cursor-pointer bg-white disabled:opacity-60`} style={{ border: '1px solid #111', color: '#111' }}>
+      {t('راسِل', 'Message')}
+    </button>
+  )
   const role = roleLine(specialties, p.specialty_ids, p.other_specialty)
   const place = [cityLabel(p.city), label(COUNTRIES, p.country)].filter(Boolean).join(t('، ', ', '))
   const years = p.start_year ? new Date().getFullYear() - p.start_year : null
@@ -92,6 +106,7 @@ export default function MakerPage({ username }: { username: string }) {
             ) : (
               <a href="#contact" className="hidden md:inline-block text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>{t('اطلب تعاوناً', 'Request a collaboration')}</a>
             )}
+            {canMessage && msgBtn('hidden md:inline-block text-sm px-6 py-3')}
             <button type="button" onClick={copy} className="hidden md:flex items-center gap-2 text-[13px] font-semibold px-4 py-3 rounded-full cursor-pointer bg-white" style={{ border: '1px solid #E3E3E0' }}>
               {copied ? t('تم نسخ الرابط', 'Link copied') : t('انسخ الرابط', 'Copy link')}
             </button>
@@ -108,6 +123,7 @@ export default function MakerPage({ username }: { username: string }) {
             ) : (
               <a href="#contact" className="flex-1 text-center text-[15px] font-semibold py-3.5 rounded-full" style={{ background: '#2563EB', color: '#fff' }}>{t('اطلب تعاوناً', 'Request a collaboration')}</a>
             )}
+            {canMessage && msgBtn('text-[14px] px-5')}
             <button type="button" onClick={copy} className="text-[13px] font-semibold px-4 rounded-full cursor-pointer bg-white" style={{ border: '1px solid #E3E3E0' }}>{copied ? t('تم النسخ', 'Copied') : t('انسخ الرابط', 'Copy link')}</button>
           </div>
           {socials.length > 0 && (

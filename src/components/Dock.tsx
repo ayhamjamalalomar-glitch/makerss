@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { useAuth } from '../lib/auth'
 import { computeProgress, useMyCounts } from '../lib/progress'
+import { useUnreadMessages } from '../lib/messages'
 import { Avatar, Ring } from './mk'
 import { t, useLang } from '../lib/i18n'
 import { LOGO_PATH, LOGO_VIEWBOX } from './logoPath'
@@ -15,6 +16,9 @@ const LogoMark = ({ size = 9, color = '#181818' }: { size?: number; color?: stri
 
 const PlusIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+)
+const ChatIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 01-11.6 7.1L4 20l1-4A8 8 0 1120 12z" /></svg>
 )
 const InboxIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 13l2.5-7h11L20 13" /><path d="M4 13v5h16v-5h-5l-1 2h-4l-1-2z" /></svg>
@@ -40,9 +44,9 @@ function LangToggle({ mobile }: { mobile?: boolean }) {
   const tip = lang === 'ar' ? 'English' : 'العربية'
   if (mobile) {
     return (
-      <button type="button" onClick={() => setLang(next)} aria-label={tip} className="flex flex-col items-center gap-0.5 w-12 bg-transparent border-0 cursor-pointer" style={{ color: '#5C5C59' }}>
+      <button type="button" onClick={() => setLang(next)} aria-label={tip} className="flex flex-col items-center gap-0.5 min-w-0 flex-1 bg-transparent border-0 cursor-pointer p-0" style={{ color: '#5C5C59' }}>
         <span className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold" style={{ background: '#F3F3F2', color: '#111' }}>{text}</span>
-        <span className="text-[10px] font-medium">{tip}</span>
+        <span className="text-[10px] font-medium whitespace-nowrap">{tip}</span>
       </button>
     )
   }
@@ -58,6 +62,7 @@ export default function Dock() {
   const { session, profile } = useAuth()
   const { path } = useRouter()
   const counts = useMyCounts(session?.user.id)
+  const unreadMsgs = useUnreadMessages(session && profile?.status === 'approved' ? session.user.id : undefined)
   const progress = computeProgress(profile, counts.works)
   const signedIn = !!session
 
@@ -72,6 +77,7 @@ export default function Dock() {
   const items: { to: string; label: string; icon: ReactNode; key: string; badge?: number; show: boolean }[] = [
     { to: '/', label: t('الدليل', 'Directory'), icon: <LogoMark />, key: 'dir', show: true },
     { to: signedIn ? '/me#add' : '/join', label: signedIn ? t('أضف عملاً', 'Add work') : t('انضم', 'Join'), icon: <PlusIcon />, key: 'add', show: true },
+    { to: '/messages', label: t('الرسائل', 'Messages'), icon: <ChatIcon />, key: 'messages', badge: unreadMsgs, show: signedIn && profile?.status === 'approved' },
     { to: '/inbox', label: t('الطلبات', 'Requests'), icon: <InboxIcon />, key: 'inbox', badge: counts.newRequests, show: signedIn && profile?.status === 'approved' },
     { to: '/admin', label: t('الإدارة', 'Admin'), icon: <ShieldIcon />, key: 'admin', show: signedIn && (profile?.role === 'admin' || profile?.role === 'reviewer') },
   ]
@@ -85,7 +91,7 @@ export default function Dock() {
   )
   const meTo = !signedIn ? '/login' : profile?.status === 'approved' ? `/${profile?.username || 'me'}` : '/me'
   const active = (key: string) =>
-    (key === 'dir' && path === '/') || (key === 'inbox' && path.startsWith('/inbox')) || (key === 'add' && path.startsWith('/me')) || (key === 'admin' && path.startsWith('/admin'))
+    (key === 'dir' && path === '/') || (key === 'inbox' && path.startsWith('/inbox')) || (key === 'messages' && path.startsWith('/messages')) || (key === 'add' && path.startsWith('/me')) || (key === 'admin' && path.startsWith('/admin'))
 
   return (
     <>
@@ -106,18 +112,18 @@ export default function Dock() {
       </nav>
 
       {/* mobile: bottom capsule with labels */}
-      <nav aria-label={t('التنقل', 'Navigation')} className="md:hidden fixed bottom-4 right-4 left-4 z-40 h-[72px] px-2 bg-white flex items-center justify-around" style={{ borderRadius: 36, boxShadow: '0 8px 28px rgba(0,0,0,0.12)' }}>
-        {items.filter((i) => i.show).map((i) => (
-          <Link key={i.key} to={i.to} className="relative flex flex-col items-center gap-0.5 w-16" style={{ color: active(i.key) ? '#111' : '#5C5C59' }}>
+      <nav aria-label={t('التنقل', 'Navigation')} className="md:hidden fixed bottom-4 right-4 left-4 z-40 h-[72px] px-1.5 bg-white flex items-center justify-around" style={{ borderRadius: 36, boxShadow: '0 8px 28px rgba(0,0,0,0.12)' }}>
+        {items.filter((i) => i.show && !(signedIn && i.key === 'add' && profile?.status === 'approved')).map((i) => (
+          <Link key={i.key} to={i.to} className="relative flex flex-col items-center gap-0.5 min-w-0 flex-1" style={{ color: active(i.key) ? '#111' : '#5C5C59' }}>
             <span className="relative w-9 h-9 rounded-full flex items-center justify-center" style={{ background: '#F3F3F2' }}>
               {i.key === 'dir' ? <LogoMark size={9} /> : i.icon}
               <Badge n={i.badge || 0} />
             </span>
-            <span className="text-[10px]" style={{ fontWeight: active(i.key) ? 600 : 500 }}>{i.label}</span>
+            <span className="text-[10px] whitespace-nowrap" style={{ fontWeight: active(i.key) ? 600 : 500 }}>{i.label}</span>
           </Link>
         ))}
         <LangToggle mobile />
-        <Link to={meTo} className="flex flex-col items-center gap-0.5 w-16" style={{ color: '#5C5C59' }}>
+        <Link to={meTo} className="flex flex-col items-center gap-0.5 min-w-0 flex-1" style={{ color: '#5C5C59' }}>
           {signedIn ? (
             <Ring value={profile?.status === 'approved' ? 1 : progress.ratio} size={38} stroke={2.5}>
               <Avatar url={profile?.avatar_url} name={profile?.full_name} size={30} />
@@ -125,7 +131,7 @@ export default function Dock() {
           ) : (
             <span className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: '#F3F3F2' }}><UserIcon /></span>
           )}
-          <span className="text-[10px] font-medium">{signedIn ? t('صفحتي', 'My page') : t('دخول', 'Sign in')}</span>
+          <span className="text-[10px] font-medium whitespace-nowrap">{signedIn ? t('صفحتي', 'My page') : t('دخول', 'Sign in')}</span>
         </Link>
       </nav>
     </>
