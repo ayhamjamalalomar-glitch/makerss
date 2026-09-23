@@ -3,7 +3,7 @@ import Link, { useRouter } from '../lib/router'
 import { supabase, type Award, type Profile, type Work } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import WorkThumb from '../components/WorkThumb'
-import { COUNTRIES, SITE_URL, VIDEO_LENGTHS, detectPlatform, platformLabel, videoLengthLabel } from '../lib/constants'
+import { COUNTRIES, SITE_URL, cityLabel, VIDEO_LENGTHS, detectPlatform, platformLabel, videoLengthLabel } from '../lib/constants'
 import { isRtl, label, t } from '../lib/i18n'
 import { roleLine, useSpecialties } from '../lib/specialties'
 import { computeProgress } from '../lib/progress'
@@ -132,7 +132,7 @@ export default function EditorPage() {
           <div className="flex-1 flex flex-col gap-3">
             {hasSpec ? (
               <button type="button" onClick={() => setModal('spec')} className="self-start text-start text-sm bg-transparent border-0 p-0 cursor-pointer" style={{ color: '#3A3A38' }}>
-                {role}{vlen ? ` · ${vlen}` : ''} · {[profile.city, label(COUNTRIES, profile.country)].filter(Boolean).join(t('، ', ', '))} <span className="text-xs" style={{ color: '#2563EB' }}>{t('تعديل', 'Edit')}</span>
+                {role}{vlen ? ` · ${vlen}` : ''} · {[cityLabel(profile.city), label(COUNTRIES, profile.country)].filter(Boolean).join(t('، ', ', '))} <span className="text-xs" style={{ color: '#2563EB' }}>{t('تعديل', 'Edit')}</span>
               </button>
             ) : (
               <Btn variant="dashed" onClick={() => setModal('spec')} className="self-start !px-3.5 !py-1.5 text-[13px]">{t('+ التخصص والدولة', '+ Role & country')}</Btn>
@@ -293,7 +293,7 @@ function SpecModal({ profile, onClose, onSave }: { profile: Profile; onClose: ()
         <span className="flex justify-between text-[13px] font-semibold">{t('التخصص', 'Role')} <span className="font-normal" style={{ color: '#5C5C59' }}>{t(`${ids.length} من 2`, `${ids.length} of 2`)}</span></span>
         <div className="flex flex-wrap gap-1.5">
           {specialties.map((s) => (
-            <Chip key={s.id} on={ids.includes(s.id)} onClick={() => toggle(s.id)} style={{ opacity: !ids.includes(s.id) && ids.length >= 2 ? 0.45 : 1 }}>{s.name_ar || s.name_en}</Chip>
+            <Chip key={s.id} on={ids.includes(s.id)} onClick={() => toggle(s.id)} style={{ opacity: !ids.includes(s.id) && ids.length >= 2 ? 0.45 : 1 }}>{t(s.name_ar || s.name_en, s.name_en || s.name_ar || '')}</Chip>
           ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-1">

@@ -41,7 +41,7 @@ export function Btn({ variant = 'primary', className = '', style, ...rest }: But
   )
 }
 
-export function Chip({ on, className = '', dark, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { on: boolean; dark?: boolean }) {
+export function Chip({ on, className = '', dark, style, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { on: boolean; dark?: boolean }) {
   const s: CSSProperties = dark
     ? on
       ? { background: '#fff', color: '#111', border: '1px solid #fff', fontWeight: 600 }
@@ -49,7 +49,7 @@ export function Chip({ on, className = '', dark, ...rest }: ButtonHTMLAttributes
     : on
       ? { background: '#111', color: '#fff', border: '1px solid #111', fontWeight: 600 }
       : { background: '#fff', color: '#3A3A38', border: '1px solid #E3E3E0' }
-  return <button type="button" aria-pressed={on} className={`rounded-full px-3.5 py-2 text-[13px] cursor-pointer ${className}`} style={s} {...rest} />
+  return <button type="button" aria-pressed={on} className={`rounded-full px-3.5 py-2 text-[13px] cursor-pointer ${className}`} style={{ ...s, ...style }} {...rest} />
 }
 
 const fieldBase: CSSProperties = { height: 48, padding: '0 18px', borderRadius: 24, fontSize: 14, width: '100%' }

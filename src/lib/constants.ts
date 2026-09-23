@@ -84,3 +84,23 @@ export function relativeAr(iso: string) {
   if (d === 1) return en ? 'yesterday' : 'أمس'
   return en ? `${d} days ago` : `قبل ${d} أيام`
 }
+
+// City is free text. In English we show a known English name, or hide an Arabic-only city
+// so the line never mixes scripts ("عمان, Jordan").
+const CITIES: Record<string, string> = {
+  'عمان': 'Amman', 'عمّان': 'Amman', 'إربد': 'Irbid', 'اربد': 'Irbid', 'الزرقاء': 'Zarqa', 'العقبة': 'Aqaba', 'السلط': 'Salt', 'مادبا': 'Madaba',
+  'الرياض': 'Riyadh', 'جدة': 'Jeddah', 'مكة': 'Makkah', 'المدينة المنورة': 'Madinah', 'الدمام': 'Dammam', 'الخبر': 'Khobar',
+  'دبي': 'Dubai', 'أبوظبي': 'Abu Dhabi', 'ابوظبي': 'Abu Dhabi', 'أبو ظبي': 'Abu Dhabi', 'الشارقة': 'Sharjah', 'عجمان': 'Ajman',
+  'الدوحة': 'Doha', 'الكويت': 'Kuwait City', 'المنامة': 'Manama', 'مسقط': 'Muscat', 'بيروت': 'Beirut', 'طرابلس': 'Tripoli',
+  'القاهرة': 'Cairo', 'الإسكندرية': 'Alexandria', 'الاسكندرية': 'Alexandria', 'الجيزة': 'Giza', 'بغداد': 'Baghdad', 'أربيل': 'Erbil', 'اربيل': 'Erbil', 'البصرة': 'Basra',
+  'دمشق': 'Damascus', 'حلب': 'Aleppo', 'حمص': 'Homs', 'اللاذقية': 'Latakia', 'درعا': 'Daraa', 'رام الله': 'Ramallah', 'غزة': 'Gaza', 'القدس': 'Jerusalem', 'نابلس': 'Nablus',
+  'الدار البيضاء': 'Casablanca', 'الرباط': 'Rabat', 'مراكش': 'Marrakech', 'تونس': 'Tunis', 'الجزائر': 'Algiers', 'الخرطوم': 'Khartoum',
+  'بنغازي': 'Benghazi', 'صنعاء': "Sana'a", 'عدن': 'Aden', 'نواكشوط': 'Nouakchott', 'مقديشو': 'Mogadishu', 'جيبوتي': 'Djibouti',
+}
+export function cityLabel(city: string | null | undefined) {
+  if (!city) return ''
+  if (getLang() !== 'en') return city
+  const c = city.trim()
+  if (CITIES[c]) return CITIES[c]
+  return /[؀-ۿ]/.test(c) ? '' : c
+}

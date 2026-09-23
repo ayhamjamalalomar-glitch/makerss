@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Link from '../lib/router'
 import { supabase, PUBLIC_PROFILE_COLUMNS, type Award, type Profile, type Work } from '../lib/supabase'
-import { COUNTRIES, BUDGETS, PROJECT_TYPES, REMOTE, SITE_URL, formatDateAr, videoLengthLabel } from '../lib/constants'
+import { COUNTRIES, BUDGETS, cityLabel, PROJECT_TYPES, REMOTE, SITE_URL, formatDateAr, videoLengthLabel } from '../lib/constants'
 import { isRtl, label, t } from '../lib/i18n'
 import { roleLine, useSpecialties } from '../lib/specialties'
 import { useAuth } from '../lib/auth'
@@ -55,7 +55,7 @@ export default function MakerPage({ username }: { username: string }) {
 
   const isOwner = session?.user.id === p.id
   const role = roleLine(specialties, p.specialty_ids, p.other_specialty)
-  const place = [p.city, label(COUNTRIES, p.country)].filter(Boolean).join(t('، ', ', '))
+  const place = [cityLabel(p.city), label(COUNTRIES, p.country)].filter(Boolean).join(t('، ', ', '))
   const years = p.start_year ? new Date().getFullYear() - p.start_year : null
   const vlen = videoLengthLabel(p.video_length)
   const link = `${SITE_URL}/${p.username}`

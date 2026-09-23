@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from '../lib/router'
 import { supabase, type ContactRequest } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { BUDGETS, COUNTRIES, PROJECT_TYPES, REMOTE, daysBetween, durationAr, formatDateAr, relativeAr } from '../lib/constants'
+import { BUDGETS, COUNTRIES, cityLabel, PROJECT_TYPES, REMOTE, daysBetween, durationAr, formatDateAr, relativeAr } from '../lib/constants'
 import { label, t } from '../lib/i18n'
 import { Btn, Card, PageShell, Pill, Spinner } from '../components/mk'
 
@@ -15,7 +15,7 @@ const META: Record<ContactRequest['status'], { ar: string; en: string; tone: 'bl
 }
 const metaLabel = (s: ContactRequest['status']) => t(META[s].ar, META[s].en)
 const ptLabel = (v: string | null) => (v ? label(PROJECT_TYPES, v) : t('طلب تعاون', 'Collaboration request'))
-const place = (r: ContactRequest) => [r.city, r.country === REMOTE.ar ? t(REMOTE.ar, REMOTE.en) : label(COUNTRIES, r.country)].filter(Boolean).join(t('، ', ', '))
+const place = (r: ContactRequest) => [cityLabel(r.city), r.country === REMOTE.ar ? t(REMOTE.ar, REMOTE.en) : label(COUNTRIES, r.country)].filter(Boolean).join(t('، ', ', '))
 
 export default function InboxPage() {
   const { session, loading } = useAuth()

@@ -13,7 +13,7 @@ const LENS = [
 ] as const
 
 // roles we invite as founding seats when nobody fills them yet
-const SEAT_ROLES = [['مدير تصوير', 'Cinematographer'], ['مونتير', 'Editor'], ['مهندس صوت', 'Sound engineer'], ['ستايلست', 'Stylist'], ['مصمم موشن جرافيك', 'Motion designer']]
+const SEAT_ROLES = [['مدير تصوير', 'Cinematographer (DOP)'], ['مونتير', 'Video Editor'], ['مهندس صوت', 'Sound Engineer'], ['ستايلست', 'Stylist'], ['مصمم موشن جرافيك', 'Motion Graphics Designer']]
 
 const tokenStyle = 'font-semibold cursor-pointer bg-transparent border-0 border-b-2 px-1'
 
