@@ -4,6 +4,7 @@ import Link, { useRouter } from '../lib/router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { Notice } from '../components/mk'
+import ResendConfirm from '../components/ResendConfirm'
 import DarkCard, { darkInputStyle, darkRow, darkRowStyle } from '../components/DarkCard'
 
 const slugify = (s: string) =>
@@ -80,6 +81,7 @@ export default function JoinPage() {
               : t(`أرسلنا رابط التفعيل إلى ${sentTo}. افتح الرابط لتبدأ ببناء صفحتك.`, `We sent an activation link to ${sentTo}. Open it to start building your page.`)}
           </p>
         </div>
+        {sentTo !== 'interest' && <ResendConfirm email={sentTo} />}
         <Link to="/" className="text-sm font-semibold" style={{ color: '#F2F2F0' }}>{t('العودة إلى الدليل', 'Back to the directory')}</Link>
       </DarkCard>
     )

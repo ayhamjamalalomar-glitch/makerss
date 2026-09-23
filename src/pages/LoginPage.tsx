@@ -4,6 +4,7 @@ import Link, { useRouter } from '../lib/router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { Notice } from '../components/mk'
+import ResendConfirm from '../components/ResendConfirm'
 import DarkCard, { darkInputStyle, darkRow, darkRowStyle } from '../components/DarkCard'
 
 export default function LoginPage() {
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
+  const [unconfirmed, setUnconfirmed] = useState(false)
 
   useEffect(() => {
     if (mode !== 'update' && session && profile) {
@@ -31,8 +33,10 @@ export default function LoginPage() {
     setBusy(true)
     setError(null)
     setInfo(null)
+    setUnconfirmed(false)
     if (mode === 'signin') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error && /confirm/i.test(error.message)) setUnconfirmed(true)
       if (error) setError(error.message.includes('confirmed') ? t('فعّل بريدك أولاً من الرسالة التي وصلتك.', 'Activate your email first from the message we sent you.') : t('البريد أو كلمة المرور غير صحيحة.', 'Wrong email or password.'))
     } else if (mode === 'reset') {
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/login?reset=1` })
@@ -70,6 +74,7 @@ export default function LoginPage() {
           )}
         </div>
         {error && <Notice tone="error">{error}</Notice>}
+        {unconfirmed && <ResendConfirm email={email} />}
         {info && <Notice tone="success">{info}</Notice>}
         <button type="submit" disabled={busy} className="h-[52px] rounded-full text-[15px] font-semibold cursor-pointer disabled:opacity-60" style={{ background: '#2563EB', color: '#fff', border: 'none' }}>
           {busy ? t('لحظة…', 'One moment…') : mode === 'signin' ? t('دخول', 'Sign in') : mode === 'reset' ? t('أرسل الرابط', 'Send link') : t('حفظ كلمة المرور', 'Save password')}
