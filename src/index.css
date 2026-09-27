@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --color-ink: #0D0A08;
+  --color-surface: #161210;
+  --color-surface-alt: #1D1917;
+  --color-sidebar: #0F0C0A;
+  --color-orange: #E85D04;
+  --color-orange-deep: #CC4F03;
+  --color-orange-glow: rgba(232,93,4,0.15);
+  --color-paper: #F5F0EB;
+  --color-border: #2C2420;
+  --color-border-light: #3D342D;
+  --color-muted: #7A6E66;
+  --font-archivo: 'Archivo Black', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+  --font-arabic: 'IBM Plex Sans Arabic', sans-serif;
+  --radius-card: 14px;
+}
+
+:root {
+  --c-bg: #0D0A08;
+  --c-surface: #161210;
+  --c-surface-alt: #1D1917;
+  --c-text: #F5F0EB;
+  --c-border: #2C2420;
+  --c-border-mid: #3D342D;
+  --c-muted: #7A6E66;
+  --c-muted-2: #5A4E47;
+  --c-overlay: rgba(13,10,8,0.85);
+  --c-overlay-hard: rgba(13,10,8,0.95);
+  --c-shadow: rgba(0,0,0,0.55);
+}
+
+[data-theme='light'] {
+  --c-bg: #F5F0EB;
+  --c-surface: #EDE6DF;
+  --c-surface-alt: #E5DDD5;
+  --c-text: #0D0A08;
+  --c-border: #D4C9C0;
+  --c-border-mid: #C4B5AA;
+  --c-muted: #7A6E66;
+  --c-muted-2: #9A8E86;
+  --c-overlay: rgba(245,240,235,0.9);
+  --c-overlay-hard: rgba(245,240,235,0.98);
+  --c-shadow: rgba(0,0,0,0.12);
+
+  /* Override Tailwind @theme tokens so text-paper, bg-surface, etc. also flip */
+  --color-ink: #F5F0EB;
+  --color-surface: #EDE6DF;
+  --color-surface-alt: #E5DDD5;
+  --color-surface-alt: #E5DDD5;
+  --color-sidebar: #EDE6DF;
+  --color-paper: #0D0A08;
+  --color-border: #D4C9C0;
+  --color-border-light: #C4B5AA;
+  --color-muted: #7A6E66;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--c-border-mid);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E85D04;
+}
+
+.font-archivo { font-family: 'Archivo Black', sans-serif; }
+.font-inter { font-family: 'Inter', sans-serif; }
+.font-arabic { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+
+input, select, textarea {
+  background-color: var(--c-surface-alt);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+  outline: none;
+  font-family: 'Inter', sans-serif;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(232,93,4,0.5);
+}
+input::placeholder { color: var(--c-muted-2); }
+select option { background-color: var(--c-surface-alt); }
