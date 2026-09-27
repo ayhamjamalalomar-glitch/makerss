@@ -1,22 +1,14 @@
 import { motion } from 'framer-motion'
 import type { Page, Navigate } from '../App'
-import { useLang } from '../LangContext'
 
 interface NavBarProps {
   page: Page
   navigate: Navigate
 }
 
-const NAV_LABELS: Record<string, { ar: string; en: string }> = {
-  home: { ar: 'الرئيسية', en: 'Home' },
-  titles: { ar: 'مشاريع', en: 'Projects' },
-  makers: { ar: 'صنّاع', en: 'Makers' },
-  'open-projects': { ar: 'فرص', en: 'Open Calls' },
-}
-
-const NAV_ITEMS: { labelKey: string; page: Page['name']; icon: React.ReactNode }[] = [
+const NAV_ITEMS: { label: string; page: Page['name']; icon: React.ReactNode }[] = [
   {
-    labelKey: 'home',
+    label: 'Home',
     page: 'home',
     icon: (
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
@@ -25,7 +17,7 @@ const NAV_ITEMS: { labelKey: string; page: Page['name']; icon: React.ReactNode }
     ),
   },
   {
-    labelKey: 'titles',
+    label: 'Titles',
     page: 'titles',
     icon: (
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
@@ -35,7 +27,7 @@ const NAV_ITEMS: { labelKey: string; page: Page['name']; icon: React.ReactNode }
     ),
   },
   {
-    labelKey: 'makers',
+    label: 'Makers',
     page: 'makers',
     icon: (
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
@@ -47,7 +39,7 @@ const NAV_ITEMS: { labelKey: string; page: Page['name']; icon: React.ReactNode }
     ),
   },
   {
-    labelKey: 'open-projects',
+    label: 'Projects',
     page: 'open-projects',
     icon: (
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
@@ -57,11 +49,39 @@ const NAV_ITEMS: { labelKey: string; page: Page['name']; icon: React.ReactNode }
       </svg>
     ),
   },
+  {
+    label: 'Events',
+    page: 'events',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M5 2v2M11 2v2M2 7h12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    label: 'News',
+    page: 'news',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M5 5.5h6M5 8h6M5 10.5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Community',
+    page: 'feed',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+        <path d="M2 4c0-.55.45-1 1-1h10c.55 0 1 .45 1 1v1c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V4zM2 9c0-.55.45-1 1-1h6c.55 0 1 .45 1 1v1c0 .55-.45 1-1 1H3c-.55 0-1-.45-1-1V9z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
 ]
 
 export default function Sidebar({ page, navigate }: NavBarProps) {
   const activePage = page.name
-  const lang = useLang()
 
   return (
     <motion.nav
@@ -79,14 +99,14 @@ export default function Sidebar({ page, navigate }: NavBarProps) {
       }}
     >
       {NAV_ITEMS.map((item) => {
-        const label = NAV_LABELS[item.labelKey]?.[lang] ?? item.labelKey
         const isActive =
           activePage === item.page ||
-          ((activePage === 'maker' || activePage === 'creators') && item.page === 'makers')
+          ((activePage === 'maker' || activePage === 'creators') && item.page === 'makers') ||
+          (activePage === 'news-article' && item.page === 'news')
 
         return (
           <motion.button
-            key={item.labelKey}
+            key={item.label}
             onClick={() => navigate({ name: item.page } as Page)}
             whileTap={{ scale: 0.94 }}
             className="relative flex items-center justify-center"
@@ -99,7 +119,7 @@ export default function Sidebar({ page, navigate }: NavBarProps) {
               background: 'transparent',
               padding: '0 12px',
             }}
-            aria-label={label}
+            aria-label={item.label}
           >
             {/* Active pill background */}
             {isActive && (
@@ -133,10 +153,10 @@ export default function Sidebar({ page, navigate }: NavBarProps) {
                 opacity: { duration: 0.15, delay: isActive ? 0.06 : 0 },
                 marginLeft: { type: 'spring', stiffness: 350, damping: 32 },
               }}
-              className="relative z-10 font-arabic font-semibold whitespace-nowrap overflow-hidden"
-              style={{ fontSize: 13, color: 'var(--c-text)', direction: 'rtl' }}
+              className="relative z-10 font-inter font-semibold whitespace-nowrap overflow-hidden"
+              style={{ fontSize: 13, color: 'var(--c-text)' }}
             >
-              {label}
+              {item.label}
             </motion.span>
           </motion.button>
         )

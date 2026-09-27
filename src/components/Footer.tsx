@@ -1,19 +1,30 @@
 import { useEffect, useState } from 'react'
 import type { Navigate, Page } from '../App'
 import Logo from './Logo'
-import { useLang } from '../LangContext'
 
 interface FooterProps {
   navigate: Navigate
 }
 
-const COLUMNS_AR = [
-  { title: 'المنصة', items: [{ label: 'الرئيسية', page: { name: 'home' } as Page }, { label: 'المشاريع', page: { name: 'titles' } as Page }, { label: 'الصنّاع', page: { name: 'makers' } as Page }] },
-  { title: 'العمل', items: [{ label: 'الفرص المفتوحة', page: { name: 'open-projects' } as Page }, { label: 'طلب دعوة', page: { name: 'request-invite' } as Page }] },
-]
-const COLUMNS_EN = [
-  { title: 'Platform', items: [{ label: 'Home', page: { name: 'home' } as Page }, { label: 'Projects', page: { name: 'titles' } as Page }, { label: 'Makers', page: { name: 'makers' } as Page }] },
-  { title: 'Work', items: [{ label: 'Open Calls', page: { name: 'open-projects' } as Page }, { label: 'Request an Invitation', page: { name: 'request-invite' } as Page }] },
+const columns: { title: string; items: { label: string; page: Page }[] }[] = [
+  {
+    title: 'Platform',
+    items: [
+      { label: 'Home', page: { name: 'home' } },
+      { label: 'Community', page: { name: 'feed' } },
+      { label: 'Makers', page: { name: 'makers' } },
+      { label: 'Titles', page: { name: 'titles' } },
+    ],
+  },
+  {
+    title: 'Work',
+    items: [
+      { label: 'Open Projects', page: { name: 'open-projects' } },
+      { label: 'Events', page: { name: 'events' } },
+      { label: 'News', page: { name: 'news' } },
+      { label: 'Request an Invitation', page: { name: 'request-invite' } },
+    ],
+  },
 ]
 
 function TikTokIcon({ className }: { className?: string }) {
@@ -78,8 +89,6 @@ const iconBtnBase: React.CSSProperties = {
 }
 
 export default function Footer({ navigate }: FooterProps) {
-  const lang = useLang()
-  const columns = lang === 'ar' ? COLUMNS_AR : COLUMNS_EN
   const [showTop, setShowTop] = useState(false)
   const [isLight, setIsLight] = useState(false)
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { makers, titles, formatFollowers } from '../data/seed'
 import type { Navigate } from '../App'
-import { useLang } from '../LangContext'
 
 interface LandingProps {
   navigate: Navigate
@@ -96,8 +95,6 @@ function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => vo
 }
 
 export default function Landing({ navigate }: LandingProps) {
-  const lang = useLang()
-  const ar = lang === 'ar'
   const [heroIndex, setHeroIndex] = useState(0)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
@@ -126,8 +123,10 @@ export default function Landing({ navigate }: LandingProps) {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--c-bg)' }}>
 
-      {/* hero section removed — page starts at search */}
-      {false && <section className="relative" style={{ height: '100vh', minHeight: 560 }}>
+      {/* ══════════════════════════════════════════════════════
+          FULL-SCREEN HERO — Featured Production
+      ══════════════════════════════════════════════════════ */}
+      <section className="relative" style={{ height: '100vh', minHeight: 560 }}>
 
         {/* Background image — cross-fade between titles */}
         {titles.map((t, i) => (
@@ -299,10 +298,12 @@ export default function Landing({ navigate }: LandingProps) {
             />
           ))}
         </div>
-      </section>}
+      </section>
 
-      {/* search bar removed — now in global header */}
-      {false && <div className="px-4 sm:px-8 py-5 border-b" style={{ borderColor: 'var(--c-border)', background: 'var(--c-bg)' }}>
+      {/* ══════════════════════════════════════════════════════
+          SEARCH BAR — floats just below hero fold
+      ══════════════════════════════════════════════════════ */}
+      <div className="px-4 sm:px-8 py-5 border-b" style={{ borderColor: 'var(--c-border)', background: 'var(--c-bg)' }}>
         <div className="max-w-2xl mx-auto relative">
           <div
             className="flex items-center rounded-xl"
@@ -360,50 +361,137 @@ export default function Landing({ navigate }: LandingProps) {
             </div>
           )}
         </div>
-      </div>}
+      </div>
 
       <div className="px-4 sm:px-8 py-8 sm:py-10 flex flex-col gap-10 sm:gap-14">
 
         {/* ══════════════════════════════════════════════════
-            NEW ON MAKERS
+            أعمال من ترشيحنا — OUR PICKS
         ══════════════════════════════════════════════════ */}
         {(() => {
-          const NEW_TITLES = titles.slice(0, 6)
+          const OUR_PICKS = [
+            {
+              type: 'Project',
+              tag: 'Documentary',
+              label: 'Threads of Jordan',
+              sub: 'A cinematic journey through Jordanian fashion heritage',
+              cta: 'Watch now',
+              titleId: 'threads-of-jordan',
+              posters: [
+                'https://images.unsplash.com/photo-1645616672289-3681f160db22?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400&q=80',
+                'https://images.unsplash.com/photo-1623680904963-5580d963e18e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400&q=80',
+                'https://images.unsplash.com/photo-1760741319697-cf29ac50fc7b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400&q=80',
+              ],
+              hero: 'https://images.unsplash.com/photo-1645616672289-3681f160db22?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80',
+            },
+            {
+              type: 'Collection',
+              tag: 'Editor\'s Pick',
+              label: 'Arab Voices — Aug 2026',
+              sub: '12 hand-picked productions from across the Arab world',
+              cta: 'See the list',
+              titleId: null,
+              posters: [
+                'https://images.unsplash.com/photo-1572188863110-46d457c9234d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400&q=80',
+                'https://images.unsplash.com/photo-1676221515185-e2ad0b61e798?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400&q=80',
+                'https://images.unsplash.com/photo-1623674657689-3444240b19fa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400&q=80',
+              ],
+              hero: 'https://images.unsplash.com/photo-1572188863110-46d457c9234d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80',
+            },
+          ]
           return (
             <section>
-              <SectionHeader title={ar ? 'جديد على ميكرز' : 'New on Makers'} onSeeAll={() => navigate({ name: 'titles' })} />
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-                {NEW_TITLES.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => navigate({ name: 'project', id: t.id })}
-                    className="group flex flex-col gap-2 text-left"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              {/* Header */}
+              <div className="flex items-center gap-3 mb-1">
+                <span className="inline-block w-1 rounded-full flex-shrink-0" style={{ background: '#E85D04', height: 20 }} />
+                <h2 className="font-inter font-black text-paper" style={{ fontSize: 20, letterSpacing: '-0.01em' }}>
+                  Our Picks
+                </h2>
+              </div>
+              <p className="font-inter text-muted text-sm mb-5 ml-4">Curated by the Makers editorial team</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {OUR_PICKS.map((pick, i) => (
+                  <div
+                    key={i}
+                    onClick={() => pick.titleId ? navigate({ name: 'project', id: pick.titleId }) : undefined}
+                    className="group relative rounded-2xl overflow-hidden"
+                    style={{ cursor: pick.titleId ? 'pointer' : 'default', background: 'var(--c-surface)', border: '1px solid var(--c-border)', minHeight: 240 }}
                   >
-                    <div className="relative rounded-xl overflow-hidden w-full" style={{ aspectRatio: '2/3' }}>
-                      <img src={t.thumb} alt={t.name} className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'rgba(13,10,8,0.4)' }} />
-                      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-center pb-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="font-inter font-bold text-white rounded-full px-3 py-1" style={{ background: '#E85D04', fontSize: 11 }}>View</span>
+                    {/* Hero image */}
+                    <div className="absolute inset-0">
+                      <img
+                        src={pick.hero}
+                        alt={pick.label}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        style={{ filter: 'brightness(0.45)' }}
+                      />
+                      <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(13,10,8,0.7) 0%, transparent 60%), linear-gradient(to top, rgba(13,10,8,0.95) 0%, rgba(13,10,8,0.2) 50%, transparent 100%)' }} />
+                    </div>
+
+                    {/* Stacked poster thumbnails — top right */}
+                    <div className="absolute top-4 right-4 flex gap-1.5">
+                      {pick.posters.map((src, j) => (
+                        <div
+                          key={j}
+                          className="rounded-lg overflow-hidden flex-shrink-0 shadow-lg"
+                          style={{
+                            width: 52,
+                            height: 72,
+                            border: '1.5px solid rgba(255,255,255,0.12)',
+                            transform: `rotate(${(j - 1) * 3}deg) translateY(${j === 1 ? -4 : 0}px)`,
+                            zIndex: j === 1 ? 3 : j === 0 ? 2 : 1,
+                            position: 'relative',
+                          }}
+                        >
+                          <img src={src} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Content */}
+                    <div className="relative z-10 p-6 flex flex-col justify-end" style={{ minHeight: 240 }}>
+                      {/* Type badge */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <span
+                          className="font-inter font-black text-white px-2.5 py-1 rounded-lg flex items-center gap-1.5"
+                          style={{ background: '#E85D04', fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase' }}
+                        >
+                          <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                            {pick.type === 'Collection'
+                              ? <><rect x="0.5" y="0.5" width="2.5" height="2.5" rx="0.5" fill="white" /><rect x="5" y="0.5" width="2.5" height="2.5" rx="0.5" fill="white" /><rect x="0.5" y="5" width="2.5" height="2.5" rx="0.5" fill="white" /><rect x="5" y="5" width="2.5" height="2.5" rx="0.5" fill="white" /></>
+                              : <path d="M2 1.5l4 2.5-4 2.5V1.5z" fill="white" />
+                            }
+                          </svg>
+                          {pick.type}
+                        </span>
+                        <span className="font-inter text-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>{pick.tag}</span>
                       </div>
+
+                      <h3 className="font-inter font-black mb-1 group-hover:text-orange transition-colors leading-tight" style={{ fontSize: 22, color: 'white' }}>
+                        {pick.label}
+                      </h3>
+                      <p className="font-inter text-sm mb-5 leading-relaxed" style={{ maxWidth: 320, color: 'rgba(255,255,255,0.55)' }}>
+                        {pick.sub}
+                      </p>
+
+                      <span className="inline-flex items-center gap-2 font-inter font-semibold text-sm group-hover:gap-3 transition-all" style={{ color: '#E85D04' }}>
+                        {pick.cta}
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      </span>
                     </div>
-                    <div>
-                      <p className="font-inter font-semibold leading-snug" style={{ fontSize: 12, color: 'var(--c-text)' }}>{t.name}</p>
-                      <p className="font-inter" style={{ fontSize: 11, color: 'var(--c-muted)' }}>{t.year}</p>
-                    </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </section>
           )
         })()}
 
-
         {/* ══════════════════════════════════════════════════
             TOP 10 MAKERS THIS WEEK
         ══════════════════════════════════════════════════ */}
         <section>
-          <SectionHeader title={ar ? 'أفضل ١٠ صنّاع هذا الأسبوع' : 'Top 10 Makers this week'} onSeeAll={() => navigate({ name: 'makers' })} />
+          <SectionHeader title="Top 10 Makers this week" onSeeAll={() => navigate({ name: 'makers' })} />
 
           {/* All 10 — uniform poster grid */}
           <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
@@ -496,7 +584,10 @@ export default function Landing({ navigate }: LandingProps) {
           </div>
         </section>
 
-        {false && <section>
+        {/* ══════════════════════════════════════════════════
+            TOP PICKS
+        ══════════════════════════════════════════════════ */}
+        <section>
           <div className="flex items-start justify-between mb-1">
             <div>
               <SectionHeader title="Top Picks" onSeeAll={() => navigate({ name: 'makers' })} />
@@ -583,7 +674,8 @@ export default function Landing({ navigate }: LandingProps) {
               )
             })}
           </div>
-        </section>}
+        </section>
+
 
         {/* ══════════════════════════════════════════════════
             BIGGEST AUDIENCES + RATINGS — two-col
@@ -593,7 +685,7 @@ export default function Landing({ navigate }: LandingProps) {
 
             {/* Biggest Audiences */}
             <div>
-              <SectionHeader title={ar ? 'أكبر الجماهير' : 'Biggest Audiences'} onSeeAll={() => navigate({ name: 'makers' })} />
+              <SectionHeader title="Biggest Audiences" onSeeAll={() => navigate({ name: 'creators' })} />
               <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
                 {[...makers].sort((a, b) => {
                   const aT = Object.values(a.social).reduce((s, n) => s + (n ?? 0), 0)
@@ -628,7 +720,10 @@ export default function Landing({ navigate }: LandingProps) {
           </div>
         </section>
 
-        {false && <section>
+        {/* ══════════════════════════════════════════════════
+            TOP SOCIAL MEDIA CONTENT
+        ══════════════════════════════════════════════════ */}
+        <section>
           <SectionHeader title="Top Social Media Content" onSeeAll={() => navigate({ name: 'creators' })} />
           <p className="font-inter text-muted text-sm mb-4" style={{ marginTop: -12 }}>
             Most viewed content from verified Makers
@@ -698,9 +793,12 @@ export default function Landing({ navigate }: LandingProps) {
               )
             })}
           </div>
-        </section>}
+        </section>
 
-        {false && <section>
+        {/* ══════════════════════════════════════════════════
+            TOP FILMS RATING (IMDB-style ranked list)
+        ══════════════════════════════════════════════════ */}
+        <section>
           <SectionHeader title="Top Rated Films" onSeeAll={() => navigate({ name: 'makers' })} />
           <p className="font-inter text-muted text-sm mb-5" style={{ marginTop: -12 }}>
             250 best-rated productions of all time
@@ -767,7 +865,7 @@ export default function Landing({ navigate }: LandingProps) {
               )
             })}
           </div>
-        </section>}
+        </section>
 
         {/* ══════════════════════════════════════════════════
             JOIN CTA
@@ -777,29 +875,30 @@ export default function Landing({ navigate }: LandingProps) {
           style={{ background: 'radial-gradient(ellipse 80% 80% at 50% 50%, rgba(232,93,4,0.18) 0%, transparent 70%), var(--c-surface)', border: '1px solid rgba(232,93,4,0.2)' }}
         >
           <p className="font-inter text-xs uppercase tracking-widest mb-3" style={{ color: '#E85D04', letterSpacing: '0.18em', fontWeight: 600 }}>
-            {ar ? 'بالدعوة فقط · ٧٠ / ١٥٠ مقعداً شُغِّل' : 'Invite Only · 70 / 150 spots filled'}
+            Invite Only · 70 / 150 spots filled
           </p>
-          <h2 className="font-arabic font-bold text-paper mb-3 leading-tight" style={{ fontSize: 'clamp(22px, 3vw, 34px)' }}>
-            {ar ? <>نحن في البداية.<br />كن من أوائل ١٥٠ اسماً.</> : <>{"We're just getting started."}<br />{"Be one of the first 150 names."}</>}
+          <h2 className="font-inter font-bold text-paper mb-3 leading-tight" style={{ fontSize: 'clamp(22px, 3vw, 34px)' }}>
+            We're just getting started.<br />Be one of the first 150 names.
           </h2>
-          <p className="font-arabic text-muted text-sm mb-8 max-w-md mx-auto leading-relaxed">
-            {ar
-              ? 'كل طلب يحتاج ترشيح من صانع موجود على المنصة. لا ملفات تقديم — أرسل أعمالك وسنراجعها.'
-              : "Every application needs a referral from an existing Maker. No pitch decks — submit your credits and we'll review."}
+          <p className="font-inter text-muted text-sm mb-8 max-w-md mx-auto leading-relaxed">
+            Every application needs a referral from an existing Maker. No pitch decks — submit your credits and we'll review.
           </p>
           <button
             onClick={() => navigate({ name: 'request-invite' })}
-            className="inline-flex items-center gap-3 font-arabic font-bold text-paper px-10 py-4 rounded-full hover:opacity-90 active:scale-95 transition-all"
+            className="inline-flex items-center gap-3 font-inter font-bold text-paper px-10 py-4 rounded-full hover:opacity-90 active:scale-95 transition-all"
             style={{ background: '#E85D04', border: 'none', cursor: 'pointer', fontSize: 15 }}
           >
-            {ar ? 'طلب دعوة' : 'Request an Invitation'}
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d={ar ? 'M13 8H3M7 4l-4 4 4 4' : 'M3 8h10M9 4l4 4-4 4'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            Request an Invitation
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
         </section>
 
       </div>
 
-      {false && <div className="px-4 sm:px-8 pb-12">
+      {/* ══════════════════════════════════════════════════
+          TOP NEWS — last section
+      ══════════════════════════════════════════════════ */}
+      <div className="px-4 sm:px-8 pb-12">
         <section>
           <SectionHeader title="Top News" onSeeAll={() => navigate({ name: 'news' })} />
 
@@ -856,7 +955,7 @@ export default function Landing({ navigate }: LandingProps) {
             </div>
           </div>
         </section>
-      </div>}
+      </div>
 
     </div>
   )

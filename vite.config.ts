@@ -3,14 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const siteConfiguration: FigmaSiteConfiguration = (() => {
-  try {
-    return require('./.figma/make/site.json')
-  } catch {
-    return { title: 'Makers by intime', description: 'The collaboration platform for Arab film, TV, and content production talent.' }
-  }
-})()
+import siteConfiguration from './.figma/make/site.json'
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {

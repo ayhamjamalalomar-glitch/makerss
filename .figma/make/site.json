@@ -1,10 +1,18 @@
 {
-  "description": "Enables users to create and customize websites easily, providing tools for building professional online presence without coding skills.",
+  "description": "دليل عربي لصنّاع الإنتاج: مخرجون ومصورون ومونتيرون وغيرهم من كل الدول العربية. تصفّح أعمالهم واطلب التعاون مباشرة.",
   "robots": {
-    "index": false
+    "index": true
   },
   "accessibility": {
     "addBypassLinks": false,
     "ignoreReducedMotion": false
+  },
+  "title": "Makers · دليل صنّاع الإنتاج العرب",
+  "language": "ar",
+  "icons": {
+    "icon": "/favicon.svg"
+  },
+  "openGraph": {
+    "image": "https://makerss.net/og.png"
   }
 }
