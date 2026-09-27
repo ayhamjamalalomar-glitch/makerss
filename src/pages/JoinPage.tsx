@@ -75,14 +75,14 @@ export default function JoinPage() {
       <DarkCard>
         <div className="flex flex-col gap-3">
           <h1 className="m-0 text-[28px] md:text-[34px] font-bold" style={{ lineHeight: 1.35 }}>{sentTo === 'interest' ? t('سجّلنا اهتمامك', 'We saved your interest') : t('تحقق من بريدك', 'Check your email')}</h1>
-          <p className="m-0 text-sm leading-relaxed" style={{ color: '#A3A3A0' }}>
+          <p className="m-0 text-sm leading-relaxed" style={{ color: 'var(--c-muted)' }}>
             {sentTo === 'interest'
               ? t('ينضم صنّاع المحتوى في المرحلة القادمة. سنبلغك فور فتح التسجيل.', 'Content creators join in the next phase. We will let you know as soon as sign-up opens.')
               : t(`أرسلنا رابط التفعيل إلى ${sentTo}. افتح الرابط لتبدأ ببناء صفحتك.`, `We sent an activation link to ${sentTo}. Open it to start building your page.`)}
           </p>
         </div>
         {sentTo !== 'interest' && <ResendConfirm email={sentTo} />}
-        <Link to="/" className="text-sm font-semibold" style={{ color: '#F2F2F0' }}>{t('العودة إلى الدليل', 'Back to the directory')}</Link>
+        <Link to="/" className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>{t('العودة إلى الدليل', 'Back to the directory')}</Link>
       </DarkCard>
     )
   }
@@ -91,30 +91,30 @@ export default function JoinPage() {
     <DarkCard>
       <div className="flex flex-col gap-2.5">
         <h1 className="m-0 text-[28px] md:text-[34px] font-bold" style={{ lineHeight: 1.35 }}>{t('لنبدأ بصفحتك', 'Let\'s start your page')}</h1>
-        <p className="m-0 text-sm" style={{ color: '#A3A3A0' }}>{t('معلومات قليلة فقط، والباقي تكمله داخل صفحتك.', 'Just a few details. You finish the rest inside your page.')}</p>
+        <p className="m-0 text-sm" style={{ color: 'var(--c-muted)' }}>{t('معلومات قليلة فقط، والباقي تكمله داخل صفحتك.', 'Just a few details. You finish the rest inside your page.')}</p>
       </div>
       <form onSubmit={submit} className="flex flex-col gap-6">
-        <div className="flex flex-col" style={{ borderTop: '1px solid #2E2E2C' }}>
+        <div className="flex flex-col" style={{ borderTop: '1px solid var(--c-border)' }}>
           <div className={darkRow} style={darkRowStyle}>
-            <span className="text-[13px] w-24 shrink-0" style={{ color: '#A3A3A0' }}>{t('أنا', 'I am')}</span>
+            <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('أنا', 'I am')}</span>
             <div className="flex flex-wrap gap-2">
               {(['maker', 'creator'] as const).map((k) => (
-                <button key={k} type="button" aria-pressed={type === k} onClick={() => setType(k)} className="h-[38px] px-4 rounded-full text-[13px] cursor-pointer" style={type === k ? { background: '#F2F2F0', color: '#0B0B0B', border: '1px solid #F2F2F0', fontWeight: 600 } : { background: 'transparent', color: '#A3A3A0', border: '1px solid #3A3A38' }}>
+                <button key={k} type="button" aria-pressed={type === k} onClick={() => setType(k)} className="h-[38px] px-4 rounded-full text-[13px] cursor-pointer" style={type === k ? { background: '#E85D04', color: '#fff', border: '1px solid #E85D04', fontWeight: 600 } : { background: 'transparent', color: 'var(--c-muted)', border: '1px solid var(--c-border-mid)' }}>
                   {k === 'maker' ? t('صانع إنتاج (Maker)', 'Production maker') : t('صانع محتوى', 'Content creator')}
                 </button>
               ))}
             </div>
           </div>
           <label className={darkRow} style={darkRowStyle}>
-            <span className="text-[13px] w-24 shrink-0" style={{ color: '#A3A3A0' }}>{t('الاسم', 'Name')}</span>
+            <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('الاسم', 'Name')}</span>
             <input required minLength={2} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('اسمك الكامل', 'Your full name')} style={darkInputStyle} />
           </label>
           {type === 'maker' && (
             <>
               <label className={darkRow} style={darkRowStyle}>
-                <span className="text-[13px] w-24 shrink-0" style={{ color: '#A3A3A0' }}>{t('رابط صفحتك', 'Your link')}</span>
+                <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('رابط صفحتك', 'Your link')}</span>
                 <span dir="ltr" className={`flex-1 flex items-center ${isRtl() ? 'justify-end' : 'justify-start'} mono text-sm min-w-0`}>
-                  <span style={{ color: '#6E6E6B' }}>makerss.net/</span>
+                  <span style={{ color: 'var(--c-muted)' }}>makerss.net/</span>
                   <input
                     required
                     value={username}
@@ -124,31 +124,31 @@ export default function JoinPage() {
                   />
                 </span>
               </label>
-              <span className="text-xs -mt-4" style={{ color: available === false ? '#FCA5A5' : '#8C8C89' }}>
+              <span className="text-xs -mt-4" style={{ color: available === false ? 'rgba(248,113,113,0.35)' : 'var(--c-muted)' }}>
                 {available === false ? t('هذا الرابط محجوز أو غير صالح.', 'This link is taken or invalid.') : t('حروف إنجليزية صغيرة وأرقام وشرطات فقط.', 'Lowercase letters, numbers and dashes only.')}
               </span>
               <label className={darkRow} style={darkRowStyle}>
-                <span className="text-[13px] w-24 shrink-0" style={{ color: '#A3A3A0' }}>{t('البريد', 'Email')}</span>
+                <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('البريد', 'Email')}</span>
                 <input required type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@email.com" style={{ ...darkInputStyle, textAlign: isRtl() ? 'right' : 'left' }} />
               </label>
               <label className={darkRow} style={darkRowStyle}>
-                <span className="text-[13px] w-24 shrink-0" style={{ color: '#A3A3A0' }}>{t('كلمة المرور', 'Password')}</span>
+                <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('كلمة المرور', 'Password')}</span>
                 <input required type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('8 أحرف على الأقل', 'At least 8 characters')} autoComplete="new-password" style={darkInputStyle} />
               </label>
             </>
           )}
         </div>
-        <span className="text-[13px] leading-relaxed" style={{ color: '#8C8C89' }}>
+        <span className="text-[13px] leading-relaxed" style={{ color: 'var(--c-muted)' }}>
           {type === 'maker'
             ? t('مخرج، مصوّر، مونتير، ستايلست وغيرهم. تظهر صفحتك في الدليل بعد أن يراجعها فريق Makers.', 'Directors, cinematographers, editors, stylists and more. Your page appears in the directory after the Makers team reviews it.')
             : t('ينضم صنّاع المحتوى في المرحلة القادمة. سجّل اهتمامك وسنبلغك فور فتح التسجيل.', 'Content creators join in the next phase. Register your interest and we will tell you when sign-up opens.')}
         </span>
         {error && <Notice tone="error">{error}</Notice>}
-        <button type="submit" disabled={busy} className="h-[52px] rounded-full text-[15px] font-semibold cursor-pointer disabled:opacity-60" style={{ background: '#2563EB', color: '#fff', border: 'none' }}>
+        <button type="submit" disabled={busy} className="h-[52px] rounded-full text-[15px] font-semibold cursor-pointer disabled:opacity-60" style={{ background: '#E85D04', color: '#fff', border: 'none' }}>
           {busy ? t('جارٍ الإنشاء…', 'Creating…') : type === 'maker' ? t('أنشئ صفحتك', 'Create your page') : t('سجّل اهتمامي', 'Register my interest')}
         </button>
-        <p className="m-0 text-[13px]" style={{ color: '#8C8C89' }}>
-          {t('لديك حساب؟', 'Have an account?')} <Link to="/login" className="underline" style={{ color: '#F2F2F0' }}>{t('سجّل الدخول', 'Sign in')}</Link>
+        <p className="m-0 text-[13px]" style={{ color: 'var(--c-muted)' }}>
+          {t('لديك حساب؟', 'Have an account?')} <Link to="/login" className="underline" style={{ color: 'var(--c-text)' }}>{t('سجّل الدخول', 'Sign in')}</Link>
         </p>
       </form>
     </DarkCard>

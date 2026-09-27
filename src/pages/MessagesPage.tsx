@@ -8,7 +8,7 @@ import { roleLine, useSpecialties } from '../lib/specialties'
 import { splitLinks, type Conversation, type Message } from '../lib/messages'
 import { Avatar, Card, Notice, PageShell, Spinner, VerifiedBadge } from '../components/mk'
 
-const MUTED = '#5C5C59'
+const MUTED = 'var(--c-muted)'
 const readParam = () => new URLSearchParams(window.location.search).get('c')
 const timeOf = (iso: string) => new Date(iso).toLocaleTimeString(getLang() === 'en' ? 'en-GB' : 'ar-JO', { hour: '2-digit', minute: '2-digit' })
 const localDay = (iso: string) => {
@@ -82,7 +82,7 @@ export default function MessagesPage() {
         <Card className="p-10 text-center flex flex-col gap-2 items-center">
           <span className="text-lg font-bold">{t('الرسائل متاحة بعد نشر صفحتك', 'Messages open once your page is live')}</span>
           <span className="text-sm" style={{ color: MUTED }}>{t('عندما يوافق فريق Makers على صفحتك، تستطيع مراسلة باقي الأعضاء.', 'When the Makers team approves your page, you can message other members.')}</span>
-          <Link to="/me" className="text-sm font-semibold mt-2" style={{ color: '#2563EB' }}>{t('أكمل صفحتك', 'Complete your page')}</Link>
+          <Link to="/me" className="text-sm font-semibold mt-2" style={{ color: '#E85D04' }}>{t('أكمل صفحتك', 'Complete your page')}</Link>
         </Card>
       </PageShell>
     )
@@ -102,7 +102,7 @@ export default function MessagesPage() {
         <Card className="p-10 text-center flex flex-col gap-2">
           <span className="text-lg font-bold">{t('لا توجد محادثات بعد', 'No conversations yet')}</span>
           <span className="text-sm" style={{ color: MUTED }}>{t('افتح صفحة أي عضو في الدليل واضغط «راسِل» لتبدأ محادثة.', 'Open any member page in the directory and tap "Message" to start a conversation.')}</span>
-          <Link to="/" className="text-sm font-semibold mt-2" style={{ color: '#2563EB' }}>{t('تصفّح الدليل', 'Browse the directory')}</Link>
+          <Link to="/" className="text-sm font-semibold mt-2" style={{ color: '#E85D04' }}>{t('تصفّح الدليل', 'Browse the directory')}</Link>
         </Card>
       ) : (
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-[calc(100vh-260px)] md:min-h-[520px]">
@@ -111,7 +111,7 @@ export default function MessagesPage() {
               const o = people[otherOf(c)]
               const n = unread[c.id] || 0
               return (
-                <button key={c.id} type="button" onClick={() => open(c.id)} className="flex items-center gap-3 p-3.5 rounded-[22px] bg-white cursor-pointer text-start" style={{ border: c.id === sel ? '1.5px solid #111' : '1px solid #ECECEA' }}>
+                <button key={c.id} type="button" onClick={() => open(c.id)} className="flex items-center gap-3 p-3.5 rounded-[22px] bg-[var(--c-surface)] cursor-pointer text-start" style={{ border: c.id === sel ? '1.5px solid var(--c-border-mid)' : '1px solid var(--c-border)' }}>
                   <Avatar url={o?.avatar_url} name={o?.full_name} size={44} />
                   <span className="flex-1 min-w-0 flex flex-col gap-0.5">
                     <span className="flex items-center justify-between gap-2">
@@ -119,10 +119,10 @@ export default function MessagesPage() {
                       {c.last_message_at && <span className="text-[11px] shrink-0" style={{ color: MUTED }}>{relativeAr(c.last_message_at)}</span>}
                     </span>
                     <span className="flex items-center justify-between gap-2">
-                      <span dir="auto" className="text-[13px] truncate" style={{ color: n ? '#111' : MUTED, fontWeight: n ? 600 : 400 }}>
+                      <span dir="auto" className="text-[13px] truncate" style={{ color: n ? 'var(--c-text)' : MUTED, fontWeight: n ? 600 : 400 }}>
                         {c.last_sender === me ? t('أنت: ', 'You: ') : ''}{c.last_message_preview || t('محادثة جديدة', 'New conversation')}
                       </span>
-                      {n > 0 && <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold text-white flex items-center justify-center shrink-0" style={{ background: '#2563EB' }}>{n}</span>}
+                      {n > 0 && <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold text-white flex items-center justify-center shrink-0" style={{ background: '#E85D04' }}>{n}</span>}
                     </span>
                   </span>
                 </button>
@@ -213,8 +213,8 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
 
   return (
     <Card className="flex-1 flex flex-col min-h-[70vh] md:min-h-0 overflow-hidden">
-      <div className="flex items-center gap-3 px-4 md:px-6 py-3.5" style={{ borderBottom: '1px solid #F0F0EE' }}>
-        <button type="button" onClick={onBack} aria-label={t('رجوع', 'Back')} className="md:hidden w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" style={{ background: '#F3F3F2', border: 'none' }}>
+      <div className="flex items-center gap-3 px-4 md:px-6 py-3.5" style={{ borderBottom: '1px solid var(--c-surface-alt)' }}>
+        <button type="button" onClick={onBack} aria-label={t('رجوع', 'Back')} className="md:hidden w-9 h-9 rounded-full flex items-center justify-center cursor-pointer" style={{ background: 'var(--c-surface-alt)', border: 'none' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ltr:-scale-x-100"><path d="M10 6l6 6-6 6" /></svg>
         </button>
         <Link to={other?.username ? `/${other.username}` : '#'} className="flex items-center gap-3 min-w-0 flex-1">
@@ -225,11 +225,11 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
           </span>
         </Link>
         <div className="relative">
-          <button type="button" onClick={() => setMenu(!menu)} aria-label={t('خيارات', 'Options')} className="w-9 h-9 rounded-full cursor-pointer text-lg" style={{ background: '#F3F3F2', border: 'none' }}>⋯</button>
+          <button type="button" onClick={() => setMenu(!menu)} aria-label={t('خيارات', 'Options')} className="w-9 h-9 rounded-full cursor-pointer text-lg" style={{ background: 'var(--c-surface-alt)', border: 'none' }}>⋯</button>
           {menu && (
-            <div className="absolute end-0 top-11 z-20 bg-white rounded-2xl p-1.5 min-w-[180px]" style={{ boxShadow: '0 12px 32px rgba(0,0,0,0.14)', border: '1px solid #ECECEA' }}>
-              {other?.username && <Link to={`/${other.username}`} className="block px-3.5 py-2.5 rounded-xl text-sm hover:bg-[#F7F7F6]">{t('افتح صفحته', 'View profile')}</Link>}
-              <button type="button" onClick={toggleBlock} className="w-full text-start px-3.5 py-2.5 rounded-xl text-sm cursor-pointer bg-transparent border-0 hover:bg-[#F7F7F6]" style={{ color: blocked ? '#111' : '#B42318' }}>
+            <div className="absolute end-0 top-11 z-20 bg-[var(--c-surface)] rounded-2xl p-1.5 min-w-[180px]" style={{ boxShadow: '0 12px 32px rgba(0,0,0,0.14)', border: '1px solid var(--c-border)' }}>
+              {other?.username && <Link to={`/${other.username}`} className="block px-3.5 py-2.5 rounded-xl text-sm hover:bg-[var(--c-surface-alt)]">{t('افتح صفحته', 'View profile')}</Link>}
+              <button type="button" onClick={toggleBlock} className="w-full text-start px-3.5 py-2.5 rounded-xl text-sm cursor-pointer bg-transparent border-0 hover:bg-[var(--c-surface-alt)]" style={{ color: blocked ? 'var(--c-text)' : '#F87171' }}>
                 {blocked ? t('إلغاء الحظر', 'Unblock') : t('حظر هذا العضو', 'Block this member')}
               </button>
             </div>
@@ -237,7 +237,7 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 flex flex-col gap-1.5" style={{ background: '#FBFBFA' }}>
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 flex flex-col gap-1.5" style={{ background: 'var(--c-surface-alt)' }}>
         {msgs === null && <Spinner />}
         {msgs?.length === 0 && (
           <div className="m-auto text-center text-sm max-w-[320px]" style={{ color: MUTED }}>
@@ -250,14 +250,14 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
           const grouped = !newDay && i > 0 && msgs[i - 1].sender_id === m.sender_id
           return (
             <div key={m.id} className="flex flex-col">
-              {newDay && <span className="self-center text-[11px] px-3 py-1 rounded-full my-3" style={{ background: '#F0F0EE', color: MUTED }}>{formatDateAr(localDay(m.created_at))}</span>}
+              {newDay && <span className="self-center text-[11px] px-3 py-1 rounded-full my-3" style={{ background: 'var(--c-surface-alt)', color: MUTED }}>{formatDateAr(localDay(m.created_at))}</span>}
               <div className={`flex w-full ${mine ? 'justify-end' : 'justify-start'} ${grouped ? '' : 'mt-1.5'}`}>
                 <div
                   className="max-w-[78%] md:max-w-[65%] px-4 py-2.5 text-[15px]"
                   style={{
                     ...(mine
-                      ? { background: '#2563EB', color: '#fff' }
-                      : { background: '#FFFFFF', color: '#111', border: '1px solid #ECECEA' }),
+                      ? { background: '#E85D04', color: '#fff' }
+                      : { background: 'var(--c-surface)', color: 'var(--c-text)', border: '1px solid var(--c-border)' }),
                     borderRadius: 20,
                     // Tail corner sits on the sender's outer edge, computed from the page direction (not the text's).
                     ...(grouped ? {} : (mine === rtl ? { borderTopLeftRadius: 6 } : { borderTopRightRadius: 6 })),
@@ -276,7 +276,7 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
         <div ref={endRef} />
       </div>
 
-      <div className="px-3 md:px-5 py-3 flex flex-col gap-2" style={{ borderTop: '1px solid #F0F0EE' }}>
+      <div className="px-3 md:px-5 py-3 flex flex-col gap-2" style={{ borderTop: '1px solid var(--c-surface-alt)' }}>
         {error && <Notice tone="error">{error}</Notice>}
         {blocked ? (
           <div className="text-sm text-center py-2" style={{ color: MUTED }}>{t('حظرت هذا العضو. ألغِ الحظر من القائمة لتراسله.', 'You blocked this member. Unblock from the menu to message them.')}</div>
@@ -293,7 +293,7 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
               className="flex-1 resize-none"
               style={{ minHeight: 48, maxHeight: 160, padding: '13px 18px', borderRadius: 24, fontSize: 15, lineHeight: 1.5 }}
             />
-            <button type="button" onClick={send} disabled={busy || !text.trim()} aria-label={t('إرسال', 'Send')} className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer disabled:opacity-40 shrink-0" style={{ background: '#2563EB', color: '#fff', border: 'none' }}>
+            <button type="button" onClick={send} disabled={busy || !text.trim()} aria-label={t('إرسال', 'Send')} className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer disabled:opacity-40 shrink-0" style={{ background: '#E85D04', color: '#fff', border: 'none' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="rtl:-scale-x-100" aria-hidden="true"><path d="M3.4 20.4l17.5-7.5a1 1 0 000-1.8L3.4 3.6a1 1 0 00-1.4 1.1L4 11l9 1-9 1-2 6.3a1 1 0 001.4 1.1z" /></svg>
             </button>
           </div>

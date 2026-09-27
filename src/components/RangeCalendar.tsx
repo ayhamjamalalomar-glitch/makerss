@@ -27,33 +27,33 @@ export default function RangeCalendar({ start, end, onChange }: { start: string 
     }
   }
 
-  const box = (active: boolean) => ({ background: active ? 'rgba(37,99,235,0.18)' : '#1E1E1D', border: `1px solid ${active ? '#2563EB' : '#2E2E2C'}` })
+  const box = (active: boolean) => ({ background: active ? 'rgba(232,93,4,0.18)' : 'var(--c-surface-alt)', border: `1px solid ${active ? '#E85D04' : 'var(--c-border)'}` })
   const dur = start && end ? durationAr(daysBetween(start, end)) : null
 
   return (
-    <div className="flex flex-col gap-3.5 p-4 md:p-5 rounded-[28px]" style={{ background: '#1A1A19', border: '1px solid #2E2E2C' }}>
+    <div className="flex flex-col gap-3.5 p-4 md:p-5 rounded-2xl" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>
       <div className="grid grid-cols-2 gap-2.5">
-        <button type="button" onClick={() => setMode('start')} className="text-start px-4 py-3 rounded-[20px] cursor-pointer flex flex-col gap-0.5 text-white" style={box(mode === 'start')}>
-          <span className="text-[11px]" style={{ color: '#A3A3A0' }}>{t('تاريخ البدء', 'Start date')}</span>
+        <button type="button" onClick={() => setMode('start')} className="text-start px-4 py-3 rounded-xl cursor-pointer flex flex-col gap-0.5 text-paper" style={box(mode === 'start')}>
+          <span className="text-[11px]" style={{ color: 'var(--c-muted)' }}>{t('تاريخ البدء', 'Start date')}</span>
           <span className="text-[15px] font-semibold">{start ? formatDateAr(start) : t('اختر من التقويم', 'Pick on the calendar')}</span>
         </button>
-        <button type="button" onClick={() => setMode('end')} className="text-start px-4 py-3 rounded-[20px] cursor-pointer flex flex-col gap-0.5 text-white" style={box(mode === 'end')}>
-          <span className="text-[11px]" style={{ color: '#A3A3A0' }}>{t('تاريخ التسليم', 'Delivery date')}</span>
+        <button type="button" onClick={() => setMode('end')} className="text-start px-4 py-3 rounded-xl cursor-pointer flex flex-col gap-0.5 text-paper" style={box(mode === 'end')}>
+          <span className="text-[11px]" style={{ color: 'var(--c-muted)' }}>{t('تاريخ التسليم', 'Delivery date')}</span>
           <span className="text-[15px] font-semibold">{end ? formatDateAr(end) : t('اختر من التقويم', 'Pick on the calendar')}</span>
         </button>
       </div>
       <div className="flex items-center justify-between px-1">
-        <button type="button" aria-label={t('الشهر السابق', 'Previous month')} disabled={!canPrev} onClick={() => (m === 0 ? (setM(11), setY(y - 1)) : setM(m - 1))} className="w-9 h-9 rounded-full flex items-center justify-center text-white cursor-pointer disabled:opacity-30" style={{ border: '1px solid #2E2E2C', background: 'transparent' }}>
+        <button type="button" aria-label={t('الشهر السابق', 'Previous month')} disabled={!canPrev} onClick={() => (m === 0 ? (setM(11), setY(y - 1)) : setM(m - 1))} className="w-9 h-9 rounded-full flex items-center justify-center text-paper cursor-pointer disabled:opacity-30" style={{ border: '1px solid var(--c-border)', background: 'transparent' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ltr:-scale-x-100"><path d="M10 6l6 6-6 6" /></svg>
         </button>
-        <span className="text-[15px] font-semibold text-white">{months()[m]} {y}</span>
-        <button type="button" aria-label={t('الشهر التالي', 'Next month')} onClick={() => (m === 11 ? (setM(0), setY(y + 1)) : setM(m + 1))} className="w-9 h-9 rounded-full flex items-center justify-center text-white cursor-pointer" style={{ border: '1px solid #2E2E2C', background: 'transparent' }}>
+        <span className="text-[15px] font-semibold text-paper">{months()[m]} {y}</span>
+        <button type="button" aria-label={t('الشهر التالي', 'Next month')} onClick={() => (m === 11 ? (setM(0), setY(y + 1)) : setM(m + 1))} className="w-9 h-9 rounded-full flex items-center justify-center text-paper cursor-pointer" style={{ border: '1px solid var(--c-border)', background: 'transparent' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ltr:-scale-x-100"><path d="M14 6l-6 6 6 6" /></svg>
         </button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center">
         {(t('أحد|إثنين|ثلاثاء|أربعاء|خميس|جمعة|سبت', 'Sun|Mon|Tue|Wed|Thu|Fri|Sat').split('|')).map((w) => (
-          <span key={w} className="text-[10px] md:text-[11px] py-1" style={{ color: '#8C8C89' }}>{w}</span>
+          <span key={w} className="text-[10px] md:text-[11px] py-1" style={{ color: 'var(--c-muted)' }}>{w}</span>
         ))}
         {Array.from({ length: first }).map((_, i) => <span key={'b' + i} />)}
         {Array.from({ length: days }).map((_, i) => {
@@ -69,14 +69,14 @@ export default function RangeCalendar({ start, end, onChange }: { start: string 
               aria-pressed={edge}
               onClick={() => pick(d)}
               className="h-10 rounded-full text-sm cursor-pointer disabled:cursor-default"
-              style={{ border: 'none', background: edge ? '#2563EB' : inRange ? 'rgba(37,99,235,0.28)' : 'transparent', color: past ? '#55554F' : '#fff', fontWeight: edge ? 700 : 500 }}
+              style={{ border: 'none', background: edge ? '#E85D04' : inRange ? 'rgba(232,93,4,0.28)' : 'transparent', color: past ? 'var(--c-muted-2)' : edge ? '#fff' : 'var(--c-text)', fontWeight: edge ? 700 : 500 }}
             >
               {i + 1}
             </button>
           )
         })}
       </div>
-      <span className="text-[13px] px-1" style={{ color: '#A3A3A0' }}>
+      <span className="text-[13px] px-1" style={{ color: 'var(--c-muted)' }}>
         {dur ? t(`مدة المشروع: ${dur}`, `Project length: ${dur}`) : mode === 'start' ? t('اختر يوم بدء المشروع.', 'Pick the start day.') : t('اختر الآن يوم التسليم.', 'Now pick the delivery day.')}
       </span>
     </div>

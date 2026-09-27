@@ -22,12 +22,12 @@ export default function ResendConfirm({ email }: { email: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-1.5 text-[13px]" style={{ color: '#A3A3A0' }}>
+    <div className="flex flex-col gap-1.5 text-[13px]" style={{ color: 'var(--c-muted)' }}>
       <span>{t('لم تصلك الرسالة؟ تفقّد مجلد الرسائل غير المرغوب فيها (Junk / Spam).', "Didn't get it? Check your Junk or Spam folder.")}</span>
-      <button type="button" onClick={resend} disabled={wait > 0 || !email} className="self-start bg-transparent border-0 p-0 underline cursor-pointer disabled:opacity-50 disabled:no-underline" style={{ color: '#F2F2F0' }}>
+      <button type="button" onClick={resend} disabled={wait > 0 || !email} className="self-start bg-transparent border-0 p-0 underline cursor-pointer disabled:opacity-50 disabled:no-underline" style={{ color: 'var(--c-text)' }}>
         {wait > 0 ? t(`أعد الإرسال بعد ${wait} ثانية`, `Resend in ${wait}s`) : t('أعد إرسال رسالة التفعيل', 'Resend activation email')}
       </button>
-      {msg && <span style={{ color: '#D4D4D1' }}>{msg}</span>}
+      {msg && <span style={{ color: 'var(--c-muted)' }}>{msg}</span>}
     </div>
   )
 }

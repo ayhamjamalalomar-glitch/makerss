@@ -59,16 +59,16 @@ export default function LoginPage() {
     <DarkCard>
       <h1 className="m-0 text-[28px] md:text-[34px] font-bold">{title}</h1>
       <form onSubmit={submit} className="flex flex-col gap-6">
-        <div className="flex flex-col" style={{ borderTop: '1px solid #2E2E2C' }}>
+        <div className="flex flex-col" style={{ borderTop: '1px solid var(--c-border)' }}>
           {mode !== 'update' && (
             <label className={darkRow} style={darkRowStyle}>
-              <span className="text-[13px] w-24 shrink-0" style={{ color: '#A3A3A0' }}>{t('البريد', 'Email')}</span>
+              <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('البريد', 'Email')}</span>
               <input required type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@email.com" autoComplete="email" style={{ ...darkInputStyle, textAlign: isRtl() ? 'right' : 'left' }} />
             </label>
           )}
           {mode !== 'reset' && (
             <label className={darkRow} style={darkRowStyle}>
-              <span className="text-[13px] w-24 shrink-0" style={{ color: '#A3A3A0' }}>{t('كلمة المرور', 'Password')}</span>
+              <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('كلمة المرور', 'Password')}</span>
               <input required type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} style={darkInputStyle} />
             </label>
           )}
@@ -76,17 +76,17 @@ export default function LoginPage() {
         {error && <Notice tone="error">{error}</Notice>}
         {unconfirmed && <ResendConfirm email={email} />}
         {info && <Notice tone="success">{info}</Notice>}
-        <button type="submit" disabled={busy} className="h-[52px] rounded-full text-[15px] font-semibold cursor-pointer disabled:opacity-60" style={{ background: '#2563EB', color: '#fff', border: 'none' }}>
+        <button type="submit" disabled={busy} className="h-[52px] rounded-full text-[15px] font-semibold cursor-pointer disabled:opacity-60" style={{ background: '#E85D04', color: '#fff', border: 'none' }}>
           {busy ? t('لحظة…', 'One moment…') : mode === 'signin' ? t('دخول', 'Sign in') : mode === 'reset' ? t('أرسل الرابط', 'Send link') : t('حفظ كلمة المرور', 'Save password')}
         </button>
-        <div className="flex flex-col gap-2 text-[13px]" style={{ color: '#8C8C89' }}>
+        <div className="flex flex-col gap-2 text-[13px]" style={{ color: 'var(--c-muted)' }}>
           {mode === 'signin' ? (
             <>
-              <button type="button" onClick={() => setMode('reset')} className="text-start bg-transparent border-0 p-0 cursor-pointer" style={{ color: '#D4D4D1' }}>{t('نسيت كلمة المرور؟', 'Forgot password?')}</button>
-              <span>{t('ليس لديك حساب؟', 'No account yet?')} <Link to="/join" className="underline" style={{ color: '#F2F2F0' }}>{t('انضم إلى Makers', 'Join Makers')}</Link></span>
+              <button type="button" onClick={() => setMode('reset')} className="text-start bg-transparent border-0 p-0 cursor-pointer" style={{ color: 'var(--c-muted)' }}>{t('نسيت كلمة المرور؟', 'Forgot password?')}</button>
+              <span>{t('ليس لديك حساب؟', 'No account yet?')} <Link to="/join" className="underline" style={{ color: 'var(--c-text)' }}>{t('انضم إلى Makers', 'Join Makers')}</Link></span>
             </>
           ) : (
-            <button type="button" onClick={() => setMode('signin')} className="text-start bg-transparent border-0 p-0 cursor-pointer" style={{ color: '#D4D4D1' }}>{t('العودة لتسجيل الدخول', 'Back to sign in')}</button>
+            <button type="button" onClick={() => setMode('signin')} className="text-start bg-transparent border-0 p-0 cursor-pointer" style={{ color: 'var(--c-muted)' }}>{t('العودة لتسجيل الدخول', 'Back to sign in')}</button>
           )}
         </div>
       </form>
