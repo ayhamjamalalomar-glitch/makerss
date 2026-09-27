@@ -1,370 +1,266 @@
-import { useState } from 'react'
-import type { Navigate } from '../App'
+import { useEffect, useState } from 'react'
+import Link, { useRouter } from '../lib/router'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../lib/auth'
+import { label, t, useLang } from '../lib/i18n'
+import { COUNTRIES, cityLabel, formatDateAr, relativeAr } from '../lib/constants'
+import { useSpecialties, specName } from '../lib/specialties'
+import { CALL_COLORS, CALL_SELECT, displayName, kindLabel, listOpenCalls, type OpenCall } from '../lib/data'
+import { Avatar, Btn, Notice, Pill, Spinner, TextArea } from '../components/mk'
 
-interface OpenProjectsProps {
-  navigate: Navigate
+const box = { background: 'var(--c-surface)', border: '1px solid var(--c-border)' } as const
+
+function placeOf(c: OpenCall) {
+  if (c.remote) return t('عن بُعد', 'Remote')
+  return [cityLabel(c.city), label(COUNTRIES, c.country)].filter(Boolean).join('، ')
 }
 
-const ROLES = ['All roles', 'Director', 'Cinematographer', 'Video Editor', 'Photographer', 'Motion Designer', 'Sound Engineer', 'Makeup Artist', 'Stylist', 'Screenwriter', 'Social Media Manager', 'Content Creator']
+function CallDetail({ id, onClose, applied, onApplied }: { id: string; onClose: () => void; applied: boolean; onApplied: () => void }) {
+  const specialties = useSpecialties()
+  const { profile } = useAuth()
+  const [c, setC] = useState<OpenCall | null | undefined>(undefined)
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-const LISTINGS = [
-  {
-    id: 'op-1',
-    title: 'Ramadan Campaign — Series of 4 Short Films',
-    brand: 'intime Creative',
-    logo: 'https://images.unsplash.com/photo-1631891337800-9a2f2b7c8f3e?w=60&h=60&fit=crop',
-    type: 'Brand Campaign',
-    location: 'Amman, Jordan',
-    remote: false,
-    deadline: 'Feb 15, 2025',
-    budget: '$2,000 – $4,000',
-    roles: ['Director', 'Cinematographer', 'Video Editor'],
-    description: 'We are producing a 4-part Ramadan short film series celebrating Arab family traditions. Looking for a Director with branded content experience and a Cinematographer comfortable with intimate, warm lighting setups.',
-    platforms: ['Instagram', 'YouTube'],
-    posted: '2 days ago',
-    applicants: 14,
-  },
-  {
-    id: 'op-2',
-    title: 'Fashion Editorial — Desert Collection',
-    brand: 'Al-Noor Studios',
-    logo: 'https://images.unsplash.com/photo-1512850183-6d7990f42385?w=60&h=60&fit=crop',
-    type: 'Editorial',
-    location: 'Dubai, UAE',
-    remote: false,
-    deadline: 'Jan 30, 2025',
-    budget: '$800 – $1,500',
-    roles: ['Photographer', 'Stylist', 'Makeup Artist'],
-    description: 'Desert editorial for a luxury modest fashion label. Shooting over 2 days in the Dubai desert. Need a photographer with fashion/editorial portfolio and a stylist familiar with modest fashion aesthetics.',
-    platforms: ['Instagram', 'TikTok'],
-    posted: '5 days ago',
-    applicants: 28,
-  },
-  {
-    id: 'op-3',
-    title: 'Social Media Content — Monthly Retainer',
-    brand: 'Meshwar Agency',
-    logo: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=60&h=60&fit=crop',
-    type: 'Retainer',
-    location: 'Remote',
-    remote: true,
-    deadline: 'Rolling',
-    budget: '$500/month',
-    roles: ['Content Creator', 'Video Editor', 'Social Media Manager'],
-    description: 'Growing regional digital agency looking for a content creator + editor on a monthly retainer. 8–12 short-form videos per month for multiple Arab lifestyle brands. Flexible hours, fully remote.',
-    platforms: ['TikTok', 'Instagram', 'YouTube'],
-    posted: '1 week ago',
-    applicants: 41,
-  },
-  {
-    id: 'op-4',
-    title: 'Documentary — Urban Street Culture in Cairo',
-    brand: 'Nile Wave Productions',
-    logo: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=60&h=60&fit=crop',
-    type: 'Documentary',
-    location: 'Cairo, Egypt',
-    remote: false,
-    deadline: 'Mar 1, 2025',
-    budget: '$3,500 – $6,000',
-    roles: ['Cinematographer', 'Sound Engineer', 'Video Editor'],
-    description: 'Feature-length documentary exploring Cairo\'s underground music and street art scene. 3-week shoot starting April. Looking for a cinematographer with documentary experience and a sound engineer comfortable in unpredictable environments.',
-    platforms: ['Vimeo', 'YouTube'],
-    posted: '3 days ago',
-    applicants: 9,
-  },
-  {
-    id: 'op-5',
-    title: 'Motion Graphics Package — Sports Brand',
-    brand: 'Riyada Media',
-    logo: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=60&h=60&fit=crop',
-    type: 'Motion Design',
-    location: 'Remote',
-    remote: true,
-    deadline: 'Feb 5, 2025',
-    budget: '$1,200 – $2,000',
-    roles: ['Motion Designer'],
-    description: 'Sports brand launching new regional identity needs a full motion graphics package: logo animations, lower thirds, transitions, and social media templates. Full Adobe After Effects workflow.',
-    platforms: ['Instagram', 'YouTube'],
-    posted: '1 day ago',
-    applicants: 22,
-  },
-  {
-    id: 'op-6',
-    title: 'Wedding Films — Peak Season Bookings',
-    brand: 'Qalb Films',
-    logo: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=60&h=60&fit=crop',
-    type: 'Wedding',
-    location: 'Beirut & Amman',
-    remote: false,
-    deadline: 'Feb 20, 2025',
-    budget: '$1,500 – $2,500 / event',
-    roles: ['Cinematographer', 'Video Editor'],
-    description: 'Wedding film studio booking for 2025 peak season. Looking for a second-shooter cinematographer and an editor who can deliver cinematic 8-min highlight films. Arabic cultural context required.',
-    platforms: ['Vimeo', 'Instagram'],
-    posted: '4 days ago',
-    applicants: 17,
-  },
-]
+  useEffect(() => {
+    supabase.from('open_calls').select(CALL_SELECT).eq('id', id).maybeSingle().then(({ data }) => setC((data as unknown as OpenCall) || null))
+  }, [id])
 
-const TYPE_COLORS: Record<string, string> = {
-  'Brand Campaign': '#E85D04',
-  'Editorial': '#9333EA',
-  'Retainer': '#059669',
-  'Documentary': '#2563EB',
-  'Motion Design': '#DC2626',
-  'Wedding': '#D97706',
-}
+  const apply = async () => {
+    setError(null)
+    setBusy(true)
+    const { error } = await supabase.rpc('apply_open_call', { p_id: id, p_message: msg })
+    setBusy(false)
+    if (error) return setError(error.message.includes('closed') ? t('هذه الفرصة أُغلقت.', 'This opportunity is closed.') : t('تعذّر إرسال طلبك. حاول مرة أخرى.', 'Could not send your application. Try again.'))
+    onApplied()
+  }
+  const close = async () => {
+    setBusy(true)
+    await supabase.rpc('close_open_call', { p_id: id })
+    setBusy(false)
+    onClose()
+  }
 
-export default function OpenProjects({ navigate }: OpenProjectsProps) {
-  const [selectedRole, setSelectedRole] = useState('All roles')
-  const [remoteOnly, setRemoteOnly] = useState(false)
-  const [applied, setApplied] = useState<Set<string>>(new Set())
-  const [activeModal, setActiveModal] = useState<string | null>(null)
-
-  const filtered = LISTINGS.filter((l) => {
-    if (remoteOnly && !l.remote) return false
-    if (selectedRole !== 'All roles' && !l.roles.includes(selectedRole)) return false
-    return true
-  })
-
-  const activeJob = LISTINGS.find((l) => l.id === activeModal)
+  const color = c ? CALL_COLORS[c.kind || 'other'] || '#E85D04' : '#E85D04'
+  const isOwner = !!c && profile?.id === c.owner_id
 
   return (
-    <div className="min-h-screen px-4 sm:px-8 py-8">
-
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="inline-block w-1 rounded-full flex-shrink-0" style={{ background: '#E85D04', height: 24 }} />
-          <h1 className="font-inter font-black text-paper" style={{ fontSize: 28, letterSpacing: '-0.02em' }}>
-            Open Projects
-          </h1>
-        </div>
-        <p className="font-inter text-muted ml-3" style={{ fontSize: 14 }}>
-          Productions actively looking for Makers — apply to join the crew
-        </p>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 mb-7">
-        <div className="relative">
-          <select
-            value={selectedRole}
-            onChange={(e) => setSelectedRole(e.target.value)}
-            className="font-inter text-sm pl-4 pr-9 py-2.5 rounded-xl appearance-none"
-            style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', color: selectedRole !== 'All roles' ? 'var(--c-text)' : 'var(--c-muted)', cursor: 'pointer', fontSize: 13 }}
-          >
-            {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
-          <svg className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'var(--c-muted-2)' }}>
-            <path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-          </svg>
-        </div>
-
-        <button
-          onClick={() => setRemoteOnly(!remoteOnly)}
-          className="flex items-center gap-2.5 font-inter text-sm px-4 py-2.5 rounded-xl transition-all"
-          style={{ background: 'var(--c-surface)', border: `1px solid ${remoteOnly ? '#E85D04' : 'var(--c-border)'}`, cursor: 'pointer', color: remoteOnly ? 'var(--c-text)' : 'var(--c-muted)', fontSize: 13 }}
-        >
-          <div className="w-8 h-4 rounded-full flex items-center" style={{ backgroundColor: remoteOnly ? '#E85D04' : 'var(--c-border)', padding: '2px' }}>
-            <div className="w-3 h-3 rounded-full transition-transform" style={{ background: 'var(--c-text)', transform: remoteOnly ? 'translateX(16px)' : 'translateX(0)' }} />
-          </div>
-          Remote only
-        </button>
-
-        <span className="font-inter text-muted text-sm ml-auto">{filtered.length} open positions</span>
-      </div>
-
-      {/* Listings */}
-      <div className="flex flex-col gap-4">
-        {filtered.map((job) => {
-          const isApplied = applied.has(job.id)
-          return (
-            <div
-              key={job.id}
-              className="rounded-2xl overflow-hidden"
-              style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}
-            >
-              <div className="p-5 sm:p-6">
-                <div className="flex items-start gap-4">
-
-                  {/* Logo */}
-                  <div className="flex-shrink-0 rounded-xl overflow-hidden" style={{ width: 52, height: 52, border: '1px solid var(--c-border)' }}>
-                    <img src={job.logo} alt={job.brand} className="w-full h-full object-cover" />
-                  </div>
-
-                  {/* Main info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span
-                        className="font-inter font-bold text-white px-2 py-0.5 rounded-md"
-                        style={{ background: TYPE_COLORS[job.type] ?? '#E85D04', fontSize: 10, letterSpacing: '0.04em', textTransform: 'uppercase' }}
-                      >
-                        {job.type}
-                      </span>
-                      {job.remote && (
-                        <span className="font-inter text-xs px-2 py-0.5 rounded-md" style={{ background: 'rgba(5,150,105,0.15)', color: '#34D399', border: '1px solid rgba(5,150,105,0.3)', fontSize: 10 }}>
-                          Remote
-                        </span>
-                      )}
-                    </div>
-
-                    <h2
-                      className="font-inter font-bold text-paper mb-0.5 cursor-pointer hover:text-orange transition-colors"
-                      style={{ fontSize: 16 }}
-                      onClick={() => setActiveModal(job.id)}
-                    >
-                      {job.title}
-                    </h2>
-                    <p className="font-inter text-muted text-sm">{job.brand} · {job.location}</p>
-                  </div>
-
-                  {/* Apply button */}
-                  <button
-                    onClick={() => setApplied((prev) => { const n = new Set(prev); isApplied ? n.delete(job.id) : n.add(job.id); return n })}
-                    className="flex-shrink-0 font-inter font-bold px-5 py-2.5 rounded-xl transition-all hover:opacity-90 hidden sm:block"
-                    style={{
-                      background: isApplied ? 'transparent' : '#E85D04',
-                      border: isApplied ? '1.5px solid #E85D04' : 'none',
-                      color: isApplied ? '#E85D04' : 'white',
-                      cursor: 'pointer',
-                      fontSize: 13,
-                    }}
-                  >
-                    {isApplied ? '✓ Applied' : 'Apply now'}
-                  </button>
-                </div>
-
-                {/* Description */}
-                <p className="font-inter mt-4 leading-relaxed" style={{ fontSize: 13, color: 'rgba(245,240,235,0.6)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {job.description}
-                </p>
-
-                {/* Roles + meta row */}
-                <div className="flex flex-wrap items-center gap-3 mt-4">
-                  <div className="flex flex-wrap gap-1.5">
-                    {job.roles.map((r) => (
-                      <span key={r} className="font-inter text-xs px-2.5 py-1 rounded-lg" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)', color: 'var(--c-text)', fontSize: 11 }}>
-                        {r}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-4 ml-auto">
-                    <span className="font-inter text-muted flex items-center gap-1.5" style={{ fontSize: 12 }}>
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.2" /><path d="M6 3.5V6l1.5 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>
-                      {job.deadline}
-                    </span>
-                    <span className="font-inter font-semibold" style={{ color: '#E85D04', fontSize: 12 }}>{job.budget}</span>
-                    <span className="font-inter text-muted" style={{ fontSize: 12 }}>{job.applicants} applicants</span>
-                    <span className="font-inter text-muted" style={{ fontSize: 11 }}>{job.posted}</span>
-                  </div>
-                </div>
-
-                {/* Mobile apply */}
-                <button
-                  onClick={() => setApplied((prev) => { const n = new Set(prev); isApplied ? n.delete(job.id) : n.add(job.id); return n })}
-                  className="sm:hidden w-full font-inter font-bold py-3 rounded-xl mt-4 transition-all"
-                  style={{
-                    background: isApplied ? 'transparent' : '#E85D04',
-                    border: isApplied ? '1.5px solid #E85D04' : 'none',
-                    color: isApplied ? '#E85D04' : 'white',
-                    cursor: 'pointer',
-                    fontSize: 14,
-                  }}
-                >
-                  {isApplied ? '✓ Applied' : 'Apply now'}
-                </button>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Post a project CTA */}
-      <div
-        className="mt-8 rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6"
-        style={{ background: 'linear-gradient(135deg, rgba(232,93,4,0.12) 0%, rgba(13,10,8,0) 100%)', border: '1px solid rgba(232,93,4,0.25)' }}
-      >
-        <div>
-          <h3 className="font-inter font-black text-paper mb-1" style={{ fontSize: 18 }}>Have a project to crew up?</h3>
-          <p className="font-inter text-muted" style={{ fontSize: 14 }}>Post your production and connect with verified Makers in the Arab world.</p>
-        </div>
-        <button
-          className="flex-shrink-0 font-inter font-bold text-paper px-8 py-3.5 rounded-full hover:opacity-90 transition-all"
-          style={{ background: '#E85D04', border: 'none', cursor: 'pointer', fontSize: 14, whiteSpace: 'nowrap' }}
-        >
-          Post a Project
-        </button>
-      </div>
-
-      {/* Detail modal */}
-      {activeJob && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
-          onClick={() => setActiveModal(null)}
-        >
-          <div
-            className="w-full max-w-2xl rounded-2xl overflow-hidden"
-            style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', maxHeight: '90vh', overflowY: 'auto' }}
-            onClick={(e) => e.stopPropagation()}
-          >
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }} onClick={onClose}>
+      <div className="w-full max-w-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden" style={{ ...box, maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+        {c === undefined ? <Spinner /> : c === null ? (
+          <div className="p-8 flex flex-col gap-4"><span className="font-bold text-lg">{t('الفرصة غير متاحة', 'Opportunity not available')}</span><Btn variant="outline" onClick={onClose}>{t('إغلاق', 'Close')}</Btn></div>
+        ) : (
+          <>
+            <div style={{ height: 4, background: color }} />
             <div className="p-6 sm:p-8">
-              <div className="flex items-start justify-between mb-5">
+              <div className="flex items-start justify-between mb-5 gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-xl overflow-hidden flex-shrink-0" style={{ width: 52, height: 52, border: '1px solid var(--c-border)' }}>
-                    <img src={activeJob.logo} alt={activeJob.brand} className="w-full h-full object-cover" />
-                  </div>
+                  <Avatar url={c.owner?.avatar_url} name={c.owner?.full_name} size={48} rounded={12} />
                   <div>
-                    <span className="font-inter font-bold text-white px-2 py-0.5 rounded-md block mb-1" style={{ background: TYPE_COLORS[activeJob.type] ?? '#E85D04', fontSize: 10, textTransform: 'uppercase', display: 'inline-block' }}>
-                      {activeJob.type}
-                    </span>
-                    <p className="font-inter text-muted text-sm">{activeJob.brand}</p>
+                    {c.kind && <span className="font-bold text-white px-2 py-0.5 rounded-md inline-block mb-1" style={{ background: color, fontSize: 10 }}>{kindLabel(c.kind)}</span>}
+                    <p className="text-sm m-0" style={{ color: 'var(--c-muted)' }}>{c.org || displayName(c.owner)}</p>
                   </div>
                 </div>
-                <button onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--c-muted-2)' }}>
+                <button onClick={onClose} aria-label={t('إغلاق', 'Close')} className="cursor-pointer" style={{ background: 'none', border: 'none', color: 'var(--c-muted)' }}>
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4l12 12M16 4L4 16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
                 </button>
               </div>
 
-              <h2 className="font-inter font-black text-paper mb-2" style={{ fontSize: 20 }}>{activeJob.title}</h2>
-              <div className="flex flex-wrap items-center gap-3 mb-5 text-sm font-inter text-muted">
-                <span>📍 {activeJob.location}</span>
-                <span>⏰ Deadline: {activeJob.deadline}</span>
-                <span className="font-bold" style={{ color: '#E85D04' }}>{activeJob.budget}</span>
+              {c.status !== 'open' && (
+                <div className="mb-4"><Pill tone={c.status === 'pending' ? 'amber' : c.status === 'rejected' ? 'red' : 'neutral'}>
+                  {c.status === 'pending' ? t('بانتظار مراجعة الفريق', 'Waiting for team review') : c.status === 'rejected' ? t('لم تُقبل للنشر', 'Not approved') : t('مغلقة', 'Closed')}
+                </Pill></div>
+              )}
+              {c.status === 'rejected' && c.review_note && isOwner && <div className="mb-4"><Notice tone="error">{c.review_note}</Notice></div>}
+
+              <h2 className="font-black mb-2 mt-0" style={{ fontSize: 22 }}>{c.title}</h2>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-5 text-sm" style={{ color: 'var(--c-muted)' }}>
+                {placeOf(c) && <span>📍 {placeOf(c)}</span>}
+                {c.deadline && <span>⏰ {t('آخر موعد:', 'Deadline:')} {formatDateAr(c.deadline)}</span>}
+                <span className="font-bold" style={{ color: '#E85D04' }}>{c.budget || t('الميزانية حسب الاتفاق', 'Budget open to discuss')}</span>
               </div>
 
-              <p className="font-inter leading-relaxed mb-6" style={{ fontSize: 14, color: 'rgba(245,240,235,0.7)' }}>{activeJob.description}</p>
+              <p dir="auto" className="leading-relaxed mb-6 mt-0 whitespace-pre-line" style={{ fontSize: 14, color: 'var(--c-text-2)' }}>{c.description}</p>
 
-              <div className="mb-6">
-                <p className="font-inter font-semibold text-paper mb-2 text-sm">Roles needed</p>
-                <div className="flex flex-wrap gap-2">
-                  {activeJob.roles.map((r) => (
-                    <span key={r} className="font-inter px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background: 'rgba(232,93,4,0.15)', color: '#E85D04', border: '1px solid rgba(232,93,4,0.3)' }}>{r}</span>
-                  ))}
+              {c.role_ids.length > 0 && (
+                <div className="mb-6">
+                  <p className="font-semibold mb-2 mt-0 text-sm">{t('الأدوار المطلوبة', 'Roles needed')}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {c.role_ids.map((r) => <span key={r} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background: 'rgba(232,93,4,0.15)', color: '#E85D04', border: '1px solid rgba(232,93,4,0.3)' }}>{specName(specialties, r)}</span>)}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="mb-6">
-                <p className="font-inter font-semibold text-paper mb-2 text-sm">Platforms</p>
-                <div className="flex gap-2">
-                  {activeJob.platforms.map((p) => (
-                    <span key={p} className="font-inter px-3 py-1 rounded-lg text-xs font-bold" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)', color: 'var(--c-text)' }}>{p}</span>
-                  ))}
+              {c.owner && (
+                <Link to={`/${c.owner.username}`} className="flex items-center gap-3 p-3 rounded-xl mb-6" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>
+                  <Avatar url={c.owner.avatar_url} name={c.owner.full_name} size={36} />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-semibold">{displayName(c.owner)}</span>
+                    <span className="block text-xs" style={{ color: 'var(--c-muted)' }}>{t('نشر الفرصة', 'Posted this')} · {relativeAr(c.created_at)}</span>
+                  </span>
+                </Link>
+              )}
+
+              {isOwner ? (
+                <div className="flex flex-col gap-3">
+                  <Notice>{t(`وصلك ${c.applicants_count} طلب. تجدهم في صندوق الوارد.`, `You have ${c.applicants_count} application${c.applicants_count === 1 ? '' : 's'}. Find them in your inbox.`)}</Notice>
+                  <div className="flex gap-2">
+                    <Link to="/inbox?tab=calls" className="flex-1 text-center font-bold py-3.5 rounded-xl" style={{ background: '#E85D04', color: '#fff' }}>{t('افتح الطلبات', 'Open applications')}</Link>
+                    {(c.status === 'open' || c.status === 'pending') && <Btn variant="outline" disabled={busy} onClick={close}>{t('أغلق الفرصة', 'Close it')}</Btn>}
+                  </div>
                 </div>
-              </div>
-
-              <button
-                onClick={() => { setApplied((prev) => { const n = new Set(prev); n.has(activeJob.id) ? n.delete(activeJob.id) : n.add(activeJob.id); return n }); setActiveModal(null) }}
-                className="w-full font-inter font-bold text-paper py-4 rounded-xl hover:opacity-90 transition-all"
-                style={{ background: applied.has(activeJob.id) ? 'transparent' : '#E85D04', border: applied.has(activeJob.id) ? '2px solid #E85D04' : 'none', color: applied.has(activeJob.id) ? '#E85D04' : 'white', cursor: 'pointer', fontSize: 15 }}
-              >
-                {applied.has(activeJob.id) ? '✓ Already Applied' : 'Apply for this project'}
-              </button>
+              ) : c.status !== 'open' ? null : applied ? (
+                <div className="w-full text-center font-bold py-4 rounded-xl" style={{ border: '2px solid #E85D04', color: '#E85D04' }}>✓ {t('قدّمت على هذه الفرصة', 'You applied')}</div>
+              ) : !profile ? (
+                <div className="flex flex-col gap-2">
+                  <Link to="/join" className="w-full text-center font-bold py-4 rounded-xl" style={{ background: '#E85D04', color: '#fff' }}>{t('انضم لتقدّم على الفرصة', 'Join to apply')}</Link>
+                  <Link to="/login" className="text-center text-sm" style={{ color: 'var(--c-muted)' }}>{t('عندك حساب؟ سجّل الدخول', 'Have an account? Sign in')}</Link>
+                </div>
+              ) : profile.status !== 'approved' ? (
+                <Notice>{t('يمكنك التقديم بعد موافقة فريق Makers على ملفك.', 'You can apply once the Makers team approves your profile.')}</Notice>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <TextArea rows={3} maxLength={2000} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t('رسالة قصيرة: لماذا أنت مناسب؟ (اختياري)', 'A short note: why are you a fit? (optional)')} />
+                  {error && <Notice tone="error">{error}</Notice>}
+                  <button onClick={apply} disabled={busy} className="w-full font-bold py-4 rounded-xl cursor-pointer disabled:opacity-60" style={{ background: '#E85D04', border: 'none', color: 'white', fontSize: 15 }}>{busy ? t('جارٍ الإرسال…', 'Sending…') : t('قدّم على هذه الفرصة', 'Apply for this project')}</button>
+                  <span className="text-xs text-center" style={{ color: 'var(--c-muted)' }}>{t('يصل طلبك مع رابط صفحتك إلى صاحب الفرصة.', 'Your application goes to the poster with a link to your page.')}</span>
+                </div>
+              )}
             </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default function OpenProjects({ openId }: { openId?: string }) {
+  useLang()
+  const { go } = useRouter()
+  const { profile } = useAuth()
+  const specialties = useSpecialties()
+  const [calls, setCalls] = useState<OpenCall[] | null>(null)
+  const [mine, setMine] = useState<OpenCall[]>([])
+  const [appliedIds, setAppliedIds] = useState<string[]>([])
+  const [role, setRole] = useState<number | 'all'>('all')
+  const [remoteOnly, setRemoteOnly] = useState(false)
+
+  const load = () => {
+    listOpenCalls(100).then(setCalls)
+    if (profile) {
+      supabase.from('open_calls').select(CALL_SELECT).eq('owner_id', profile.id).neq('status', 'open').order('created_at', { ascending: false }).then(({ data }) => setMine((data as unknown as OpenCall[]) || []))
+      supabase.from('open_call_applications').select('call_id').eq('applicant_id', profile.id).then(({ data }) => setAppliedIds(((data as { call_id: string }[]) || []).map((x) => x.call_id)))
+    }
+  }
+  useEffect(load, [profile?.id])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const filtered = (calls || []).filter((c) => (!remoteOnly || c.remote) && (role === 'all' || c.role_ids.includes(role)))
+  const usedRoles = specialties.filter((s) => (calls || []).some((c) => c.role_ids.includes(s.id)))
+  const canPost = profile?.status === 'approved'
+
+  return (
+    <div className="px-4 sm:px-8 py-8">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-block w-1 rounded-full" style={{ background: '#E85D04', height: 24 }} />
+            <h1 className="font-black m-0" style={{ fontSize: 28, letterSpacing: '-0.02em' }}>{t('فرص مفتوحة', 'Open Projects')}</h1>
           </div>
+          <p className="ms-3 m-0" style={{ fontSize: 14, color: 'var(--c-muted)' }}>{t('إنتاجات تبحث عن صنّاع الآن. قدّم وانضم إلى الطاقم.', 'Productions looking for Makers right now. Apply to join the crew.')}</p>
         </div>
+        <Link to={canPost ? '/opportunities/new' : profile ? '/me/status' : '/join'} className="self-start sm:self-auto font-bold px-5 py-2.5 rounded-full text-sm shrink-0" style={{ background: '#E85D04', color: '#fff' }}>+ {t('انشر فرصة', 'Post an opportunity')}</Link>
+      </div>
+
+      {mine.length > 0 && (
+        <div className="mb-8 flex flex-col gap-2">
+          <span className="text-sm font-semibold" style={{ color: 'var(--c-muted)' }}>{t('فرصك غير المنشورة', 'Your unpublished calls')}</span>
+          {mine.map((c) => (
+            <button key={c.id} onClick={() => go(`/opportunities/${c.id}`)} className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-start cursor-pointer" style={{ ...box, color: 'var(--c-text)' }}>
+              <span className="font-semibold text-sm truncate">{c.title}</span>
+              <Pill tone={c.status === 'pending' ? 'amber' : c.status === 'rejected' ? 'red' : 'neutral'}>{c.status === 'pending' ? t('بانتظار المراجعة', 'In review') : c.status === 'rejected' ? t('مرفوضة', 'Rejected') : t('مغلقة', 'Closed')}</Pill>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-3 mb-7">
+        <div className="relative">
+          <select value={role} onChange={(e) => setRole(e.target.value === 'all' ? 'all' : Number(e.target.value))} className="appearance-none text-sm ps-4 pe-9 rounded-xl cursor-pointer" style={{ ...box, height: 42, fontSize: 13, color: role !== 'all' ? 'var(--c-text)' : 'var(--c-muted)' }}>
+            <option value="all">{t('كل الأدوار', 'All roles')}</option>
+            {(usedRoles.length ? usedRoles : specialties).map((s) => <option key={s.id} value={s.id}>{t(s.name_ar || s.name_en, s.name_en)}</option>)}
+          </select>
+        </div>
+        <button onClick={() => setRemoteOnly(!remoteOnly)} className="flex items-center gap-2.5 text-sm px-4 rounded-xl cursor-pointer" style={{ ...box, height: 42, borderColor: remoteOnly ? '#E85D04' : 'var(--c-border)', color: remoteOnly ? 'var(--c-text)' : 'var(--c-muted)', fontSize: 13 }}>
+          <span className="w-8 h-4 rounded-full flex items-center" style={{ backgroundColor: remoteOnly ? '#E85D04' : 'var(--c-border)', padding: 2, justifyContent: remoteOnly ? 'flex-end' : 'flex-start' }}><span className="w-3 h-3 rounded-full" style={{ background: 'var(--c-text)' }} /></span>
+          {t('عن بُعد فقط', 'Remote only')}
+        </button>
+        <span className="text-sm ms-auto" style={{ color: 'var(--c-muted)' }}>{calls ? t(`${filtered.length} فرصة`, `${filtered.length} open`) : ''}</span>
+      </div>
+
+      {!calls ? <Spinner /> : filtered.length === 0 ? (
+        <div className="py-16 text-center rounded-2xl" style={{ ...box, borderStyle: 'dashed' }}>
+          <p className="m-0" style={{ color: 'var(--c-muted)' }}>{calls.length === 0 ? t('لا توجد فرص منشورة الآن. عندك مشروع يحتاج طاقم؟ انشره هنا.', 'No open calls right now. Have a project that needs a crew? Post it here.') : t('لا فرص تطابق الفلتر.', 'No calls match the filter.')}</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {filtered.map((c) => {
+            const applied = appliedIds.includes(c.id)
+            const color = CALL_COLORS[c.kind || 'other'] || '#E85D04'
+            return (
+              <div key={c.id} className="rounded-2xl overflow-hidden" style={box}>
+                <div className="p-5 sm:p-6">
+                  <div className="flex items-start gap-4">
+                    <Avatar url={c.owner?.avatar_url} name={c.owner?.full_name} size={52} rounded={12} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        {c.kind && <span className="font-bold text-white px-2 py-0.5 rounded-md" style={{ background: color, fontSize: 10 }}>{kindLabel(c.kind)}</span>}
+                        {c.remote && <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: 'rgba(5,150,105,0.15)', color: '#34D399', border: '1px solid rgba(5,150,105,0.3)', fontSize: 10 }}>{t('عن بُعد', 'Remote')}</span>}
+                      </div>
+                      <h2 className="font-bold mb-0.5 mt-0 cursor-pointer hover:text-orange transition-colors" style={{ fontSize: 16 }} onClick={() => go(`/opportunities/${c.id}`)}>{c.title}</h2>
+                      <p className="text-sm m-0" style={{ color: 'var(--c-muted)' }}>{[c.org || displayName(c.owner), placeOf(c)].filter(Boolean).join(' · ')}</p>
+                    </div>
+                    <button onClick={() => go(`/opportunities/${c.id}`)} className="hidden sm:block shrink-0 font-bold px-5 py-2.5 rounded-xl cursor-pointer" style={{ background: applied ? 'transparent' : '#E85D04', border: applied ? '1.5px solid #E85D04' : 'none', color: applied ? '#E85D04' : 'white', fontSize: 13 }}>
+                      {applied ? `✓ ${t('قدّمت', 'Applied')}` : t('قدّم الآن', 'Apply now')}
+                    </button>
+                  </div>
+                  <p dir="auto" className="mt-4 mb-0 leading-relaxed" style={{ fontSize: 13, color: 'var(--c-text-2)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.description}</p>
+                  <div className="flex flex-wrap items-center gap-3 mt-4">
+                    <div className="flex flex-wrap gap-1.5">
+                      {c.role_ids.map((r) => <span key={r} className="text-xs px-2.5 py-1 rounded-lg" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)', fontSize: 11 }}>{specName(specialties, r)}</span>)}
+                    </div>
+                    <div className="flex items-center gap-4 ms-auto flex-wrap">
+                      {c.deadline && <span className="flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--c-muted)' }}>⏰ {formatDateAr(c.deadline)}</span>}
+                      <span className="font-semibold" style={{ color: '#E85D04', fontSize: 12 }}>{c.budget || t('حسب الاتفاق', 'Open to discuss')}</span>
+                      <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>{t(`${c.applicants_count} متقدّم`, `${c.applicants_count} applicant${c.applicants_count === 1 ? '' : 's'}`)}</span>
+                      <span style={{ fontSize: 11, color: 'var(--c-muted-2)' }}>{relativeAr(c.created_at)}</span>
+                    </div>
+                  </div>
+                  <button onClick={() => go(`/opportunities/${c.id}`)} className="sm:hidden w-full font-bold py-3 rounded-xl mt-4 cursor-pointer" style={{ background: applied ? 'transparent' : '#E85D04', border: applied ? '1.5px solid #E85D04' : 'none', color: applied ? '#E85D04' : 'white', fontSize: 14 }}>
+                    {applied ? `✓ ${t('قدّمت', 'Applied')}` : t('قدّم الآن', 'Apply now')}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <div className="mt-8 rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6" style={{ background: 'linear-gradient(135deg, rgba(232,93,4,0.12) 0%, rgba(13,10,8,0) 100%)', border: '1px solid rgba(232,93,4,0.25)' }}>
+        <div>
+          <h3 className="font-black mb-1 mt-0" style={{ fontSize: 18 }}>{t('عندك مشروع يحتاج طاقم؟', 'Have a project to crew up?')}</h3>
+          <p className="m-0" style={{ fontSize: 14, color: 'var(--c-muted)' }}>{t('انشر مشروعك وتواصل مع صنّاع موثّقين في العالم العربي.', 'Post your production and connect with reviewed Makers across the Arab world.')}</p>
+        </div>
+        <Link to={canPost ? '/opportunities/new' : profile ? '/me/status' : '/join'} className="shrink-0 font-bold px-8 py-3.5 rounded-full whitespace-nowrap" style={{ background: '#E85D04', color: '#fff', fontSize: 14 }}>{t('انشر فرصة', 'Post a project')}</Link>
+      </div>
+
+      {openId && (
+        <CallDetail
+          id={openId}
+          applied={appliedIds.includes(openId)}
+          onClose={() => { go('/opportunities'); load() }}
+          onApplied={() => setAppliedIds([...appliedIds, openId])}
+        />
       )}
     </div>
   )

@@ -1,5 +1,5 @@
-import { createContext, useContext } from 'react'
+import { useLang as useLangCtx } from './lib/i18n'
 
 export type Lang = 'ar' | 'en'
-export const LangContext = createContext<Lang>('ar')
-export const useLang = () => useContext(LangContext)
+/** Current language code. Thin wrapper over the app-wide language provider. */
+export const useLang = (): Lang => useLangCtx().lang

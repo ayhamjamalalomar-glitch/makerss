@@ -28,6 +28,7 @@
   --c-border-mid: #3D342D;
   --c-muted: #7A6E66;
   --c-muted-2: #5A4E47;
+  --c-text-2: #C8B8A8;
   --c-overlay: rgba(13,10,8,0.85);
   --c-overlay-hard: rgba(13,10,8,0.95);
   --c-shadow: rgba(0,0,0,0.55);
@@ -42,6 +43,7 @@
   --c-border-mid: #C4B5AA;
   --c-muted: #7A6E66;
   --c-muted-2: #9A8E86;
+  --c-text-2: #3D342D;
   --c-overlay: rgba(245,240,235,0.9);
   --c-overlay-hard: rgba(245,240,235,0.98);
   --c-shadow: rgba(0,0,0,0.12);
@@ -71,7 +73,7 @@ html {
 body {
   background-color: var(--c-bg);
   color: var(--c-text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', 'IBM Plex Sans Arabic', sans-serif;
   -webkit-font-smoothing: antialiased;
   margin: 0;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -93,15 +95,21 @@ body {
 }
 
 .font-archivo { font-family: 'Archivo Black', sans-serif; }
-.font-inter { font-family: 'Inter', sans-serif; }
-.font-arabic { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+.font-inter { font-family: 'Inter', 'IBM Plex Sans Arabic', sans-serif; }
+.font-arabic { font-family: 'IBM Plex Sans Arabic', 'Inter', sans-serif; }
+[dir='rtl'] body, [dir='rtl'] .font-inter { font-family: 'IBM Plex Sans Arabic', 'Inter', sans-serif; }
+button { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+::selection { background: rgba(232,93,4,0.35); }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 input, select, textarea {
   background-color: var(--c-surface-alt);
   color: var(--c-text);
   border: 1px solid var(--c-border);
   outline: none;
-  font-family: 'Inter', sans-serif;
+  font-family: inherit;
 }
 input:focus, select:focus, textarea:focus {
   border-color: rgba(232,93,4,0.5);
