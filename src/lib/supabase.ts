@@ -48,6 +48,8 @@ export interface Profile {
   start_year?: number | null
   available?: boolean
   is_featured?: boolean
+  about?: string | null
+  featured_work_ids?: string[]
 }
 
 export interface Specialty {
@@ -60,7 +62,7 @@ export interface Specialty {
 }
 
 export const PUBLIC_PROFILE_COLUMNS =
-  'id, full_name, name_ar, username, account_type, status, role, is_founding, avatar_url, bio, city, country, specialty_ids, other_specialty, content_types, video_length, socials, followers, work_links, invites_remaining, submitted_at, last_active_at, created_at, updated_at, referred_by, start_year, available, is_featured'
+  'id, full_name, name_ar, username, account_type, status, role, is_founding, avatar_url, bio, city, country, specialty_ids, other_specialty, content_types, video_length, socials, followers, work_links, invites_remaining, submitted_at, last_active_at, created_at, updated_at, referred_by, start_year, available, is_featured, about, featured_work_ids'
 
 export interface Work {
   id: string

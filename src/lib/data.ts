@@ -15,6 +15,8 @@ export const PROJECT_KINDS: (Pair & { key: string })[] = [
   { key: 'music-video', ar: 'فيديو كليب', en: 'Music video' },
   { key: 'social', ar: 'محتوى سوشال', en: 'Social content' },
   { key: 'program', ar: 'برنامج', en: 'Show' },
+  { key: 'ai-film', ar: 'فيلم ذكاء اصطناعي', en: 'AI film' },
+  { key: 'ai-video', ar: 'فيديو ذكاء اصطناعي', en: 'AI video' },
   { key: 'other', ar: 'أخرى', en: 'Other' },
 ]
 export const kindLabel = (k: string | null | undefined) => {
@@ -158,5 +160,5 @@ export async function listOpenCalls(limit = 50) {
 
 export const CALL_COLORS: Record<string, string> = {
   commercial: '#E85D04', film: '#2563EB', short: '#0891B2', series: '#9333EA', documentary: '#2563EB',
-  'music-video': '#DC2626', social: '#059669', program: '#D97706', other: '#7A6E66',
+  'music-video': '#DC2626', social: '#059669', program: '#D97706', 'ai-film': '#7C3AED', 'ai-video': '#A855F7', other: '#7A6E66',
 }
