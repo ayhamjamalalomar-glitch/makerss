@@ -10,7 +10,8 @@ import { Btn, Modal, PageShell, PosterFallback, Spinner, VerifiedBadge } from '.
 
 const vimeoId = (url: string) => url.match(/vimeo\.com\/(?:video\/)?(\d{6,})/)?.[1] || null
 
-const isRole = (c: CreditRow, words: string[]) => !!c.role && words.some((w) => c.role!.toLowerCase().includes(w))
+const NOT_DIRECTOR = ['creative', 'art', 'photography', 'casting', 'إبداعي', 'فني', 'تصوير', 'كاستينغ']
+const isRole = (c: CreditRow, words: string[]) => !!c.role && words.some((w) => c.role!.toLowerCase().includes(w)) && !(words === DIRECTOR && NOT_DIRECTOR.some((x) => c.role!.toLowerCase().includes(x)))
 const DIRECTOR = ['مخرج', 'إخراج', 'director']
 const WRITER = ['كاتب', 'كتابة', 'سيناريو', 'writer', 'screenplay', 'script']
 
@@ -60,7 +61,10 @@ export default function TitlePage({ id }: { id: string }) {
   const rest = credits.filter((c) => c !== director && c !== writer).slice(0, 4)
   const yt = p.url ? youtubeId(p.url) : null
   const vm = p.url ? vimeoId(p.url) : null
-  const embed = yt ? `https://www.youtube-nocookie.com/embed/${yt}?autoplay=1&rel=0` : vm ? `https://player.vimeo.com/video/${vm}?autoplay=1` : null
+  const start = p.url ? Number(p.url.match(/[?&#]t=(\d+)/)?.[1] || 0) : 0
+  const embed = yt ? `https://www.youtube-nocookie.com/embed/${yt}?autoplay=1&rel=0${start ? `&start=${start}` : ''}` : vm ? `https://player.vimeo.com/video/${vm}?autoplay=1` : null
+  // Wide frame: a real frame from the video when there is one; otherwise the poster, uncropped, over a blurred copy.
+  const frame = yt ? `https://i.ytimg.com/vi/${yt}/maxresdefault.jpg` : p.thumbnail_url && p.thumbnail_url !== p.thumb_url ? p.thumbnail_url : null
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(`${SITE_URL}/projects/${p.id}`) } catch { /* blocked */ }
@@ -122,15 +126,22 @@ export default function TitlePage({ id }: { id: string }) {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="hidden sm:block shrink-0 relative rounded-xl overflow-hidden" style={{ width: 200, height: 300 }}>
+            <div className="hidden sm:block shrink-0 relative rounded-xl overflow-hidden" style={{ height: 'clamp(240px, 26vw, 380px)', aspectRatio: '2/3' }}>
               {img ? <img src={img} alt={p.title} className="w-full h-full object-cover" /> : <PosterFallback title={p.title} />}
             </div>
-            <div className="flex-1 relative rounded-xl overflow-hidden" style={{ minHeight: 200, maxHeight: 380, aspectRatio: '16/9', background: '#161210' }}>
+            <div className="relative rounded-xl overflow-hidden w-full sm:w-auto sm:h-[clamp(240px,26vw,380px)]" style={{ aspectRatio: '16/9', background: '#161210' }}>
               {playing && embed ? (
                 <iframe src={embed} title={p.title} className="absolute inset-0 w-full h-full" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ border: 0 }} />
               ) : (
                 <button onClick={onPlay} disabled={!p.url} className="absolute inset-0 w-full h-full p-0 group" style={{ border: 'none', background: 'none', cursor: p.url ? 'pointer' : 'default' }}>
-                  {img ? <img src={img} alt="" className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" style={{ objectPosition: 'center 30%' }} /> : <PosterFallback title="" />}
+                  {frame ? (
+                    <img src={frame} alt="" className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" onError={(e) => { if (yt && !e.currentTarget.src.includes('hqdefault')) e.currentTarget.src = `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` }} />
+                  ) : img ? (
+                    <>
+                      <img src={img} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(28px) brightness(0.45)', transform: 'scale(1.15)' }} />
+                      <img src={img} alt="" className="relative h-full mx-auto object-contain" />
+                    </>
+                  ) : <PosterFallback title="" />}
                   <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.35)' }} />
                   {p.url && (
                     <div className="absolute bottom-3 start-4 flex items-center gap-2.5">
