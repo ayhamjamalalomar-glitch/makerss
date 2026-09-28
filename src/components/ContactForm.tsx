@@ -3,11 +3,12 @@ import { supabase, type Profile } from '../lib/supabase'
 import { COUNTRIES, BUDGETS, PROJECT_TYPES, REMOTE, formatDateAr } from '../lib/constants'
 import { isRtl, t } from '../lib/i18n'
 import { useAuth } from '../lib/auth'
+import Link from '../lib/router'
 import { Btn, Chip, Field, Notice, SelectInput, TextArea, TextInput } from './mk'
 import RangeCalendar from './RangeCalendar'
 
 export default function ContactForm({ to, onDone }: { to: Pick<Profile, "id" | "full_name" | "country">; onDone?: () => void }) {
-  const { session } = useAuth()
+  const { session, profile: viewer } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState(session?.user.email || '')
   const [details, setDetails] = useState('')
@@ -63,7 +64,8 @@ export default function ContactForm({ to, onDone }: { to: Pick<Profile, "id" | "
       {sent ? (
         <div className="flex items-center gap-3 px-5 py-4 rounded-xl text-[15px]" style={{ background: 'rgba(74,222,128,0.12)', color: '#86EFAC' }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7" /></svg>
-          {t(`تم إرسال طلبك إلى ${first}`, `Your request was sent to ${first}`)}{start && end ? t(` (من ${formatDateAr(start)} إلى ${formatDateAr(end)})`, ` (${formatDateAr(start)} to ${formatDateAr(end)})`) : ''}{t('. ستصلك الإجابة على بريدك الإلكتروني.', '. The reply will reach your email.')}
+          {t(`تم إرسال طلبك إلى ${first}`, `Your request was sent to ${first}`)}{start && end ? t(` (من ${formatDateAr(start)} إلى ${formatDateAr(end)})`, ` (${formatDateAr(start)} to ${formatDateAr(end)})`) : ''}{viewer?.status === 'approved' ? t('. تجده الآن في رسائلكما، والرد يصلك هناك.', '. It is now in your messages together, and the reply will come there.') : t('. ستصلك الإجابة على بريدك الإلكتروني.', '. The reply will reach your email.')}
+          {viewer?.status === 'approved' && <Link to="/messages" className="ms-auto shrink-0 font-semibold underline">{t('افتح الرسائل', 'Open messages')}</Link>}
         </div>
       ) : (
         <form onSubmit={send} className="flex flex-col gap-4">

@@ -18,6 +18,8 @@ export interface Message {
   body: string
   created_at: string
   read_at: string | null
+  kind?: 'text' | 'collab'
+  ref_id?: string | null
 }
 
 /** Unread direct-message count for the signed-in member, kept live over realtime. */
