@@ -54,7 +54,7 @@ export default function MakersPage() {
   const usedCountries = COUNTRIES.filter((c) => (all || []).some((m) => m.country === c.ar))
 
   return (
-    <div className="px-4 sm:px-8 py-8">
+    <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8">
       <div className="flex items-center gap-2 mb-6">
         <span className="inline-block w-1 rounded-full" style={{ background: '#E85D04', height: 24 }} />
         <h1 className="font-black m-0" style={{ fontSize: 28, letterSpacing: '-0.01em' }}>{t('الصنّاع', 'Makers')}</h1>

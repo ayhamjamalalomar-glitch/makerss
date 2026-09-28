@@ -144,7 +144,8 @@ export default function Header() {
   const ar = lang === 'ar'
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 flex items-center px-4 sm:px-8" style={{ height: 56, background: 'var(--c-overlay)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--c-border)', gap: 10 }}>
+    <header className="fixed top-0 left-0 right-0 z-40" style={{ height: 56, background: 'var(--c-overlay)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--c-border)' }}>
+      <div className="max-w-[1120px] mx-auto w-full h-full flex items-center px-4 sm:px-8" style={{ gap: 10 }}>
       {mobileSearch ? (
         <div className="flex sm:hidden items-center gap-2 w-full">
           <SearchBox autoFocus onDone={() => setMobileSearch(false)} />
@@ -177,6 +178,7 @@ export default function Header() {
           ))}
         </>
       )}
+      </div>
     </header>
   )
 }

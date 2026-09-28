@@ -49,7 +49,7 @@ export default function Footer() {
 
   return (
     <footer style={{ background: 'var(--c-bg)', borderTop: '1px solid var(--c-border)' }}>
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-6 items-start md:items-center px-6 sm:px-10 pt-12 pb-10">
+      <div className="max-w-[1120px] mx-auto flex flex-col md:flex-row gap-6 items-start md:items-center px-6 sm:px-10 pt-12 pb-10">
         <Logo />
         <p style={{ fontSize: 13, color: 'var(--c-muted)', lineHeight: 1.8, maxWidth: 560, margin: 0 }}>
           {t(
@@ -61,7 +61,7 @@ export default function Footer() {
 
       <div style={{ borderTop: '1px dashed var(--c-border)' }} />
 
-      <div className="max-w-7xl mx-auto grid grid-cols-2 md:flex md:flex-row gap-8 md:gap-20 px-6 sm:px-10 py-9">
+      <div className="max-w-[1120px] mx-auto grid grid-cols-2 md:flex md:flex-row gap-8 md:gap-20 px-6 sm:px-10 py-9">
         {columns.map((col) => (
           <div key={col.title} className="flex flex-col gap-3">
             <span style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.13em', color: 'var(--c-muted-2)' }}>{col.title}</span>
@@ -78,7 +78,7 @@ export default function Footer() {
 
       <div style={{ borderTop: '1px dashed var(--c-border)' }} />
 
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-3 px-6 sm:px-10 py-7">
+      <div className="max-w-[1120px] mx-auto flex flex-wrap items-center justify-center gap-3 px-6 sm:px-10 py-7">
         <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label={t('للأعلى', 'Back to top')} style={{ ...iconBtn, opacity: showTop ? 1 : 0.35, pointerEvents: showTop ? 'auto' : 'none' }}>
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
@@ -91,7 +91,7 @@ export default function Footer() {
         </button>
       </div>
 
-      <div className="max-w-7xl mx-auto text-center px-6 sm:px-10 pb-9" style={{ fontSize: 11, color: 'var(--c-muted-2)' }}>
+      <div className="max-w-[1120px] mx-auto text-center px-6 sm:px-10 pb-9" style={{ fontSize: 11, color: 'var(--c-muted-2)' }}>
         © {new Date().getFullYear()} Makers, by intime
       </div>
     </footer>
