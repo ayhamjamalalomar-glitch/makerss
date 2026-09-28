@@ -2,11 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { supabase, PUBLIC_PROFILE_COLUMNS, type Profile } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { t, getLang, isRtl } from '../lib/i18n'
-import { formatDateAr, relativeAr } from '../lib/constants'
+import { t, getLang, isRtl, label } from '../lib/i18n'
+import { BUDGETS, COUNTRIES, PROJECT_TYPES, REMOTE, cityLabel, formatDateAr, relativeAr } from '../lib/constants'
 import { roleLine, useSpecialties } from '../lib/specialties'
 import { splitLinks, type Conversation, type Message } from '../lib/messages'
-import { Avatar, Card, Notice, PageShell, Spinner, VerifiedBadge } from '../components/mk'
+import { Avatar, Btn, Card, Notice, PageShell, Spinner, VerifiedBadge } from '../components/mk'
+import { RequestsInbox } from './InboxPage'
 
 const MUTED = 'var(--c-muted)'
 const readParam = () => new URLSearchParams(window.location.search).get('c')
@@ -23,6 +24,9 @@ export default function MessagesPage() {
   const [convs, setConvs] = useState<Conversation[] | null>(null)
   const [people, setPeople] = useState<Record<string, Profile>>({})
   const [sel, setSel] = useState<string | null>(readParam())
+  const [section, setSection] = useState<'chats' | 'collab'>(() => (new URLSearchParams(window.location.search).get('tab') === 'collab' ? 'collab' : 'chats'))
+  const [pending, setPending] = useState(0)
+  useEffect(() => { supabase.rpc('pending_collab_count').then(({ data }) => setPending(typeof data === 'number' ? data : 0)) }, [section])
   const [unread, setUnread] = useState<Record<string, number>>({})
 
   useEffect(() => {
@@ -98,7 +102,16 @@ export default function MessagesPage() {
         <span className="text-sm" style={{ color: MUTED }}>{t('تحدّث مع باقي أعضاء Makers مباشرة.', 'Talk to other Makers members directly.')}</span>
       </div>
 
-      {convs.length === 0 && !current ? (
+      <div className={`flex gap-1.5 p-1 rounded-full self-start ${current ? 'hidden md:flex' : ''}`} style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>
+        {([['chats', t('المحادثات', 'Conversations')], ['collab', t('طلبات التعاون', 'Collaboration requests')]] as ['chats' | 'collab', string][]).map(([k, l]) => (
+          <button key={k} type="button" onClick={() => setSection(k)} className="flex items-center gap-1.5 text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: section === k ? '#E85D04' : 'transparent', fontWeight: section === k ? 600 : 400, color: section === k ? '#fff' : MUTED }}>
+            {l}
+            {k === 'collab' && pending > 0 && <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold flex items-center justify-center" style={{ background: section === k ? 'rgba(0,0,0,0.3)' : '#E85D04', color: '#fff' }}>{pending}</span>}
+          </button>
+        ))}
+      </div>
+
+      {section === 'collab' ? <RequestsInbox /> : convs.length === 0 && !current ? (
         <Card className="p-10 text-center flex flex-col gap-2">
           <span className="text-lg font-bold">{t('لا توجد محادثات بعد', 'No conversations yet')}</span>
           <span className="text-sm" style={{ color: MUTED }}>{t('افتح صفحة أي عضو في الدليل واضغط «راسِل» لتبدأ محادثة.', 'Open any member page in the directory and tap "Message" to start a conversation.')}</span>
@@ -251,6 +264,9 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
           return (
             <div key={m.id} className="flex flex-col">
               {newDay && <span className="self-center text-[11px] px-3 py-1 rounded-full my-3" style={{ background: 'var(--c-surface-alt)', color: MUTED }}>{formatDateAr(localDay(m.created_at))}</span>}
+              {m.kind === 'collab' && m.ref_id ? (
+                <div className={`flex w-full mt-2 ${mine ? 'justify-end' : 'justify-start'}`}><CollabCard id={m.ref_id} me={me} /></div>
+              ) : (
               <div className={`flex w-full ${mine ? 'justify-end' : 'justify-start'} ${grouped ? '' : 'mt-1.5'}`}>
                 <div
                   className="max-w-[78%] md:max-w-[65%] px-4 py-2.5 text-[15px]"
@@ -269,6 +285,7 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
                   <span className="block text-[10px] mt-1 opacity-70" dir="ltr" style={{ textAlign: mine === rtl ? 'left' : 'right' }}>{timeOf(m.created_at)}</span>
                 </div>
               </div>
+              )}
               {mine && lastMineRead?.id === m.id && m.read_at && <span className="text-[11px] mt-1 self-end" style={{ color: MUTED }}>{t('تمت القراءة', 'Seen')}</span>}
             </div>
           )
@@ -300,5 +317,61 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
         )}
       </div>
     </Card>
+  )
+}
+
+interface Collab { id: string; to_id: string; sender_id: string | null; sender_name: string; project_type: string | null; country: string | null; city: string | null; budget: string | null; start_date: string | null; end_date: string | null; details: string; status: 'new' | 'accepted' | 'declined' | 'expired'; created_at: string }
+
+function CollabCard({ id, me }: { id: string; me: string }) {
+  const [c, setC] = useState<Collab | null | undefined>(undefined)
+  const [busy, setBusy] = useState(false)
+  const load = useCallback(() => {
+    supabase.rpc('collab_card', { p_id: id }).then(({ data }) => setC(((data as Collab[]) || [])[0] || null))
+  }, [id])
+  useEffect(load, [load])
+  if (c === undefined) return <div className="w-full max-w-[420px] h-24 rounded-2xl" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }} />
+  if (!c) return null
+  const incoming = c.to_id === me
+  const respond = async (status: 'accepted' | 'declined') => {
+    setBusy(true)
+    await supabase.from('contact_requests').update({ status, responded_at: new Date().toISOString() }).eq('id', c.id)
+    setBusy(false)
+    load()
+  }
+  const statusLabel = { new: t('بانتظار الرد', 'Awaiting reply'), accepted: t('مقبول', 'Accepted'), declined: t('اعتذر', 'Declined'), expired: t('انتهت مدته', 'Expired') }[c.status]
+  const tone = c.status === 'accepted' ? '#4ADE80' : c.status === 'new' ? '#FDBA74' : 'var(--c-muted)'
+  const place = [cityLabel(c.city), c.country === REMOTE.ar ? t(REMOTE.ar, REMOTE.en) : label(COUNTRIES, c.country)].filter(Boolean).join(t('، ', ', '))
+  return (
+    <div className="w-full max-w-[440px] rounded-2xl overflow-hidden" style={{ background: 'var(--c-surface)', border: '1px solid rgba(232,93,4,0.35)' }}>
+      <div style={{ height: 3, background: '#E85D04' }} />
+      <div className="p-4 flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs font-bold" style={{ color: '#E85D04' }}>🤝 {incoming ? t('طلب تعاون وصلك', 'Collaboration request for you') : t('طلب تعاون أرسلته', 'Collaboration request you sent')}</span>
+          <span className="text-[11px] font-semibold" style={{ color: tone }}>{statusLabel}</span>
+        </div>
+        <span className="text-base font-bold">{c.project_type ? label(PROJECT_TYPES, c.project_type) : t('مشروع', 'Project')}</span>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          {[
+            [t('البدء', 'Start'), formatDateAr(c.start_date) || t('غير محدد', 'Not set')],
+            [t('التسليم', 'Delivery'), formatDateAr(c.end_date) || t('غير محدد', 'Not set')],
+            [t('المكان', 'Location'), place || t('غير محدد', 'Not set')],
+            [t('الميزانية', 'Budget'), label(BUDGETS, c.budget || 'حسب الاتفاق')],
+          ].map(([k, v]) => (
+            <div key={k} className="p-2.5 rounded-xl" style={{ background: 'var(--c-surface-alt)' }}>
+              <span className="block" style={{ color: MUTED }}>{k}</span>
+              <span className="block font-semibold mt-0.5">{v}</span>
+            </div>
+          ))}
+        </div>
+        <p dir="auto" className="m-0 text-sm whitespace-pre-line" style={{ color: 'var(--c-text-2)', lineHeight: 1.8 }}>{c.details}</p>
+        {incoming && c.status === 'new' && (
+          <div className="flex gap-2">
+            <Btn className="!py-2 !px-5 text-[13px]" disabled={busy} onClick={() => respond('accepted')}>{t('قبول', 'Accept')}</Btn>
+            <Btn variant="danger" className="!py-2 !px-5 text-[13px]" disabled={busy} onClick={() => respond('declined')}>{t('اعتذار', 'Decline')}</Btn>
+          </div>
+        )}
+        {incoming && c.status === 'accepted' && <span className="text-xs" style={{ color: MUTED }}>{t('قبلت الطلب. أكمل الحديث هنا في المحادثة.', 'You accepted. Carry on the conversation right here.')}</span>}
+      </div>
+    </div>
   )
 }

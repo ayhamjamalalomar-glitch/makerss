@@ -36,7 +36,7 @@ export default function InboxPage() {
   )
 }
 
-function RequestsInbox() {
+export function RequestsInbox() {
   const { session, loading } = useAuth()
   const { go } = useRouter()
   const [items, setItems] = useState<ContactRequest[] | null>(null)
@@ -93,7 +93,7 @@ function RequestsInbox() {
     <>
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 md:px-2">
         <div className="flex flex-col gap-1.5">
-          <h1 className="m-0 text-[28px] md:text-[32px] font-bold">{t('صندوق الطلبات', 'Requests inbox')}</h1>
+          <h1 className="m-0 text-[28px] md:text-[32px] font-bold">{t('طلبات التعاون', 'Collaboration requests')}</h1>
           <span className="text-sm" style={{ color: 'var(--c-muted)' }}>{newN === 0 ? t('لا توجد طلبات جديدة', 'No new requests') : newN === 1 ? t('لديك طلب جديد واحد', 'You have 1 new request') : newN === 2 ? t('لديك طلبان جديدان', 'You have 2 new requests') : t(`لديك ${newN} طلبات جديدة`, `You have ${newN} new requests`)}</span>
         </div>
         <div className="flex gap-1.5 p-1 rounded-full self-start" style={{ background: 'var(--c-surface-alt)' }}>
