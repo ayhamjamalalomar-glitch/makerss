@@ -36,7 +36,7 @@ export default function TitlesPage() {
           <img src={posterOf(hero)!} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'brightness(0.4)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(13,10,8,0.96) 35%, rgba(13,10,8,0.2) 100%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, var(--c-bg) 0%, transparent 50%)' }} />
-          <div className="relative z-10 flex flex-col justify-end h-full px-4 sm:px-8 pb-10">
+          <div className="relative z-10 flex flex-col justify-end h-full max-w-[1120px] mx-auto w-full px-4 sm:px-8 pb-10">
             <div className="flex items-center gap-2 mb-3">
               <span className="font-bold px-2.5 py-1 rounded-md" style={{ background: '#E85D04', color: 'white', fontSize: 10, letterSpacing: '0.06em' }}>{t('أحدث مشروع', 'Latest')}</span>
               <span style={{ color: 'rgba(245,240,235,0.6)', fontSize: 12 }}>{[kindLabel(hero.kind), hero.year].filter(Boolean).join(' · ')}</span>
@@ -57,13 +57,13 @@ export default function TitlesPage() {
           </div>
         </div>
       ) : (
-        <div className="px-4 sm:px-8 pt-10 flex items-center gap-2">
+        <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-10 flex items-center gap-2">
           <span className="inline-block w-1 rounded-full" style={{ background: '#E85D04', height: 24 }} />
           <h1 className="font-black m-0" style={{ fontSize: 28 }}>{t('المشاريع', 'Projects')}</h1>
         </div>
       )}
 
-      <div className="px-4 sm:px-8 pt-8 pb-4">
+      <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-8 pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
           <div className="flex gap-2 overflow-x-auto flex-1 no-scrollbar">
             <button onClick={() => setKind('all')} className="shrink-0 px-4 py-1.5 rounded-full" style={pill(kind === 'all')}>{t('الكل', 'All')}</button>

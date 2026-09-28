@@ -87,7 +87,7 @@ export default function Landing() {
   const firstSpec = (m: MemberCard) => (m.specialty_ids?.[0] ? specName(specialties, m.specialty_ids[0]) : m.other_specialty || '')
 
   return (
-    <div className="px-4 sm:px-8 py-8 sm:py-10 flex flex-col gap-10 sm:gap-14">
+    <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8 sm:py-10 flex flex-col gap-10 sm:gap-14">
 
       {!!projects?.length && (
         <section>
@@ -101,7 +101,7 @@ export default function Landing() {
       {!!top?.length && (
         <section>
           <SectionHeader title={t(`أفضل ${top.length === 10 ? '١٠' : top.length} صنّاع هذا الأسبوع`, `Top ${top.length} Makers this week`)} onSeeAll={() => go('/makers')} />
-          <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
             {top.map((m, i) => (
               <Link key={m.id} to={`/${m.username}`} className="text-start group">
                 <div className="rounded-xl overflow-hidden relative mb-1.5" style={{ aspectRatio: '2/3', background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>

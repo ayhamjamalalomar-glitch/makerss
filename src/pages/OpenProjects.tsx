@@ -160,7 +160,7 @@ export default function OpenProjects({ openId }: { openId?: string }) {
   const canPost = profile?.status === 'approved'
 
   return (
-    <div className="px-4 sm:px-8 py-8">
+    <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8">
       <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
