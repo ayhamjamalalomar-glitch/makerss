@@ -99,7 +99,7 @@ export default function TitlePage({ id }: { id: string }) {
 
   return (
     <div className="min-h-screen">
-      <div className="px-4 sm:px-8 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid var(--c-border)' }}>
+      <div style={{ borderBottom: '1px solid var(--c-border)' }}><div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-3 flex items-center justify-between">
         <button onClick={() => (window.history.length > 1 ? window.history.back() : go('/projects'))} className="inline-flex items-center gap-2 text-sm cursor-pointer" style={{ background: 'none', border: 'none', padding: 0, color: 'var(--c-muted)' }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="rtl:-scale-x-100"><path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
           {t('رجوع', 'Back')}
@@ -111,7 +111,7 @@ export default function TitlePage({ id }: { id: string }) {
             {copied ? t('تم نسخ الرابط', 'Link copied') : t('مشاركة', 'Share')}
           </button>
         </div>
-      </div>
+      </div></div>
 
       <div className="relative" style={{ background: '#0D0A08' }}>
         {img && (
@@ -119,17 +119,17 @@ export default function TitlePage({ id }: { id: string }) {
             <img src={img} alt="" className="w-full h-full object-cover" style={{ filter: 'blur(40px) brightness(0.3)', transform: 'scale(1.1)' }} />
           </div>
         )}
-        <div className="relative px-4 sm:px-8 pt-6">
+        <div className="relative max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-8">
           <div className="mb-4 pt-4 sm:pt-0">
             <h1 className="font-black leading-none mb-2 mt-0" style={{ fontSize: 'clamp(24px, 4vw, 48px)', letterSpacing: '-0.02em', color: 'white' }}>{p.title}</h1>
             <p className="text-sm m-0" style={{ color: 'rgba(255,255,255,0.6)' }}>{[p.year, kindLabel(p.kind), ...(p.platforms || []).slice(0, 2), p.brand].filter(Boolean).join(' · ')}</p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="hidden sm:block shrink-0 relative rounded-xl overflow-hidden" style={{ height: 'clamp(240px, 26vw, 380px)', aspectRatio: '2/3' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-[27.27fr_72.73fr] gap-3">
+            <div className="hidden sm:block relative rounded-xl overflow-hidden" style={{ aspectRatio: '2/3' }}>
               {img ? <img src={img} alt={p.title} className="w-full h-full object-cover" /> : <PosterFallback title={p.title} />}
             </div>
-            <div className="relative rounded-xl overflow-hidden w-full sm:w-auto sm:h-[clamp(240px,26vw,380px)]" style={{ aspectRatio: '16/9', background: '#161210' }}>
+            <div className="relative rounded-xl overflow-hidden w-full" style={{ aspectRatio: '16/9', background: '#161210' }}>
               {playing && embed ? (
                 <iframe src={embed} title={p.title} className="absolute inset-0 w-full h-full" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ border: 0 }} />
               ) : (
@@ -167,10 +167,10 @@ export default function TitlePage({ id }: { id: string }) {
         </div>
       </div>
 
-      <div className="px-4 sm:px-8 py-6 flex flex-col lg:flex-row gap-6 lg:gap-8">
+      <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8 flex flex-col lg:flex-row gap-8 lg:gap-12">
         <div className="flex-1 min-w-0">
-          {p.description && <p dir="auto" className="leading-relaxed mb-6 mt-0 max-w-2xl whitespace-pre-line" style={{ fontSize: 15, color: 'var(--c-text-2)' }}>{p.description}</p>}
-          <div className="max-w-2xl" style={{ borderTop: '1px solid var(--c-border)' }}>
+          {p.description && <p dir="auto" className="leading-relaxed mb-6 mt-0 whitespace-pre-line" style={{ fontSize: 15, color: 'var(--c-text-2)' }}>{p.description}</p>}
+          <div style={{ borderTop: '1px solid var(--c-border)' }}>
             {director && row(t('إخراج', 'Director'), <CreditName c={director} />)}
             {writer && row(t('كتابة', 'Writer'), <CreditName c={writer} />)}
             {rest.length > 0 && row(t('الطاقم', 'Crew'), rest.map((c, i) => <span key={c.id} className="flex items-center gap-1"><CreditName c={c} />{i < rest.length - 1 && <span style={{ color: 'var(--c-muted)' }}>·</span>}</span>))}
@@ -178,7 +178,7 @@ export default function TitlePage({ id }: { id: string }) {
           </div>
         </div>
 
-        <div className="shrink-0 w-full lg:w-64">
+        <div className="shrink-0 w-full lg:w-72">
           {isOwner && (
             <div className="flex gap-2 mb-4">
               <Link to={`/projects/${p.id}/edit`} className="flex-1 text-center font-bold px-4 py-3 rounded-xl" style={{ background: '#E85D04', color: '#fff', fontSize: 14 }}>{t('تعديل', 'Edit')}</Link>
@@ -206,7 +206,7 @@ export default function TitlePage({ id }: { id: string }) {
       </div>
 
       {credits.length > 0 && (
-        <div id="full-crew" className="px-4 sm:px-8 py-6 sm:py-8" style={{ borderTop: '1px solid var(--c-border)', scrollMarginTop: 70 }}>
+        <div id="full-crew" style={{ borderTop: '1px solid var(--c-border)', scrollMarginTop: 70 }}><div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8">
           <h2 className="font-bold flex items-center gap-2 mt-0 mb-6" style={{ fontSize: 20 }}>
             <span className="inline-block w-1 rounded-full" style={{ background: '#E85D04', height: 22 }} />
             {t('الطاقم الكامل', 'Full crew')}
@@ -236,7 +236,7 @@ export default function TitlePage({ id }: { id: string }) {
               )
             })}
           </div>
-        </div>
+        </div></div>
       )}
 
       {confirm && (
