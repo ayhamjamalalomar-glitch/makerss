@@ -181,7 +181,6 @@ export default function OpenProjects({ openId }: { openId?: string }) {
     <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8">
       <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <span className="font-mono text-[11px] tracking-[0.2em] block mb-2" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>CALL SHEETS</span>
           <h1 className="font-display font-black m-0 mb-2" style={{ fontSize: 'clamp(34px, 5vw, 58px)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>{t('فرص مفتوحة', 'Open calls')}</h1>
           <p className="m-0" style={{ fontSize: 15, color: 'var(--c-muted)' }}>{t('إنتاجات تبحث عن صنّاع الآن. قدّم وانضم إلى الطاقم.', 'Productions looking for Makers right now. Apply to join the crew.')}</p>
         </div>
@@ -225,12 +224,9 @@ export default function OpenProjects({ openId }: { openId?: string }) {
             const color = CALL_COLORS[c.kind || 'other'] || 'var(--c-accent)'
             return (
               <motion.div key={c.id} initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.45 }} className="rounded-2xl overflow-hidden transition-colors hover:border-[color:var(--c-border-mid)]" style={box}>
-                <div className="flex items-center justify-between px-5 sm:px-6 py-2.5 font-mono text-[10.5px] tracking-wider" style={{ background: 'var(--c-surface-alt)', borderBottom: '1px dashed var(--c-border-mid)', color: 'var(--c-muted)' }}>
-                  <span dir="ltr">CALL SHEET · {c.id.slice(0, 4).toUpperCase()}</span>
-                  <span className="flex items-center gap-2" style={{ color: 'var(--c-accent)' }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
-                    {kindLabel(c.kind) || t('مشروع', 'Project')}
-                  </span>
+                <div className="flex items-center gap-2 px-5 sm:px-6 py-2.5 text-[12px] font-medium" style={{ background: 'var(--c-surface-alt)', borderBottom: '1px dashed var(--c-border-mid)', color: 'var(--c-accent)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
+                  {kindLabel(c.kind) || t('مشروع', 'Project')}
                 </div>
                 <div className="p-5 sm:p-6">
                   <div className="flex items-start gap-4">

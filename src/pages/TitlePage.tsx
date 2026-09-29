@@ -224,7 +224,6 @@ export default function TitlePage({ id }: { id: string }) {
         <div id="full-crew" style={{ borderTop: '1px solid var(--c-border)', scrollMarginTop: 70, background: 'var(--c-screen)', color: '#F3EFE7' }}>
           <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-16 grid grid-cols-1 md:grid-cols-[260px_1fr] gap-10 md:gap-16 items-start">
             <div className="flex flex-col gap-2 md:sticky md:top-24">
-              <span className="font-mono text-[11px] tracking-[0.3em]" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>FULL CREW</span>
               <h2 className="font-display font-bold m-0" style={{ fontSize: 'clamp(26px, 3vw, 36px)', lineHeight: 1.15 }}>{t('الطاقم الكامل', 'Full crew')}</h2>
               <span className="text-[13px]" style={{ color: 'rgba(243,239,231,0.5)' }}>{t(`${credits.length} في الطاقم`, `${credits.length} credited`)}</span>
             </div>

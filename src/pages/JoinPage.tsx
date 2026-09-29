@@ -83,7 +83,6 @@ export default function JoinPage() {
   return (
     <DarkCard>
       <div className="flex flex-col gap-2.5">
-        <span className="font-mono text-[11px] tracking-[0.2em]" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>CASTING · NEW PAGE</span>
         <h1 className="m-0 text-[30px] md:text-[38px] font-black" style={{ lineHeight: 1.2 }}>{t('لنبدأ بصفحتك', 'Let\'s start your page')}</h1>
         <p className="m-0 text-sm" style={{ color: 'var(--c-muted)' }}>{t('معلومات قليلة فقط، والباقي تكمله داخل صفحتك.', 'Just a few details. You finish the rest inside your page.')}</p>
       </div>

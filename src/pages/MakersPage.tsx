@@ -110,7 +110,6 @@ export default function MakersPage() {
   return (
     <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8">
       <div className="flex flex-col gap-2 mb-8 pt-4">
-        <span className="font-mono text-[11px] tracking-[0.2em]" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>CASTING · {String(all?.length ?? 0).padStart(2, '0')}</span>
         <h1 className="font-display font-black m-0" style={{ fontSize: 'clamp(34px, 5vw, 58px)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>{t('الصنّاع', 'Makers')}</h1>
         <p className="m-0 text-[15px] max-w-[560px]" style={{ color: 'var(--c-muted)', lineHeight: 1.8 }}>{t('اعثر على من يصنع الصورة: مخرجون، مصوّرون، مونتيرون، وصنّاع محتوى من كل العالم العربي.', 'Find the people who make the image: directors, cinematographers, editors and creators across the Arab world.')}</p>
       </div>

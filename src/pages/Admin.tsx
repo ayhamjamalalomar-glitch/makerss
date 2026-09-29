@@ -108,7 +108,7 @@ export default function Admin() {
   return (
     <Wrap>
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-        <PageHeader label="CONTROL ROOM" title="لوحة الإدارة" sub={`${profile.full_name} · ${ROLE[profile.role]}`} />
+        <PageHeader title="لوحة الإدارة" sub={`${profile.full_name} · ${ROLE[profile.role]}`} />
         <div className="flex gap-1 p-1 rounded-full overflow-x-auto self-start max-w-full" style={{ background: 'var(--c-surface-alt)' }}>
           {tabs.map(([k, l, n]) => (
             <button key={k} type="button" onClick={() => setTab(k)} className="flex items-center gap-1.5 whitespace-nowrap text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: tab === k ? 'var(--c-accent)' : 'transparent', fontWeight: tab === k ? 600 : 400, color: tab === k ? 'var(--c-on-accent)' : MUTED }}>

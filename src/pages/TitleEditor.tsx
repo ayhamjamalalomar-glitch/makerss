@@ -154,7 +154,7 @@ export default function TitleEditor({ id }: { id?: string }) {
 
   return (
     <PageShell narrow>
-      <PageHeader label={id ? 'RE-EDIT' : 'NEW PRODUCTION'} title={id ? t('تعديل المشروع', 'Edit project') : t('أضف مشروعاً', 'Add a project')} sub={t('أضف عملاً شاركت فيه، وسمِّ باقي الطاقم ليظهر المشروع في صفحاتهم أيضاً.', 'Add work you were part of, and tag the rest of the crew so it shows on their pages too.')} />
+      <PageHeader title={id ? t('تعديل المشروع', 'Edit project') : t('أضف مشروعاً', 'Add a project')} sub={t('أضف عملاً شاركت فيه، وسمِّ باقي الطاقم ليظهر المشروع في صفحاتهم أيضاً.', 'Add work you were part of, and tag the rest of the crew so it shows on their pages too.')} />
 
       <form onSubmit={save} className="flex flex-col gap-5">
         <div className="p-5 rounded-2xl flex flex-col sm:flex-row gap-5" style={card}>

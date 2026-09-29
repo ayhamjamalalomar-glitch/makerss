@@ -70,7 +70,7 @@ export default function OpenCallEditor() {
 
   return (
     <PageShell narrow>
-      <PageHeader label="CALL SHEET · DRAFT" title={t('انشر فرصة', 'Post an opportunity')} sub={t('مشروع يحتاج طاقم؟ اكتب التفاصيل، ويراجعها فريقنا قبل النشر.', 'A project that needs a crew? Add the details and our team reviews it before it goes live.')} />
+      <PageHeader title={t('انشر فرصة', 'Post an opportunity')} sub={t('مشروع يحتاج طاقم؟ اكتب التفاصيل، ويراجعها فريقنا قبل النشر.', 'A project that needs a crew? Add the details and our team reviews it before it goes live.')} />
 
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div className="p-5 rounded-2xl flex flex-col gap-4" style={card}>

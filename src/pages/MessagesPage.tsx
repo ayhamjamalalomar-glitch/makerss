@@ -99,7 +99,7 @@ export default function MessagesPage() {
   return (
     <PageShell>
       <div className={current ? 'hidden md:block' : ''}>
-        <PageHeader label="WALKIE TALKIE" title={t('الرسائل', 'Messages')} sub={t('تحدّث مع باقي أعضاء Makers مباشرة.', 'Talk to other Makers members directly.')} />
+        <PageHeader title={t('الرسائل', 'Messages')} sub={t('تحدّث مع باقي أعضاء Makers مباشرة.', 'Talk to other Makers members directly.')} />
       </div>
 
       <div className={`flex gap-1.5 p-1 rounded-full self-start ${current ? 'hidden md:flex' : ''}`} style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>

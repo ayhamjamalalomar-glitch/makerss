@@ -121,7 +121,7 @@ export default function EditorPage() {
   return (
     <>
       <PageShell>
-        <PageHeader label="EDIT SUITE" title={t('صفحتي', 'My page')} sub={t('هنا تبني صفحتك في الدليل: الصورة، التخصص، النبذة، والأعمال.', 'Build your directory page here: photo, role, bio and work.')} />
+        <PageHeader title={t('صفحتي', 'My page')} sub={t('هنا تبني صفحتك في الدليل: الصورة، التخصص، النبذة، والأعمال.', 'Build your directory page here: photo, role, bio and work.')} />
         <div className="flex flex-wrap justify-between items-center gap-3 md:px-2">
           <span className="flex flex-wrap items-center gap-2.5">
             <button type="button" onClick={() => setModal('username')} className="mono text-xs bg-transparent border-0 p-0 cursor-pointer flex items-center gap-1.5" style={{ color: 'var(--c-muted)' }} dir="ltr">
@@ -268,13 +268,10 @@ export default function EditorPage() {
         </div>
         {/* the five steps as clips on an edit timeline, with a playhead at the current point */}
         <div className="relative pt-3" dir="ltr">
-          <div className="flex justify-between font-mono text-[9px] mb-1.5" style={{ color: 'var(--c-muted-2)' }}>
-            {['00:00', '00:12', '00:24', '00:36', '00:48', '01:00'].map((x) => <span key={x}>{x}</span>)}
-          </div>
           <div className="relative grid grid-cols-5 gap-1" dir={isRtl() ? 'rtl' : 'ltr'}>
             {progress.steps.map((s, i) => (
               <button key={s.key} type="button" onClick={() => openFor(s.key)} className="h-12 md:h-[54px] rounded-md text-[11px] md:text-xs cursor-pointer flex flex-col items-start justify-center gap-0.5 px-2 md:px-3 text-start transition-colors" style={s.done ? { background: 'rgba(var(--c-accent-rgb),0.22)', color: 'var(--c-text)', border: '1px solid rgba(var(--c-accent-rgb),0.55)', borderTopWidth: 3, fontWeight: 600 } : { background: 'var(--c-surface-alt)', color: 'var(--c-muted)', border: '1px dashed var(--c-border-mid)' }}>
-                <span className="hidden md:inline font-mono text-[10px]" style={{ color: 'var(--c-muted)' }} dir="ltr">CLIP {String(i + 1).padStart(2, '0')}</span>
+                <span className="hidden md:inline text-[10px]" style={{ color: 'var(--c-muted)' }}>{t('الخطوة', 'Step')} {i + 1}</span>
                 {s.label}
               </button>
             ))}

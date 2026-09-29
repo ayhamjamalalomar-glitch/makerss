@@ -17,9 +17,9 @@ function CallSheet({ c }: { c: OpenCall }) {
   const specialties = useSpecialties()
   return (
     <Link to={`/opportunities/${c.id}`} className="group shrink-0 flex flex-col rounded-2xl overflow-hidden transition-transform duration-300 hover:-translate-y-1" style={{ width: 280, background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
-      <div className="flex items-center justify-between px-4 py-2.5 font-mono text-[10.5px] tracking-wider" style={{ background: 'var(--c-surface-alt)', borderBottom: '1px dashed var(--c-border-mid)', color: 'var(--c-muted)' }}>
-        <span dir="ltr">CALL SHEET</span>
-        <span style={{ color: 'var(--c-accent)' }}>{kindLabel(c.kind) || t('مشروع', 'Project')}</span>
+      <div className="flex items-center gap-2 px-4 py-2.5 text-[12px] font-medium" style={{ background: 'var(--c-surface-alt)', borderBottom: '1px dashed var(--c-border-mid)', color: 'var(--c-accent)' }}>
+        <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--c-accent)' }} />
+        {kindLabel(c.kind) || t('مشروع', 'Project')}
       </div>
       <div className="p-4 flex flex-col gap-3 flex-1">
         <p className="font-display font-bold leading-snug m-0 transition-colors group-hover:text-[color:var(--c-accent)]" style={{ fontSize: 16 }}>{c.title}</p>
@@ -75,17 +75,13 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
       <div className="relative z-[5] max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-28 pb-28 md:pb-20 flex flex-col" style={{ minHeight: 'min(92vh, 860px)' }}>
         <div className="flex items-center justify-between">
           <RecBadge light />
-          <span className="font-mono text-[11px] tracking-wider hidden sm:inline" dir="ltr" style={{ color: 'rgba(243,239,231,0.55)' }}>24 FPS · 2.39:1 · MAKERS</span>
         </div>
 
         <div className="relative flex-1 flex flex-col justify-center py-10">
           <Corners size={26} inset={-2} color="rgba(243,239,231,0.35)" w={1.5} />
           <div className="px-5 sm:px-10 py-8 flex flex-col gap-6 max-w-[860px]">
-            <motion.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.6 }} className="font-display font-medium text-[14px]" style={{ color: 'var(--c-accent)' }}>
-              {t('دليل صنّاع الإنتاج في العالم العربي', 'The production talent directory of the Arab world')}
-            </motion.span>
             <h1 className="font-display font-black m-0" style={{ fontSize: 'clamp(40px, 7.4vw, 96px)', lineHeight: 1.05, letterSpacing: '-0.02em' }}>
-              {[t('كل صورة رأيتها', 'Every image you have seen'), t('صنعها أحد.', 'was made by someone.')].map((line, i) => (
+              {[t('دليل صنّاع الإنتاج', 'Arab World'), t('في العالم العربي', 'Production Directory')].map((line, i) => (
                 <span key={i} className="block overflow-hidden pb-[0.08em]">
                   <motion.span className="block" style={{ color: i === 1 ? 'var(--c-accent)' : undefined }} initial={{ y: '105%' }} animate={{ y: 0 }} transition={{ delay: 0.75 + i * 0.14, duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}>
                     {line}
@@ -159,7 +155,6 @@ export default function Landing() {
   const audience = (members || []).filter((m) => totalFollowers(m) > 0).sort((a, b) => totalFollowers(b) - totalFollowers(a)).slice(0, 8)
   const creators = (members || []).filter(isCreator)
   const approved = profile?.status === 'approved'
-  let scene = 0
 
   return (
     <div className="flex flex-col">
@@ -167,7 +162,7 @@ export default function Landing() {
 
       <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-6 pb-10 flex flex-col gap-16 sm:gap-20">
         <section>
-          <SceneHeader n={++scene} title={t('جديد على Makers', 'New on Makers')} sub={t('آخر ما أضافه الصنّاع إلى أعمالهم.', 'The latest work makers added.')} to="/projects" />
+          <SceneHeader title={t('جديد على Makers', 'New on Makers')} sub={t('آخر ما أضافه الصنّاع إلى أعمالهم.', 'The latest work makers added.')} to="/projects" />
           {projects === null ? (
             <div className="flex gap-3.5 overflow-hidden">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="shrink-0" style={{ width: 180, aspectRatio: '2/3' }} />)}</div>
           ) : (
@@ -182,9 +177,7 @@ export default function Landing() {
         </section>
 
         <section>
-          <SceneHeader
-            n={++scene}
-            title={top?.ranked ? t('الأكثر نشاطاً هذا الأسبوع', 'Most active this week') : t('صنّاع على Makers', 'Makers to know')}
+          <SceneHeader title={top?.ranked ? t('الأكثر نشاطاً هذا الأسبوع', 'Most active this week') : t('صنّاع على Makers', 'Makers to know')}
             sub={top?.ranked ? t('ترتيب تلقائي حسب النشاط خلال سبعة أيام.', 'Ranked automatically by activity over seven days.') : undefined}
             to="/makers"
           />
@@ -199,7 +192,7 @@ export default function Landing() {
 
         {creators.length > 0 && (
           <section>
-            <SceneHeader n={++scene} title={t('صنّاع المحتوى', 'Content creators')} sub={t('وجوه وأصوات تصنع جمهورها بنفسها.', 'Voices who build their own audience.')} to="/makers?type=creator" />
+            <SceneHeader title={t('صنّاع المحتوى', 'Content creators')} sub={t('وجوه وأصوات تصنع جمهورها بنفسها.', 'Voices who build their own audience.')} to="/makers?type=creator" />
             <Rail label={t('صنّاع المحتوى', 'Content creators')} itemWidth={200}>
               {creators.map((m) => <CastCard key={m.id} m={m} specialties={specialties} width={200} />)}
             </Rail>
@@ -207,7 +200,7 @@ export default function Landing() {
         )}
 
         <section>
-          <SceneHeader n={++scene} title={t('فرص مفتوحة', 'Open calls')} sub={t('إنتاجات تبحث عن طاقم الآن. قدّم وانضم إلى التصوير.', 'Productions looking for crew right now. Apply and join the shoot.')} to="/opportunities" />
+          <SceneHeader title={t('فرص مفتوحة', 'Open calls')} sub={t('إنتاجات تبحث عن طاقم الآن. قدّم وانضم إلى التصوير.', 'Productions looking for crew right now. Apply and join the shoot.')} to="/opportunities" />
           {calls && calls.length > 0 ? (
             <Rail label={t('فرص مفتوحة', 'Open calls')} itemWidth={280}>
               {calls.map((c) => <CallSheet key={c.id} c={c} />)}
@@ -215,7 +208,6 @@ export default function Landing() {
           ) : calls ? (
             <div className="relative rounded-2xl p-7 md:p-9 flex flex-col md:flex-row md:items-center justify-between gap-5 overflow-hidden" style={{ background: 'var(--c-surface)', border: '1px dashed var(--c-border-mid)' }}>
               <div className="flex flex-col gap-1.5">
-                <span className="font-mono text-[11px] tracking-wider" dir="ltr" style={{ color: 'var(--c-muted)', textAlign: 'start' }}>CALL SHEET · 00</span>
                 <span className="font-display font-bold text-lg">{t('لا توجد فرص منشورة الآن.', 'No open calls right now.')}</span>
                 <span className="text-sm" style={{ color: 'var(--c-muted)' }}>{t('عندك مشروع يحتاج طاقم؟ انشره ويصل إلى صنّاع موثّقين.', 'Have a project that needs a crew? Post it and reach reviewed makers.')}</span>
               </div>
@@ -226,7 +218,7 @@ export default function Landing() {
 
         {audience.length > 0 && (
           <section>
-            <SceneHeader n={++scene} title={t('أكبر الجماهير', 'Biggest audiences')} to="/makers?sort=audience" />
+            <SceneHeader title={t('أكبر الجماهير', 'Biggest audiences')} to="/makers?sort=audience" />
             <Rail label={t('أكبر الجماهير', 'Biggest audiences')} itemWidth={150}>
               {audience.map((m) => (
                 <Link key={m.id} to={`/${m.username}`} className="group shrink-0 flex flex-col items-center gap-3 p-5 rounded-2xl text-center transition-colors hover:border-[color:var(--c-accent)]" style={{ width: 150, background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
@@ -246,10 +238,7 @@ export default function Landing() {
         )}
 
         <section className="relative py-6">
-          <span className="flex items-center gap-2.5" style={{ color: 'var(--c-accent)' }}>
-            <span className="font-mono text-[11px] tracking-[0.18em]" dir="ltr">SC.{String(++scene).padStart(2, '0')}</span>
-            <span className="text-[13px] font-medium">{t('من هي Makers؟', 'Who is Makers?')}</span>
-          </span>
+          <span className="text-[14px] font-medium" style={{ color: 'var(--c-accent)' }}>{t('من هي Makers؟', 'Who is Makers?')}</span>
           <ScrollLitText
             className="font-display font-bold m-0 mt-5"
             style={{ fontSize: 'clamp(26px, 4.2vw, 52px)', lineHeight: 1.35, letterSpacing: '-0.01em' }}
@@ -266,7 +255,6 @@ export default function Landing() {
             <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 55% 80% at 85% 50%, rgba(var(--c-accent-rgb),0.2), transparent 70%)' }} />
             <div className="relative px-7 md:px-12 py-14 md:py-16 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
               <div className="flex flex-col gap-5 max-w-[640px]">
-              <span className="font-mono text-[11px] tracking-[0.2em]" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>CASTING CALL · FOUNDING MEMBERS</span>
               <h2 className="font-display font-black m-0" style={{ fontSize: 'clamp(28px, 4.2vw, 50px)', lineHeight: 1.15 }}>
                 {t('نحن في البداية. كن من الأسماء الأولى.', "We're just getting started. Be one of the first names.")}
               </h2>

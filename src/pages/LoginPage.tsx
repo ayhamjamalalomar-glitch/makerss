@@ -58,7 +58,6 @@ export default function LoginPage() {
   return (
     <DarkCard>
       <div className="flex flex-col gap-2.5">
-        <span className="font-mono text-[11px] tracking-[0.2em]" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>BACKSTAGE</span>
         <h1 className="m-0 text-[30px] md:text-[38px] font-black" style={{ lineHeight: 1.2 }}>{title}</h1>
       </div>
       <form onSubmit={submit} className="flex flex-col gap-6">

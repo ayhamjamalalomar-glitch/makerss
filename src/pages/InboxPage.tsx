@@ -27,7 +27,7 @@ export default function InboxPage() {
   const pick = (k: Section) => { setSection(k); window.history.replaceState(null, '', k === 'calls' ? '/inbox?tab=calls' : '/inbox') }
   return (
     <PageShell>
-      <PageHeader label="DAILIES" title={t('الوارد', 'Inbox')} sub={t('طلبات التعاون التي وصلتك، والمتقدّمون على فرصك.', 'Collaboration requests for you, and applicants on your calls.')} />
+      <PageHeader title={t('الوارد', 'Inbox')} sub={t('طلبات التعاون التي وصلتك، والمتقدّمون على فرصك.', 'Collaboration requests for you, and applicants on your calls.')} />
       <div className="flex gap-1.5 p-1 rounded-full self-start" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>
         {([['requests', t('طلبات التعاون', 'Collaboration requests')], ['calls', t('الفرص والمتقدّمون', 'Open calls & applicants')]] as [Section, string][]).map(([k, l]) => (
           <button key={k} type="button" onClick={() => pick(k)} className="text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: section === k ? 'var(--c-accent)' : 'transparent', fontWeight: section === k ? 600 : 400, color: section === k ? 'var(--c-on-accent)' : 'var(--c-muted)' }}>{l}</button>

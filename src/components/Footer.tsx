@@ -48,7 +48,6 @@ export default function Footer() {
       <div className="relative max-w-[1120px] mx-auto px-6 sm:px-10 pt-16 pb-40 md:pb-56">
         <div className="grid grid-cols-1 md:grid-cols-[1.3fr_1fr] gap-12 md:gap-20">
           <div className="flex flex-col gap-6">
-            <span className="font-mono text-[11px] tracking-[0.3em]" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>FADE OUT.</span>
             <Logo size="md" />
             <p className="m-0 max-w-[460px] text-[14px]" style={{ lineHeight: 1.9, color: 'var(--c-muted)' }}>
               {t(
@@ -80,7 +79,6 @@ export default function Footer() {
                 <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden><path d="M13.5 9A6 6 0 0 1 7 2.5a6 6 0 1 0 6.5 6.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               )}
             </button>
-            <span className="font-mono text-[11px] tracking-[0.4em] ps-2" dir="ltr" style={{ color: 'var(--c-muted)' }}>FIN</span>
           </div>
         </div>
       </div>

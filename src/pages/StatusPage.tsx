@@ -32,14 +32,14 @@ export default function StatusPage() {
       {profile.status === 'pending' && (
         <>
           <div className="flex flex-col gap-3 pt-4 md:pt-8">
-            <span className="flex items-center gap-3"><span className="font-mono text-[11px] tracking-[0.2em]" dir="ltr" style={{ color: 'var(--c-accent)' }}>POST-PRODUCTION</span><Pill tone="blue">{t('قيد المراجعة', 'In review')}</Pill></span>
+            <span><Pill tone="blue">{t('قيد المراجعة', 'In review')}</Pill></span>
             <h1 className="m-0 text-[30px] md:text-[40px] font-bold" style={{ lineHeight: 1.3 }}>{t('وصلت صفحتك إلى فريق Makers', 'Your page reached the Makers team')}</h1>
             <p className="m-0 text-base" style={{ lineHeight: 1.9, color: 'var(--c-text-2)' }}>{t('نراجع كل صفحة بعناية حتى يبقى الدليل موثوقاً. سنرسل لك رسالة على بريدك الإلكتروني فور صدور القرار.', 'We review every page carefully so the directory stays trustworthy. We will email you as soon as there is a decision.')}</p>
           </div>
           <Card className="px-6 py-6 md:px-8 flex flex-col gap-4">
-            <Step state="done" stage="TAKE 01" title={t('أرسلت صفحتك', 'You sent your page')} />
-            <Step state="current" stage="TAKE 02" title={t('مراجعة الفريق', 'Team review')} sub={t('نراجع الصفحات حسب ترتيب وصولها', 'Pages are reviewed in the order they arrive')} />
-            <Step state="todo" stage="TAKE 03" title={t('نشر صفحتك في الدليل', 'Your page goes live in the directory')} />
+            <Step state="done" title={t('أرسلت صفحتك', 'You sent your page')} />
+            <Step state="current" title={t('مراجعة الفريق', 'Team review')} sub={t('نراجع الصفحات حسب ترتيب وصولها', 'Pages are reviewed in the order they arrive')} />
+            <Step state="todo" title={t('نشر صفحتك في الدليل', 'Your page goes live in the directory')} />
           </Card>
           <div className="flex gap-2.5">
             <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: 'var(--c-surface-alt)' }}>{t('معاينة صفحتي', 'Preview my page')}</Link>
@@ -51,7 +51,7 @@ export default function StatusPage() {
       {profile.status === 'approved' && (
         <>
           <div className="flex flex-col gap-3 pt-4 md:pt-8">
-            <span className="flex items-center gap-3"><span className="font-mono text-[11px] tracking-[0.2em]" dir="ltr" style={{ color: 'var(--c-accent)' }}>NOW SHOWING</span><Pill tone="green">{t('منشورة', 'Live')}</Pill></span>
+            <span><Pill tone="green">{t('منشورة', 'Live')}</Pill></span>
             <h1 className="m-0 text-[30px] md:text-[40px] font-bold" style={{ lineHeight: 1.3 }}>{t('أهلاً بك في Makers، صفحتك منشورة', 'Welcome to Makers, your page is live')}</h1>
             <p className="m-0 text-base" style={{ lineHeight: 1.9, color: 'var(--c-text-2)' }}>
               {profile.is_founding ? t('أنت الآن من الأعضاء المؤسسين. ', 'You are now a founding member. ') : ''}{t('شارك رابط صفحتك في حساباتك حتى يصل إليك أصحاب المشاريع.', 'Share your link on your accounts so clients can find you.')}
@@ -80,7 +80,7 @@ export default function StatusPage() {
       {profile.status === 'rejected' && (
         <>
           <div className="flex flex-col gap-3 pt-4 md:pt-8">
-            <span className="flex items-center gap-3"><span className="font-mono text-[11px] tracking-[0.2em]" dir="ltr" style={{ color: 'var(--c-accent)' }}>RESHOOT</span><Pill tone="red">{t('تحتاج تعديلاً', 'Needs changes')}</Pill></span>
+            <span><Pill tone="red">{t('تحتاج تعديلاً', 'Needs changes')}</Pill></span>
             <h1 className="m-0 text-[30px] md:text-[40px] font-bold" style={{ lineHeight: 1.3 }}>{t('لم تُقبل صفحتك هذه المرة', 'Your page was not approved this time')}</h1>
             <p className="m-0 text-base" style={{ lineHeight: 1.9, color: 'var(--c-text-2)' }}>{t('هذا ليس رفضاً نهائياً. عدّل صفحتك حسب ملاحظة الفريق وأرسلها مرة أخرى.', 'This is not final. Update your page based on the team note and send it again.')}</p>
           </div>
@@ -118,7 +118,6 @@ function Step({ state, title, sub, stage }: { state: 'done' | 'current' | 'todo'
       {state === 'current' && <span className="w-7 h-7 rounded-full flex items-center justify-center" style={{ border: '2px solid var(--c-accent)' }}><span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--c-accent)' }} /></span>}
       {state === 'todo' && <span className="w-7 h-7 rounded-full" style={{ border: '2px solid var(--c-border)' }} />}
       <span className="flex flex-col">
-        {stage && <span className="font-mono text-[10px] tracking-[0.18em]" dir="ltr" style={{ color: 'var(--c-muted-2)', textAlign: 'start' }}>{stage}</span>}
         <span className="text-[15px]" style={{ fontWeight: state === 'todo' ? 400 : 600, color: state === 'todo' ? 'var(--c-muted)' : undefined }}>{title}</span>
         {sub && <span className="text-[13px]" style={{ color: 'var(--c-muted)' }}>{sub}</span>}
       </span>
