@@ -28,7 +28,7 @@ export default function InboxPage() {
     <PageShell>
       <div className="flex gap-1.5 p-1 rounded-full self-start" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>
         {([['requests', t('طلبات التعاون', 'Collaboration requests')], ['calls', t('الفرص والمتقدّمون', 'Open calls & applicants')]] as [Section, string][]).map(([k, l]) => (
-          <button key={k} type="button" onClick={() => pick(k)} className="text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: section === k ? '#E85D04' : 'transparent', fontWeight: section === k ? 600 : 400, color: section === k ? '#fff' : 'var(--c-muted)' }}>{l}</button>
+          <button key={k} type="button" onClick={() => pick(k)} className="text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: section === k ? 'var(--c-accent)' : 'transparent', fontWeight: section === k ? 600 : 400, color: section === k ? 'var(--c-on-accent)' : 'var(--c-muted)' }}>{l}</button>
         ))}
       </div>
       {section === 'requests' ? <RequestsInbox /> : <CallsInbox />}
@@ -98,7 +98,7 @@ export function RequestsInbox() {
         </div>
         <div className="flex gap-1.5 p-1 rounded-full self-start" style={{ background: 'var(--c-surface-alt)' }}>
           {([['all', t('الكل', 'All')], ['new', t('جديد', 'New')], ['accepted', t('مقبول', 'Accepted')], ['declined', t('اعتذرت', 'Declined')]] as [Filter, string][]).map(([k, l]) => (
-            <button key={k} type="button" onClick={() => setFilter(k)} className="text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: filter === k ? '#E85D04' : 'transparent', fontWeight: filter === k ? 600 : 400, color: filter === k ? '#fff' : 'var(--c-muted)' }}>{l}</button>
+            <button key={k} type="button" onClick={() => setFilter(k)} className="text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: filter === k ? 'var(--c-accent)' : 'transparent', fontWeight: filter === k ? 600 : 400, color: filter === k ? 'var(--c-on-accent)' : 'var(--c-muted)' }}>{l}</button>
           ))}
         </div>
       </div>
@@ -166,13 +166,13 @@ export function RequestsInbox() {
                         const { data } = await supabase.rpc('start_conversation', { p_other: member })
                         setChatBusy(false)
                         if (data) go(`/messages?c=${data}`)
-                      }} className="flex items-center gap-2 text-sm font-semibold px-6 py-3 rounded-full cursor-pointer disabled:opacity-60" style={{ background: '#E85D04', color: '#fff', border: 'none' }}>
+                      }} className="flex items-center gap-2 text-sm font-semibold px-6 py-3 rounded-full cursor-pointer disabled:opacity-60" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', border: 'none' }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 01-11.6 7.1L4 20l1-4A8 8 0 1120 12z" /></svg>
                         {t('رُدّ برسالة', 'Reply by message')}
                       </button>
                     )}
                     {email && (
-                      <a href={`mailto:${email}?subject=${encodeURIComponent(t('بخصوص طلب التعاون عبر Makers', 'About your collaboration request on Makers'))}`} className="flex items-center gap-2 text-sm font-semibold px-6 py-3 rounded-full" style={member ? { background: 'var(--c-surface)', color: 'var(--c-text)', border: '1px solid var(--c-border-mid)' } : { background: '#E85D04', color: '#fff' }}>
+                      <a href={`mailto:${email}?subject=${encodeURIComponent(t('بخصوص طلب التعاون عبر Makers', 'About your collaboration request on Makers'))}`} className="flex items-center gap-2 text-sm font-semibold px-6 py-3 rounded-full" style={member ? { background: 'var(--c-surface)', color: 'var(--c-text)', border: '1px solid var(--c-border-mid)' } : { background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></svg>
                         {t('رُدّ عبر البريد', 'Reply by email')}
                       </a>
@@ -260,7 +260,7 @@ function CallsInbox() {
           <h1 className="m-0 text-[28px] md:text-[32px] font-bold">{t('الفرص والمتقدّمون', 'Open calls & applicants')}</h1>
           <span className="text-sm" style={{ color: 'var(--c-muted)' }}>{t('الفرص التي نشرتها ومن تقدّم عليها.', 'Calls you posted and who applied.')}</span>
         </div>
-        <Link to="/opportunities/new" className="self-start text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: '#E85D04', color: '#fff' }}>+ {t('انشر فرصة', 'Post an opportunity')}</Link>
+        <Link to="/opportunities/new" className="self-start text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>+ {t('انشر فرصة', 'Post an opportunity')}</Link>
       </div>
 
       {calls.length === 0 ? (
@@ -272,7 +272,7 @@ function CallsInbox() {
         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
           <div className="md:w-[320px] shrink-0 flex flex-col gap-2.5">
             {calls.map((c) => (
-              <button key={c.id} type="button" onClick={() => setSel(c.id)} className="text-start p-5 rounded-2xl cursor-pointer flex flex-col gap-2" style={{ background: 'var(--c-surface)', color: 'var(--c-text)', border: c.id === sel ? '1.5px solid #E85D04' : '1px solid var(--c-border)' }}>
+              <button key={c.id} type="button" onClick={() => setSel(c.id)} className="text-start p-5 rounded-2xl cursor-pointer flex flex-col gap-2" style={{ background: 'var(--c-surface)', color: 'var(--c-text)', border: c.id === sel ? '1.5px solid var(--c-accent)' : '1px solid var(--c-border)' }}>
                 <span className="flex justify-between items-center gap-2"><Pill tone={callTone(c.status)}>{callLabel(c.status)}</Pill><span className="text-xs" style={{ color: 'var(--c-muted)' }}>{relativeAr(c.created_at)}</span></span>
                 <span className="text-base font-bold">{c.title}</span>
                 <span className="text-[13px]" style={{ color: 'var(--c-muted)' }}>{t(`${apps.filter((a) => a.call_id === c.id).length} متقدّم`, `${apps.filter((a) => a.call_id === c.id).length} applicants`)}</span>
@@ -286,7 +286,7 @@ function CallsInbox() {
                   <span><Pill tone={callTone(current.status)}>{callLabel(current.status)}</Pill></span>
                   <span className="text-[22px] font-bold">{current.title}</span>
                 </div>
-                <Link to={`/opportunities/${current.id}`} className="text-xs whitespace-nowrap" style={{ color: '#E85D04' }}>{t('عرض الفرصة', 'View call')}</Link>
+                <Link to={`/opportunities/${current.id}`} className="text-xs whitespace-nowrap" style={{ color: 'var(--c-accent)' }}>{t('عرض الفرصة', 'View call')}</Link>
               </div>
               {current.status === 'rejected' && current.review_note && <div className="px-4 py-3 rounded-xl text-sm" style={{ background: 'rgba(248,113,113,0.12)', color: '#FCA5A5' }}>{current.review_note}</div>}
               {currentApps.length === 0 ? (

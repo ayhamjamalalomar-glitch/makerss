@@ -40,7 +40,7 @@ export default function EmailPrefs({ userId, email }: { userId: string; email?: 
         disabled={on === null || busy}
         onClick={toggle}
         className="shrink-0 w-12 h-7 rounded-full flex items-center cursor-pointer disabled:opacity-60"
-        style={{ border: 'none', padding: 3, background: on ? '#E85D04' : 'var(--c-border-mid)', justifyContent: on ? 'flex-end' : 'flex-start', transition: 'background .2s' }}
+        style={{ border: 'none', padding: 3, background: on ? 'var(--c-accent)' : 'var(--c-border-mid)', justifyContent: on ? 'flex-end' : 'flex-start', transition: 'background .2s' }}
       >
         <span className="w-[22px] h-[22px] rounded-full" style={{ background: '#fff' }} />
       </button>

@@ -31,11 +31,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               className="pointer-events-auto flex items-center gap-2.5 rounded-full px-4 py-2.5 text-[13px] font-semibold max-w-full"
               style={{ background: 'var(--c-surface)', color: 'var(--c-text)', border: '1px solid var(--c-border-mid)', boxShadow: '0 10px 30px var(--c-shadow)' }}
             >
-              <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ background: x.tone === 'error' ? '#F87171' : x.tone === 'info' ? 'var(--c-surface-alt)' : '#E85D04' }}>
+              <span className="w-5 h-5 rounded-full flex items-center justify-center shrink-0" style={{ background: x.tone === 'error' ? '#F87171' : x.tone === 'info' ? 'var(--c-surface-alt)' : 'var(--c-accent)' }}>
                 {x.tone === 'error' ? (
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" /></svg>
                 ) : (
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 5.2l2 2L8 3" stroke={x.tone === 'info' ? 'var(--c-text)' : '#fff'} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 5.2l2 2L8 3" stroke={x.tone === 'info' ? 'var(--c-text)' : 'var(--c-on-accent)'} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 )}
               </span>
               <span dir="auto">{x.text}</span>

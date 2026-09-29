@@ -154,7 +154,7 @@ export default function TitleEditor({ id }: { id?: string }) {
   return (
     <PageShell narrow>
       <div className="flex items-center gap-2">
-        <span className="inline-block w-1 rounded-full" style={{ background: '#E85D04', height: 24 }} />
+        <span className="inline-block w-1 rounded-full" style={{ background: 'var(--c-accent)', height: 24 }} />
         <h1 className="font-black m-0" style={{ fontSize: 26 }}>{id ? t('تعديل المشروع', 'Edit project') : t('أضف مشروعاً', 'Add a project')}</h1>
       </div>
       <p className="m-0 -mt-3 text-sm" style={{ color: 'var(--c-muted)' }}>{t('أضف عملاً شاركت فيه، وسمِّ باقي الطاقم ليظهر المشروع في صفحاتهم أيضاً.', 'Add work you were part of, and tag the rest of the crew so it shows on their pages too.')}</p>

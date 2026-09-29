@@ -48,7 +48,7 @@ function CallDetail({ id, onClose, applied, onApplied }: { id: string; onClose: 
     onClose()
   }
 
-  const color = c ? CALL_COLORS[c.kind || 'other'] || '#E85D04' : '#E85D04'
+  const color = c ? CALL_COLORS[c.kind || 'other'] || 'var(--c-accent)' : 'var(--c-accent)'
   const isOwner = !!c && profile?.id === c.owner_id
 
   return (
@@ -84,7 +84,7 @@ function CallDetail({ id, onClose, applied, onApplied }: { id: string; onClose: 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-5 text-sm" style={{ color: 'var(--c-muted)' }}>
                 {placeOf(c) && <span>📍 {placeOf(c)}</span>}
                 {c.deadline && <span>⏰ {t('آخر موعد:', 'Deadline:')} {formatDateAr(c.deadline)}</span>}
-                <span className="font-bold" style={{ color: '#E85D04' }}>{c.budget ? budgetLabel(c.budget) : t('الميزانية حسب الاتفاق', 'Budget open to discuss')}</span>
+                <span className="font-bold" style={{ color: 'var(--c-accent)' }}>{c.budget ? budgetLabel(c.budget) : t('الميزانية حسب الاتفاق', 'Budget open to discuss')}</span>
               </div>
 
               <p dir="auto" className="leading-relaxed mb-6 mt-0 whitespace-pre-line" style={{ fontSize: 14, color: 'var(--c-text-2)' }}>{c.description}</p>
@@ -93,7 +93,7 @@ function CallDetail({ id, onClose, applied, onApplied }: { id: string; onClose: 
                 <div className="mb-6">
                   <p className="font-semibold mb-2 mt-0 text-sm">{t('الأدوار المطلوبة', 'Roles needed')}</p>
                   <div className="flex flex-wrap gap-2">
-                    {c.role_ids.map((r) => <span key={r} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background: 'rgba(232,93,4,0.15)', color: '#E85D04', border: '1px solid rgba(232,93,4,0.3)' }}>{specName(specialties, r)}</span>)}
+                    {c.role_ids.map((r) => <span key={r} className="px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ background: 'rgba(var(--c-accent-rgb),0.15)', color: 'var(--c-accent)', border: '1px solid rgba(var(--c-accent-rgb),0.3)' }}>{specName(specialties, r)}</span>)}
                   </div>
                 </div>
               )}
@@ -123,15 +123,15 @@ function CallDetail({ id, onClose, applied, onApplied }: { id: string; onClose: 
                 <div className="flex flex-col gap-3">
                   <Notice>{t(`وصلك ${c.applicants_count} طلب. تجدهم في صندوق الوارد.`, `You have ${c.applicants_count} application${c.applicants_count === 1 ? '' : 's'}. Find them in your inbox.`)}</Notice>
                   <div className="flex gap-2">
-                    <Link to="/inbox?tab=calls" className="flex-1 text-center font-bold py-3.5 rounded-xl" style={{ background: '#E85D04', color: '#fff' }}>{t('افتح الطلبات', 'Open applications')}</Link>
+                    <Link to="/inbox?tab=calls" className="flex-1 text-center font-bold py-3.5 rounded-xl" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>{t('افتح الطلبات', 'Open applications')}</Link>
                     {(c.status === 'open' || c.status === 'pending') && <Btn variant="outline" disabled={busy} onClick={close}>{t('أغلق الفرصة', 'Close it')}</Btn>}
                   </div>
                 </div>
               ) : c.status !== 'open' ? null : applied ? (
-                <div className="w-full text-center font-bold py-4 rounded-xl" style={{ border: '2px solid #E85D04', color: '#E85D04' }}>✓ {t('قدّمت على هذه الفرصة', 'You applied')}</div>
+                <div className="w-full text-center font-bold py-4 rounded-xl" style={{ border: '2px solid var(--c-accent)', color: 'var(--c-accent)' }}>✓ {t('قدّمت على هذه الفرصة', 'You applied')}</div>
               ) : !profile ? (
                 <div className="flex flex-col gap-2">
-                  <Link to="/join" className="w-full text-center font-bold py-4 rounded-xl" style={{ background: '#E85D04', color: '#fff' }}>{t('انضم لتقدّم على الفرصة', 'Join to apply')}</Link>
+                  <Link to="/join" className="w-full text-center font-bold py-4 rounded-xl" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>{t('انضم لتقدّم على الفرصة', 'Join to apply')}</Link>
                   <Link to="/login" className="text-center text-sm" style={{ color: 'var(--c-muted)' }}>{t('عندك حساب؟ سجّل الدخول', 'Have an account? Sign in')}</Link>
                 </div>
               ) : profile.status !== 'approved' ? (
@@ -140,7 +140,7 @@ function CallDetail({ id, onClose, applied, onApplied }: { id: string; onClose: 
                 <div className="flex flex-col gap-3">
                   <TextArea rows={3} maxLength={2000} value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={t('رسالة قصيرة: لماذا أنت مناسب؟ (اختياري)', 'A short note: why are you a fit? (optional)')} />
                   {error && <Notice tone="error">{error}</Notice>}
-                  <button onClick={apply} disabled={busy} className="w-full font-bold py-4 rounded-xl cursor-pointer disabled:opacity-60" style={{ background: '#E85D04', border: 'none', color: 'white', fontSize: 15 }}>{busy ? t('جارٍ الإرسال…', 'Sending…') : t('قدّم على هذه الفرصة', 'Apply for this project')}</button>
+                  <button onClick={apply} disabled={busy} className="w-full font-bold py-4 rounded-xl cursor-pointer disabled:opacity-60" style={{ background: 'var(--c-accent)', border: 'none', color: 'var(--c-on-accent)', fontSize: 15 }}>{busy ? t('جارٍ الإرسال…', 'Sending…') : t('قدّم على هذه الفرصة', 'Apply for this project')}</button>
                   <span className="text-xs text-center" style={{ color: 'var(--c-muted)' }}>{t('يصل طلبك مع رابط صفحتك إلى صاحب الفرصة.', 'Your application goes to the poster with a link to your page.')}</span>
                 </div>
               )}
@@ -180,13 +180,11 @@ export default function OpenProjects({ openId }: { openId?: string }) {
     <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8">
       <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-block w-1 rounded-full" style={{ background: '#E85D04', height: 24 }} />
-            <h1 className="font-black m-0" style={{ fontSize: 28, letterSpacing: '-0.02em' }}>{t('فرص مفتوحة', 'Open Projects')}</h1>
-          </div>
-          <p className="ms-3 m-0" style={{ fontSize: 14, color: 'var(--c-muted)' }}>{t('إنتاجات تبحث عن صنّاع الآن. قدّم وانضم إلى الطاقم.', 'Productions looking for Makers right now. Apply to join the crew.')}</p>
+          <span className="font-mono text-[11px] tracking-[0.2em] block mb-2" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>CALL SHEETS</span>
+          <h1 className="font-display font-black m-0 mb-2" style={{ fontSize: 'clamp(34px, 5vw, 58px)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>{t('فرص مفتوحة', 'Open calls')}</h1>
+          <p className="m-0" style={{ fontSize: 15, color: 'var(--c-muted)' }}>{t('إنتاجات تبحث عن صنّاع الآن. قدّم وانضم إلى الطاقم.', 'Productions looking for Makers right now. Apply to join the crew.')}</p>
         </div>
-        <Link to={canPost ? '/opportunities/new' : profile ? '/me/status' : '/join'} className="self-start sm:self-auto font-bold px-5 py-2.5 rounded-full text-sm shrink-0" style={{ background: '#E85D04', color: '#fff' }}>+ {t('انشر فرصة', 'Post an opportunity')}</Link>
+        <Link to={canPost ? '/opportunities/new' : profile ? '/me/status' : '/join'} className="self-start sm:self-auto font-bold px-5 py-2.5 rounded-full text-sm shrink-0" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>+ {t('انشر فرصة', 'Post an opportunity')}</Link>
       </div>
 
       {mine.length > 0 && (
@@ -208,8 +206,8 @@ export default function OpenProjects({ openId }: { openId?: string }) {
             {(usedRoles.length ? usedRoles : specialties).map((s) => <option key={s.id} value={s.id}>{t(s.name_ar || s.name_en, s.name_en)}</option>)}
           </select>
         </div>
-        <button onClick={() => setRemoteOnly(!remoteOnly)} className="flex items-center gap-2.5 text-sm px-4 rounded-xl cursor-pointer" style={{ ...box, height: 42, borderColor: remoteOnly ? '#E85D04' : 'var(--c-border)', color: remoteOnly ? 'var(--c-text)' : 'var(--c-muted)', fontSize: 13 }}>
-          <span className="w-8 h-4 rounded-full flex items-center" style={{ backgroundColor: remoteOnly ? '#E85D04' : 'var(--c-border)', padding: 2, justifyContent: remoteOnly ? 'flex-end' : 'flex-start' }}><span className="w-3 h-3 rounded-full" style={{ background: 'var(--c-text)' }} /></span>
+        <button onClick={() => setRemoteOnly(!remoteOnly)} className="flex items-center gap-2.5 text-sm px-4 rounded-xl cursor-pointer" style={{ ...box, height: 42, borderColor: remoteOnly ? 'var(--c-accent)' : 'var(--c-border)', color: remoteOnly ? 'var(--c-text)' : 'var(--c-muted)', fontSize: 13 }}>
+          <span className="w-8 h-4 rounded-full flex items-center" style={{ backgroundColor: remoteOnly ? 'var(--c-accent)' : 'var(--c-border)', padding: 2, justifyContent: remoteOnly ? 'flex-end' : 'flex-start' }}><span className="w-3 h-3 rounded-full" style={{ background: 'var(--c-text)' }} /></span>
           {t('عن بُعد فقط', 'Remote only')}
         </button>
         <span className="text-sm ms-auto" style={{ color: 'var(--c-muted)' }}>{calls ? t(`${filtered.length} فرصة`, `${filtered.length} open`) : ''}</span>
@@ -223,7 +221,7 @@ export default function OpenProjects({ openId }: { openId?: string }) {
         <div className="flex flex-col gap-4">
           {filtered.map((c) => {
             const applied = appliedIds.includes(c.id)
-            const color = CALL_COLORS[c.kind || 'other'] || '#E85D04'
+            const color = CALL_COLORS[c.kind || 'other'] || 'var(--c-accent)'
             return (
               <div key={c.id} className="rounded-2xl overflow-hidden" style={box}>
                 <div className="p-5 sm:p-6">
@@ -237,7 +235,7 @@ export default function OpenProjects({ openId }: { openId?: string }) {
                       <h2 className="font-bold mb-0.5 mt-0 cursor-pointer hover:text-orange transition-colors" style={{ fontSize: 16 }} onClick={() => go(`/opportunities/${c.id}`)}>{c.title}</h2>
                       <p className="text-sm m-0" style={{ color: 'var(--c-muted)' }}>{[c.org || displayName(c.owner), placeOf(c)].filter(Boolean).join(' · ')}</p>
                     </div>
-                    <button onClick={() => go(`/opportunities/${c.id}`)} className="hidden sm:block shrink-0 font-bold px-5 py-2.5 rounded-xl cursor-pointer" style={{ background: applied ? 'transparent' : '#E85D04', border: applied ? '1.5px solid #E85D04' : 'none', color: applied ? '#E85D04' : 'white', fontSize: 13 }}>
+                    <button onClick={() => go(`/opportunities/${c.id}`)} className="hidden sm:block shrink-0 font-bold px-5 py-2.5 rounded-xl cursor-pointer" style={{ background: applied ? 'transparent' : 'var(--c-accent)', border: applied ? '1.5px solid var(--c-accent)' : 'none', color: applied ? 'var(--c-accent)' : 'var(--c-on-accent)', fontSize: 13 }}>
                       {applied ? `✓ ${t('قدّمت', 'Applied')}` : t('قدّم الآن', 'Apply now')}
                     </button>
                   </div>
@@ -248,12 +246,12 @@ export default function OpenProjects({ openId }: { openId?: string }) {
                     </div>
                     <div className="flex items-center gap-4 ms-auto flex-wrap">
                       {c.deadline && <span className="flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--c-muted)' }}>⏰ {formatDateAr(c.deadline)}</span>}
-                      <span className="font-semibold" style={{ color: '#E85D04', fontSize: 12 }}>{budgetLabel(c.budget)}</span>
+                      <span className="font-semibold" style={{ color: 'var(--c-accent)', fontSize: 12 }}>{budgetLabel(c.budget)}</span>
                       <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>{t(`${c.applicants_count} متقدّم`, `${c.applicants_count} applicant${c.applicants_count === 1 ? '' : 's'}`)}</span>
                       <span style={{ fontSize: 11, color: 'var(--c-muted-2)' }}>{relativeAr(c.created_at)}</span>
                     </div>
                   </div>
-                  <button onClick={() => go(`/opportunities/${c.id}`)} className="sm:hidden w-full font-bold py-3 rounded-xl mt-4 cursor-pointer" style={{ background: applied ? 'transparent' : '#E85D04', border: applied ? '1.5px solid #E85D04' : 'none', color: applied ? '#E85D04' : 'white', fontSize: 14 }}>
+                  <button onClick={() => go(`/opportunities/${c.id}`)} className="sm:hidden w-full font-bold py-3 rounded-xl mt-4 cursor-pointer" style={{ background: applied ? 'transparent' : 'var(--c-accent)', border: applied ? '1.5px solid var(--c-accent)' : 'none', color: applied ? 'var(--c-accent)' : 'var(--c-on-accent)', fontSize: 14 }}>
                     {applied ? `✓ ${t('قدّمت', 'Applied')}` : t('قدّم الآن', 'Apply now')}
                   </button>
                 </div>
@@ -263,12 +261,12 @@ export default function OpenProjects({ openId }: { openId?: string }) {
         </div>
       )}
 
-      <div className="mt-8 rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6" style={{ background: 'linear-gradient(135deg, rgba(232,93,4,0.12) 0%, rgba(13,10,8,0) 100%)', border: '1px solid rgba(232,93,4,0.25)' }}>
+      <div className="mt-8 rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6" style={{ background: 'linear-gradient(135deg, rgba(var(--c-accent-rgb),0.12) 0%, rgba(13,10,8,0) 100%)', border: '1px solid rgba(var(--c-accent-rgb),0.25)' }}>
         <div>
           <h3 className="font-black mb-1 mt-0" style={{ fontSize: 18 }}>{t('عندك مشروع يحتاج طاقم؟', 'Have a project to crew up?')}</h3>
           <p className="m-0" style={{ fontSize: 14, color: 'var(--c-muted)' }}>{t('انشر مشروعك وتواصل مع صنّاع موثّقين في العالم العربي.', 'Post your production and connect with reviewed Makers across the Arab world.')}</p>
         </div>
-        <Link to={canPost ? '/opportunities/new' : profile ? '/me/status' : '/join'} className="shrink-0 font-bold px-8 py-3.5 rounded-full whitespace-nowrap" style={{ background: '#E85D04', color: '#fff', fontSize: 14 }}>{t('انشر فرصة', 'Post a project')}</Link>
+        <Link to={canPost ? '/opportunities/new' : profile ? '/me/status' : '/join'} className="shrink-0 font-bold px-8 py-3.5 rounded-full whitespace-nowrap" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', fontSize: 14 }}>{t('انشر فرصة', 'Post a project')}</Link>
       </div>
 
       {openId && (

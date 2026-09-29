@@ -76,7 +76,7 @@ export default function LoginPage() {
         {error && <Notice tone="error">{error}</Notice>}
         {unconfirmed && <ResendConfirm email={email} />}
         {info && <Notice tone="success">{info}</Notice>}
-        <button type="submit" disabled={busy} className="h-[52px] rounded-full text-[15px] font-semibold cursor-pointer disabled:opacity-60" style={{ background: '#E85D04', color: '#fff', border: 'none' }}>
+        <button type="submit" disabled={busy} className="h-[52px] rounded-full text-[15px] font-semibold cursor-pointer disabled:opacity-60" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', border: 'none' }}>
           {busy ? t('لحظة…', 'One moment…') : mode === 'signin' ? t('دخول', 'Sign in') : mode === 'reset' ? t('أرسل الرابط', 'Send link') : t('حفظ كلمة المرور', 'Save password')}
         </button>
         <div className="flex flex-col gap-2 text-[13px]" style={{ color: 'var(--c-muted)' }}>

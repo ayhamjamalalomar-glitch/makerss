@@ -27,7 +27,7 @@ export default function RangeCalendar({ start, end, onChange }: { start: string 
     }
   }
 
-  const box = (active: boolean) => ({ background: active ? 'rgba(232,93,4,0.18)' : 'var(--c-surface-alt)', border: `1px solid ${active ? '#E85D04' : 'var(--c-border)'}` })
+  const box = (active: boolean) => ({ background: active ? 'rgba(var(--c-accent-rgb),0.18)' : 'var(--c-surface-alt)', border: `1px solid ${active ? 'var(--c-accent)' : 'var(--c-border)'}` })
   const dur = start && end ? durationAr(daysBetween(start, end)) : null
 
   return (
@@ -69,7 +69,7 @@ export default function RangeCalendar({ start, end, onChange }: { start: string 
               aria-pressed={edge}
               onClick={() => pick(d)}
               className="h-10 rounded-full text-sm cursor-pointer disabled:cursor-default"
-              style={{ border: 'none', background: edge ? '#E85D04' : inRange ? 'rgba(232,93,4,0.28)' : 'transparent', color: past ? 'var(--c-muted-2)' : edge ? '#fff' : 'var(--c-text)', fontWeight: edge ? 700 : 500 }}
+              style={{ border: 'none', background: edge ? 'var(--c-accent)' : inRange ? 'rgba(var(--c-accent-rgb),0.28)' : 'transparent', color: past ? 'var(--c-muted-2)' : edge ? 'var(--c-on-accent)' : 'var(--c-text)', fontWeight: edge ? 700 : 500 }}
             >
               {i + 1}
             </button>

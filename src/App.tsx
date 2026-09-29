@@ -7,6 +7,8 @@ import Header from './components/Header'
 import BottomNav from './components/BottomNav'
 import Footer from './components/Footer'
 import CommandPalette from './components/CommandPalette'
+import Cursor from './components/Cursor'
+import { motion } from 'framer-motion'
 import { PageSkeleton } from './components/mk'
 import Landing from './pages/Landing'
 import MakersPage from './pages/MakersPage'
@@ -69,12 +71,15 @@ export default function App() {
       ) : (
         <>
           <Header />
-          <main className="pt-14 pb-28 flex flex-col min-h-screen">
-            <div className="flex-1"><Suspense fallback={<PageSkeleton />}>{page}</Suspense></div>
+          <main className="pt-16 pb-28 md:pb-0 flex flex-col min-h-screen">
+            <motion.div key={first + '/' + second} className="flex-1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: [0.2, 0.7, 0.2, 1] }}>
+              <Suspense fallback={<PageSkeleton />}>{page}</Suspense>
+            </motion.div>
             {first !== 'messages' && first !== 'admin' && <Footer />}
           </main>
           <BottomNav />
           <CommandPalette />
+          <Cursor />
         </>
       )}
     </div>

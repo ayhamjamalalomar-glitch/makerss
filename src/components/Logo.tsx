@@ -2,10 +2,11 @@ import Link from '../lib/router'
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg'
+  color?: string
 }
 
 /** Makers wordmark from the approved design. Always links home. */
-export default function Logo({ size = 'md' }: LogoProps) {
+export default function Logo({ size = 'md', color = 'var(--c-text)' }: LogoProps) {
   const sizes = {
     sm: { fontSize: 11, lineHeight: 1.05, letterSpacing: '0.04em' },
     md: { fontSize: 15, lineHeight: 1.05, letterSpacing: '0.04em' },
@@ -14,7 +15,7 @@ export default function Logo({ size = 'md' }: LogoProps) {
   const s = sizes[size]
   return (
     <Link to="/" aria-label="Makers" className="shrink-0" style={{ textAlign: 'left', direction: 'ltr' }}>
-      <div className="font-archivo" style={{ ...s, fontWeight: 900, color: 'var(--c-text)', textTransform: 'uppercase' }}>
+      <div className="font-archivo" style={{ ...s, fontWeight: 900, color, textTransform: 'uppercase', transition: 'color .3s' }}>
         <div>MAKERS</div>
         <div>FILMMAKERS</div>
         <div>CREATORS</div>

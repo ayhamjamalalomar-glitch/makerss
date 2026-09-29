@@ -135,7 +135,7 @@ function Palette({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 px-4" style={{ height: 56, borderBottom: '1px solid var(--c-border)' }}>
-          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" style={{ color: '#E85D04', flexShrink: 0 }} aria-hidden="true"><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.6" /><path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+          <svg width="16" height="16" viewBox="0 0 18 18" fill="none" style={{ color: 'var(--c-accent)', flexShrink: 0 }} aria-hidden="true"><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.6" /><path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
           <input
             autoFocus
             value={q}
@@ -150,7 +150,7 @@ function Palette({ onClose }: { onClose: () => void }) {
             className="flex-1 min-w-0"
             style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 16, color: 'var(--c-text)', padding: 0 }}
           />
-          {loading && <span className="mk-spin w-4 h-4 rounded-full shrink-0" style={{ border: '2px solid var(--c-border-mid)', borderTopColor: '#E85D04' }} />}
+          {loading && <span className="mk-spin w-4 h-4 rounded-full shrink-0" style={{ border: '2px solid var(--c-border-mid)', borderTopColor: 'var(--c-accent)' }} />}
           <kbd className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded" style={{ border: '1px solid var(--c-border-mid)', color: 'var(--c-muted)' }}>Esc</kbd>
         </div>
         <div ref={listRef} id="mk-palette-list" role="listbox" className="overflow-y-auto py-2">
@@ -172,12 +172,12 @@ function Palette({ onClose }: { onClose: () => void }) {
                     onMouseEnter={() => setActive(i)}
                     onClick={() => pick(it)}
                     className="flex items-center gap-3 mx-2 px-3 py-2.5 rounded-xl text-start cursor-pointer"
-                    style={{ background: on ? 'rgba(232,93,4,0.12)' : 'transparent', border: 'none', color: 'var(--c-text)' }}
+                    style={{ background: on ? 'rgba(var(--c-accent-rgb),0.12)' : 'transparent', border: 'none', color: 'var(--c-text)' }}
                   >
                     {it.kind === 'maker' ? <Avatar url={it.photo} name={it.label} size={32} /> : it.kind === 'project' ? (
                       <span className="shrink-0 overflow-hidden rounded-md" style={{ width: 32, height: 32, background: 'var(--c-surface-alt)' }}>{it.photo && <img src={it.photo} alt="" className="w-full h-full object-cover" />}</span>
                     ) : (
-                      <span className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--c-surface-alt)', color: on ? '#E85D04' : 'var(--c-muted)' }}>
+                      <span className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'var(--c-surface-alt)', color: on ? 'var(--c-accent)' : 'var(--c-muted)' }}>
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="rtl:-scale-x-100" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                       </span>
                     )}

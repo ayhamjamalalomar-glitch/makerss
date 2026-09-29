@@ -4,8 +4,8 @@ import { t } from '../lib/i18n'
 import type { ButtonHTMLAttributes, CSSProperties, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
 /** Accent colour of the new design. (Name kept so older screens keep compiling.) */
-export const BLUE = '#E85D04'
-export const ORANGE = '#E85D04'
+export const BLUE = 'var(--c-accent)'
+export const ORANGE = 'var(--c-accent)'
 
 export function Sheet({ children, className = '', style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
   return (
@@ -20,8 +20,8 @@ export function Card({ children, className = '', style, dark }: { children: Reac
     <section
       className={`rounded-2xl ${className}`}
       style={{
-        background: dark ? 'radial-gradient(ellipse 80% 80% at 50% 50%, rgba(232,93,4,0.16) 0%, transparent 70%), var(--c-surface)' : 'var(--c-surface)',
-        border: dark ? '1px solid rgba(232,93,4,0.25)' : '1px solid var(--c-border)',
+        background: dark ? 'radial-gradient(ellipse 80% 80% at 50% 50%, rgba(var(--c-accent-rgb),0.16) 0%, transparent 70%), var(--c-surface)' : 'var(--c-surface)',
+        border: dark ? '1px solid rgba(var(--c-accent-rgb),0.25)' : '1px solid var(--c-border)',
         color: 'var(--c-text)',
         ...style,
       }}
@@ -34,7 +34,7 @@ export function Card({ children, className = '', style, dark }: { children: Reac
 type BtnVariant = 'primary' | 'soft' | 'outline' | 'danger' | 'ghost' | 'dashed'
 export function Btn({ variant = 'primary', className = '', style, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: BtnVariant }) {
   const styles: Record<BtnVariant, CSSProperties> = {
-    primary: { background: ORANGE, color: '#fff', border: 'none' },
+    primary: { background: ORANGE, color: 'var(--c-on-accent)', border: 'none' },
     soft: { background: 'var(--c-surface-alt)', color: 'var(--c-text)', border: '1px solid var(--c-border)' },
     outline: { background: 'transparent', color: 'var(--c-text)', border: '1px solid var(--c-border-mid)' },
     danger: { background: 'transparent', color: '#F87171', border: '1px solid rgba(248,113,113,0.35)' },
@@ -52,7 +52,7 @@ export function Btn({ variant = 'primary', className = '', style, ...rest }: But
 
 export function Chip({ on, className = '', dark: _dark, style, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { on: boolean; dark?: boolean }) {
   const s: CSSProperties = on
-    ? { background: ORANGE, color: '#fff', border: `1px solid ${ORANGE}`, fontWeight: 600 }
+    ? { background: ORANGE, color: 'var(--c-on-accent)', border: `1px solid ${ORANGE}`, fontWeight: 600 }
     : { background: 'transparent', color: 'var(--c-muted)', border: '1px solid var(--c-border)' }
   return <button type="button" aria-pressed={on} className={`rounded-full px-3.5 py-2 text-[13px] cursor-pointer transition-colors ${className}`} style={{ ...s, ...style }} {...rest} />
 }
@@ -91,7 +91,7 @@ export function Pill({ tone = 'neutral', children }: { tone?: 'neutral' | 'green
   const m = {
     neutral: ['var(--c-surface-alt)', 'var(--c-text-2)'],
     green: ['rgba(74,222,128,0.12)', '#4ADE80'],
-    blue: ['rgba(232,93,4,0.14)', '#FB923C'],
+    blue: ['rgba(var(--c-accent-rgb),0.14)', '#FB923C'],
     amber: ['rgba(251,191,36,0.14)', '#FBBF24'],
     red: ['rgba(248,113,113,0.14)', '#F87171'],
   }[tone]
@@ -142,7 +142,7 @@ export function Ring({ value, size = 52, stroke = 3, children }: { value: number
 }
 
 export function Notice({ tone = 'info', children }: { tone?: 'info' | 'error' | 'success'; children: ReactNode }) {
-  const m = { info: ['rgba(232,93,4,0.10)', '#FDBA74'], error: ['rgba(248,113,113,0.12)', '#FCA5A5'], success: ['rgba(74,222,128,0.12)', '#86EFAC'] }[tone]
+  const m = { info: ['rgba(var(--c-accent-rgb),0.10)', '#FDBA74'], error: ['rgba(248,113,113,0.12)', '#FCA5A5'], success: ['rgba(74,222,128,0.12)', '#86EFAC'] }[tone]
   return (
     <div className="rounded-xl px-4 py-3 text-sm leading-relaxed" style={{ background: m[0], color: m[1] }}>
       {children}
@@ -232,9 +232,9 @@ export function PageShell({ children, narrow }: { children: ReactNode; narrow?: 
 export function SectionHeader({ title, count, onSeeAll, action }: { title: string; count?: number; onSeeAll?: () => void; action?: ReactNode }) {
   return (
     <div className="flex items-center gap-2 mb-5">
-      <span className="inline-block w-1 rounded-full flex-shrink-0" style={{ background: ORANGE, height: 20 }} />
-      <h2 className="font-inter font-bold text-paper m-0" style={{ fontSize: 19 }}>{title}</h2>
-      {count !== undefined && <span className="font-inter text-muted" style={{ fontSize: 16 }}>{count}</span>}
+      <span className="inline-block w-2 h-2 rotate-45 flex-shrink-0" style={{ background: ORANGE }} />
+      <h2 className="font-display font-bold text-paper m-0" style={{ fontSize: 20, letterSpacing: '-0.01em' }}>{title}</h2>
+      {count !== undefined && <span className="font-mono text-muted" style={{ fontSize: 14 }}>{count}</span>}
       {onSeeAll && (
         <button onClick={onSeeAll} aria-label={t('عرض الكل', 'See all')} className="font-inter font-bold text-paper hover:opacity-60 transition-opacity" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}>
           <span className="inline-block rtl:-scale-x-100">›</span>
@@ -256,7 +256,7 @@ export function VerifiedBadge({ size = 18, title }: { size?: number; title?: str
       style={{ width: size, height: size, background: ORANGE, verticalAlign: 'middle' }}
     >
       <svg width={size * 0.5} height={size * 0.5} viewBox="0 0 9 9" fill="none" aria-hidden="true">
-        <path d="M2 4.5L3.5 6L7 2.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M2 4.5L3.5 6L7 2.5" stroke="var(--c-on-accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </span>
   )

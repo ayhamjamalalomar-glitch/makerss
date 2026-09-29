@@ -86,7 +86,7 @@ export default function MessagesPage() {
         <Card className="p-10 text-center flex flex-col gap-2 items-center">
           <span className="text-lg font-bold">{t('الرسائل متاحة بعد نشر صفحتك', 'Messages open once your page is live')}</span>
           <span className="text-sm" style={{ color: MUTED }}>{t('عندما يوافق فريق Makers على صفحتك، تستطيع مراسلة باقي الأعضاء.', 'When the Makers team approves your page, you can message other members.')}</span>
-          <Link to="/me" className="text-sm font-semibold mt-2" style={{ color: '#E85D04' }}>{t('أكمل صفحتك', 'Complete your page')}</Link>
+          <Link to="/me" className="text-sm font-semibold mt-2" style={{ color: 'var(--c-accent)' }}>{t('أكمل صفحتك', 'Complete your page')}</Link>
         </Card>
       </PageShell>
     )
@@ -104,9 +104,9 @@ export default function MessagesPage() {
 
       <div className={`flex gap-1.5 p-1 rounded-full self-start ${current ? 'hidden md:flex' : ''}`} style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>
         {([['chats', t('المحادثات', 'Conversations')], ['collab', t('طلبات التعاون', 'Collaboration requests')]] as ['chats' | 'collab', string][]).map(([k, l]) => (
-          <button key={k} type="button" onClick={() => setSection(k)} className="flex items-center gap-1.5 text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: section === k ? '#E85D04' : 'transparent', fontWeight: section === k ? 600 : 400, color: section === k ? '#fff' : MUTED }}>
+          <button key={k} type="button" onClick={() => setSection(k)} className="flex items-center gap-1.5 text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: section === k ? 'var(--c-accent)' : 'transparent', fontWeight: section === k ? 600 : 400, color: section === k ? 'var(--c-on-accent)' : MUTED }}>
             {l}
-            {k === 'collab' && pending > 0 && <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold flex items-center justify-center" style={{ background: section === k ? 'rgba(0,0,0,0.3)' : '#E85D04', color: '#fff' }}>{pending}</span>}
+            {k === 'collab' && pending > 0 && <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold flex items-center justify-center" style={{ background: section === k ? 'rgba(0,0,0,0.3)' : 'var(--c-accent)', color: section === k ? '#fff' : 'var(--c-on-accent)' }}>{pending}</span>}
           </button>
         ))}
       </div>
@@ -115,7 +115,7 @@ export default function MessagesPage() {
         <Card className="p-10 text-center flex flex-col gap-2">
           <span className="text-lg font-bold">{t('لا توجد محادثات بعد', 'No conversations yet')}</span>
           <span className="text-sm" style={{ color: MUTED }}>{t('افتح صفحة أي عضو في الدليل واضغط «راسِل» لتبدأ محادثة.', 'Open any member page in the directory and tap "Message" to start a conversation.')}</span>
-          <Link to="/" className="text-sm font-semibold mt-2" style={{ color: '#E85D04' }}>{t('تصفّح الدليل', 'Browse the directory')}</Link>
+          <Link to="/" className="text-sm font-semibold mt-2" style={{ color: 'var(--c-accent)' }}>{t('تصفّح الدليل', 'Browse the directory')}</Link>
         </Card>
       ) : (
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-[calc(100vh-260px)] md:min-h-[520px]">
@@ -135,7 +135,7 @@ export default function MessagesPage() {
                       <span dir="auto" className="text-[13px] truncate" style={{ color: n ? 'var(--c-text)' : MUTED, fontWeight: n ? 600 : 400 }}>
                         {c.last_sender === me ? t('أنت: ', 'You: ') : ''}{c.last_message_preview || t('محادثة جديدة', 'New conversation')}
                       </span>
-                      {n > 0 && <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold text-white flex items-center justify-center shrink-0" style={{ background: '#E85D04' }}>{n}</span>}
+                      {n > 0 && <span className="min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold text-[color:var(--c-on-accent)] flex items-center justify-center shrink-0" style={{ background: 'var(--c-accent)' }}>{n}</span>}
                     </span>
                   </span>
                 </button>
@@ -300,7 +300,7 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
                   className="max-w-[78%] md:max-w-[65%] px-4 py-2.5 text-[15px]"
                   style={{
                     ...(mine
-                      ? { background: '#E85D04', color: '#fff' }
+                      ? { background: 'var(--c-accent)', color: 'var(--c-on-accent)' }
                       : { background: 'var(--c-surface)', color: 'var(--c-text)', border: '1px solid var(--c-border)' }),
                     borderRadius: 20,
                     // Tail corner sits on the sender's outer edge, computed from the page direction (not the text's).
@@ -345,7 +345,7 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
               className="flex-1 resize-none"
               style={{ minHeight: 48, maxHeight: 160, padding: '13px 18px', borderRadius: 24, fontSize: 15, lineHeight: 1.5 }}
             />
-            <button type="button" onClick={send} disabled={busy || !text.trim()} aria-label={t('إرسال', 'Send')} className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer disabled:opacity-40 shrink-0" style={{ background: '#E85D04', color: '#fff', border: 'none' }}>
+            <button type="button" onClick={send} disabled={busy || !text.trim()} aria-label={t('إرسال', 'Send')} className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer disabled:opacity-40 shrink-0" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', border: 'none' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="rtl:-scale-x-100" aria-hidden="true"><path d="M3.4 20.4l17.5-7.5a1 1 0 000-1.8L3.4 3.6a1 1 0 00-1.4 1.1L4 11l9 1-9 1-2 6.3a1 1 0 001.4 1.1z" /></svg>
             </button>
           </div>
@@ -377,11 +377,11 @@ function CollabCard({ id, me }: { id: string; me: string }) {
   const tone = c.status === 'accepted' ? '#4ADE80' : c.status === 'new' ? '#FDBA74' : 'var(--c-muted)'
   const place = [cityLabel(c.city), c.country === REMOTE.ar ? t(REMOTE.ar, REMOTE.en) : label(COUNTRIES, c.country)].filter(Boolean).join(t('، ', ', '))
   return (
-    <div className="w-full max-w-[440px] rounded-2xl overflow-hidden" style={{ background: 'var(--c-surface)', border: '1px solid rgba(232,93,4,0.35)' }}>
-      <div style={{ height: 3, background: '#E85D04' }} />
+    <div className="w-full max-w-[440px] rounded-2xl overflow-hidden" style={{ background: 'var(--c-surface)', border: '1px solid rgba(var(--c-accent-rgb),0.35)' }}>
+      <div style={{ height: 3, background: 'var(--c-accent)' }} />
       <div className="p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs font-bold" style={{ color: '#E85D04' }}>🤝 {incoming ? t('طلب تعاون وصلك', 'Collaboration request for you') : t('طلب تعاون أرسلته', 'Collaboration request you sent')}</span>
+          <span className="text-xs font-bold" style={{ color: 'var(--c-accent)' }}>🤝 {incoming ? t('طلب تعاون وصلك', 'Collaboration request for you') : t('طلب تعاون أرسلته', 'Collaboration request you sent')}</span>
           <span className="text-[11px] font-semibold" style={{ color: tone }}>{statusLabel}</span>
         </div>
         <span className="text-base font-bold">{c.project_type ? label(PROJECT_TYPES, c.project_type) : t('مشروع', 'Project')}</span>

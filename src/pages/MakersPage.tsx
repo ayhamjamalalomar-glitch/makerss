@@ -4,8 +4,9 @@ import Link from '../lib/router'
 import { t, label, useLang } from '../lib/i18n'
 import { CONTENT_TYPES, COUNTRIES, arNorm, cityLabel, contentLabel, listSep } from '../lib/constants'
 import { useSpecialties, specName, memberLine, isCreator } from '../lib/specialties'
-import { displayName, formatFollowers, listMembers, totalFollowers, type MemberCard } from '../lib/data'
+import { displayName, listMembers, totalFollowers, type MemberCard } from '../lib/data'
 import { Skeleton, VerifiedBadge } from '../components/mk'
+import { CastCard } from '../components/cine'
 
 const selectStyle = { background: 'var(--c-surface)', border: '1px solid var(--c-border)', cursor: 'pointer', fontSize: 13, height: 42, paddingInline: '14px 32px', borderRadius: 12 } as const
 
@@ -108,9 +109,10 @@ export default function MakersPage() {
 
   return (
     <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8">
-      <div className="flex items-center gap-2 mb-6">
-        <span className="inline-block w-1 rounded-full" style={{ background: '#E85D04', height: 24 }} />
-        <h1 className="font-black m-0" style={{ fontSize: 28, letterSpacing: '-0.01em' }}>{t('الصنّاع', 'Makers')}</h1>
+      <div className="flex flex-col gap-2 mb-8 pt-4">
+        <span className="font-mono text-[11px] tracking-[0.2em]" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>CASTING · {String(all?.length ?? 0).padStart(2, '0')}</span>
+        <h1 className="font-display font-black m-0" style={{ fontSize: 'clamp(34px, 5vw, 58px)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>{t('الصنّاع', 'Makers')}</h1>
+        <p className="m-0 text-[15px] max-w-[560px]" style={{ color: 'var(--c-muted)', lineHeight: 1.8 }}>{t('اعثر على من يصنع الصورة: مخرجون، مصوّرون، مونتيرون، وصنّاع محتوى من كل العالم العربي.', 'Find the people who make the image: directors, cinematographers, editors and creators across the Arab world.')}</p>
       </div>
 
       <div className="relative mb-5">
@@ -127,9 +129,10 @@ export default function MakersPage() {
         />
       </div>
 
+      <div className="md:sticky md:top-16 z-20 -mx-4 px-4 sm:-mx-8 sm:px-8 pt-3 pb-1 mb-3" style={{ background: 'var(--c-overlay)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}>
       <div className="flex gap-1.5 p-1 rounded-full self-start mb-5 w-fit max-w-full overflow-x-auto no-scrollbar" role="tablist" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>
         {([['all', t('الكل', 'All')], ['maker', t('صنّاع الإنتاج', 'Production')], ['creator', t('صنّاع المحتوى', 'Content creators')]] as const).map(([k, l]) => (
-          <button key={k} type="button" role="tab" aria-selected={type === k} onClick={() => pickType(k)} className="text-[13px] px-4 py-2 rounded-full cursor-pointer whitespace-nowrap" style={{ border: 'none', background: type === k ? '#E85D04' : 'transparent', fontWeight: type === k ? 600 : 400, color: type === k ? '#fff' : 'var(--c-muted)' }}>{l}</button>
+          <button key={k} type="button" role="tab" aria-selected={type === k} onClick={() => pickType(k)} className="text-[13px] px-4 py-2 rounded-full cursor-pointer whitespace-nowrap" style={{ border: 'none', background: type === k ? 'var(--c-accent)' : 'transparent', fontWeight: type === k ? 600 : 400, color: type === k ? 'var(--c-on-accent)' : 'var(--c-muted)' }}>{l}</button>
         ))}
       </div>
 
@@ -159,8 +162,8 @@ export default function MakersPage() {
           <Caret />
         </div>
         {([[verifiedOnly, setVerifiedOnly, t('المؤسسون فقط', 'Founding only')], [availableOnly, setAvailableOnly, t('المتاحون فقط', 'Available only')]] as const).map(([on, set, text]) => (
-          <button key={text} type="button" role="switch" aria-checked={on} onClick={() => set(!on)} className="flex items-center gap-2.5 text-sm px-4 rounded-xl transition-all cursor-pointer" style={{ height: 42, background: 'var(--c-surface)', border: `1px solid ${on ? '#E85D04' : 'var(--c-border)'}`, color: on ? 'var(--c-text)' : 'var(--c-muted)', fontSize: 13 }}>
-            <span className="w-8 h-4 rounded-full flex items-center" style={{ backgroundColor: on ? '#E85D04' : 'var(--c-border)', padding: 2, justifyContent: on ? 'flex-end' : 'flex-start', transition: 'background-color .2s' }}>
+          <button key={text} type="button" role="switch" aria-checked={on} onClick={() => set(!on)} className="flex items-center gap-2.5 text-sm px-4 rounded-xl transition-all cursor-pointer" style={{ height: 42, background: 'var(--c-surface)', border: `1px solid ${on ? 'var(--c-accent)' : 'var(--c-border)'}`, color: on ? 'var(--c-text)' : 'var(--c-muted)', fontSize: 13 }}>
+            <span className="w-8 h-4 rounded-full flex items-center" style={{ backgroundColor: on ? 'var(--c-accent)' : 'var(--c-border)', padding: 2, justifyContent: on ? 'flex-end' : 'flex-start', transition: 'background-color .2s' }}>
               <motion.span layout transition={{ type: 'spring', stiffness: 500, damping: 34 }} className="w-3 h-3 rounded-full" style={{ background: 'var(--c-text)' }} />
             </span>
             {text}
@@ -175,10 +178,11 @@ export default function MakersPage() {
           <Caret />
         </div>
         {activeFilters > 0 && (
-          <button type="button" onClick={clearFilters} className="text-[13px] font-semibold cursor-pointer" style={{ background: 'none', border: 'none', color: '#E85D04', padding: '0 4px' }}>
+          <button type="button" onClick={clearFilters} className="text-[13px] font-semibold cursor-pointer" style={{ background: 'none', border: 'none', color: 'var(--c-accent)', padding: '0 4px' }}>
             {t(`مسح الفلاتر (${activeFilters})`, `Clear filters (${activeFilters})`)}
           </button>
         )}
+      </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -187,7 +191,7 @@ export default function MakersPage() {
             <p className="text-sm m-0" style={{ color: 'var(--c-muted)' }}>{all ? t(`${filtered.length} صانع`, `${filtered.length} maker${filtered.length !== 1 ? 's' : ''}`) : ''}</p>
             <div className="flex items-center gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid var(--c-border)' }}>
               {(['list', 'grid'] as const).map((mode) => (
-                <button key={mode} onClick={() => setViewMode(mode)} aria-label={mode === 'list' ? t('قائمة', 'List') : t('شبكة', 'Grid')} className="p-2.5 cursor-pointer" style={{ background: viewMode === mode ? '#E85D04' : 'transparent', border: 'none', color: viewMode === mode ? '#fff' : 'var(--c-muted-2)' }}>
+                <button key={mode} onClick={() => setViewMode(mode)} aria-label={mode === 'list' ? t('قائمة', 'List') : t('شبكة', 'Grid')} className="p-2.5 cursor-pointer" style={{ background: viewMode === mode ? 'var(--c-accent)' : 'transparent', border: 'none', color: viewMode === mode ? 'var(--c-on-accent)' : 'var(--c-muted-2)' }}>
                   {mode === 'list' ? (
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3.5" width="12" height="1.5" rx="0.75" fill="currentColor" /><rect x="2" y="7.25" width="12" height="1.5" rx="0.75" fill="currentColor" /><rect x="2" y="11" width="12" height="1.5" rx="0.75" fill="currentColor" /></svg>
                   ) : (
@@ -216,7 +220,7 @@ export default function MakersPage() {
                   : t('لا يوجد صنّاع بهذه المواصفات بعد.', 'No makers match your filters yet.')}
               </p>
               {type === 'creator' && !(all || []).some(isCreator) && (
-                <Link to="/join?type=creator" className="font-bold px-6 py-2.5 rounded-full text-sm" style={{ background: '#E85D04', color: '#fff' }}>{t('انضم كصانع محتوى', 'Join as a creator')}</Link>
+                <Link to="/join?type=creator" className="font-bold px-6 py-2.5 rounded-full text-sm" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>{t('انضم كصانع محتوى', 'Join as a creator')}</Link>
               )}
             </div>
           ) : viewMode === 'grid' ? (
@@ -224,31 +228,7 @@ export default function MakersPage() {
               <AnimatePresence initial={false}>
               {filtered.map((m, i) => (
                 <motion.div key={m.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: Math.min(i, 12) * 0.025 } }} exit={{ opacity: 0, scale: 0.97 }} transition={{ type: 'spring', stiffness: 380, damping: 34 }}>
-                <Link to={`/${m.username}`} className="group rounded-2xl overflow-hidden flex flex-col h-full transition-transform duration-300 hover:-translate-y-1" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
-                  <div className="relative overflow-hidden" style={{ aspectRatio: '3/4', background: 'var(--c-surface-alt)' }}>
-                    {m.avatar_url ? (
-                      <img src={m.avatar_url} alt={displayName(m)} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center font-black" style={{ fontSize: 44, color: 'var(--c-muted-2)' }}>{displayName(m).charAt(0)}</div>
-                    )}
-                    {m.is_founding && <span className="absolute top-2.5 end-2.5"><VerifiedBadge size={24} title={t('عضو مؤسس', 'Founding member')} /></span>}
-                    {m.available && (
-                      <span className="absolute bottom-2.5 start-2.5 flex items-center gap-1.5 rounded-full px-2 py-0.5" style={{ background: 'rgba(13,10,8,0.75)', fontSize: 10, color: '#4ADE80' }}>
-                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#4ADE80' }} />{t('متاح', 'Available')}
-                      </span>
-                    )}
-                    {isCreator(m) && totalFollowers(m) > 0 && (
-                      <span className="absolute bottom-2.5 end-2.5 rounded-full px-2 py-0.5 font-bold" dir="ltr" style={{ background: 'rgba(13,10,8,0.75)', fontSize: 10, color: '#E85D04' }}>
-                        {formatFollowers(totalFollowers(m))}
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-3 flex flex-col gap-1 flex-1">
-                    <p className="font-bold group-hover:text-orange transition-colors leading-tight m-0" style={{ fontSize: 14 }}>{displayName(m)}</p>
-                    <p className="m-0 truncate" style={{ fontSize: 11, color: 'var(--c-muted)' }}>{memberLine(specialties, m) || ' '}</p>
-                    <p className="m-0 truncate" style={{ fontSize: 11, color: 'var(--c-muted-2)' }}>{[cityLabel(m.city), label(COUNTRIES, m.country)].filter(Boolean).join(listSep())}</p>
-                  </div>
-                </Link>
+                <CastCard m={m} specialties={specialties} place={[cityLabel(m.city), label(COUNTRIES, m.country)].filter(Boolean).join(listSep())} />
                 </motion.div>
               ))}
               </AnimatePresence>
@@ -279,7 +259,7 @@ export default function MakersPage() {
               {counts.map(([key, n], i) => {
                 const on = type === 'creator' ? content === key : specialty === Number(key)
                 return (
-                  <button key={key} onClick={() => { if (type === 'creator') setContent(key); else setSpecialty(Number(key)); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="flex items-center justify-between gap-3 px-4 py-3.5 text-start cursor-pointer group hover:bg-white/[0.03]" style={{ background: on ? 'rgba(232,93,4,0.08)' : 'transparent', border: 'none', borderBottom: i < counts.length - 1 ? '1px solid var(--c-border)' : 'none', color: 'var(--c-text)' }}>
+                  <button key={key} onClick={() => { if (type === 'creator') setContent(key); else setSpecialty(Number(key)); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="flex items-center justify-between gap-3 px-4 py-3.5 text-start cursor-pointer group hover:bg-white/[0.03]" style={{ background: on ? 'rgba(var(--c-accent-rgb),0.08)' : 'transparent', border: 'none', borderBottom: i < counts.length - 1 ? '1px solid var(--c-border)' : 'none', color: 'var(--c-text)' }}>
                     <span className="font-semibold group-hover:text-orange transition-colors" style={{ fontSize: 13 }}>{type === 'creator' ? contentLabel(key) : specName(specialties, Number(key))}</span>
                     <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>{n}</span>
                   </button>

@@ -43,7 +43,7 @@ export default function StatusPage() {
           </Card>
           <div className="flex gap-2.5">
             <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: 'var(--c-surface-alt)' }}>{t('معاينة صفحتي', 'Preview my page')}</Link>
-            <Link to="/me" className="text-sm px-5 py-3 rounded-full" style={{ color: '#E85D04' }}>{t('تعديل الصفحة', 'Edit page')}</Link>
+            <Link to="/me" className="text-sm px-5 py-3 rounded-full" style={{ color: 'var(--c-accent)' }}>{t('تعديل الصفحة', 'Edit page')}</Link>
           </div>
         </>
       )}
@@ -72,7 +72,7 @@ export default function StatusPage() {
           </Card>
           <div className="flex gap-2.5">
             <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: 'var(--c-surface-alt)' }}>{t('افتح صفحتي', 'Open my page')}</Link>
-            <Link to="/" className="text-sm px-5 py-3 rounded-full" style={{ color: '#E85D04' }}>{t('تصفّح الدليل', 'Browse the directory')}</Link>
+            <Link to="/" className="text-sm px-5 py-3 rounded-full" style={{ color: 'var(--c-accent)' }}>{t('تصفّح الدليل', 'Browse the directory')}</Link>
           </div>
         </>
       )}
@@ -91,7 +91,7 @@ export default function StatusPage() {
             </div>
           )}
           <div className="flex gap-2.5">
-            <Link to="/me" className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: '#E85D04', color: '#fff' }}>{t('عدّل صفحتك', 'Edit your page')}</Link>
+            <Link to="/me" className="text-sm font-semibold px-6 py-3 rounded-full" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>{t('عدّل صفحتك', 'Edit your page')}</Link>
           </div>
         </>
       )}
@@ -111,11 +111,11 @@ function Step({ state, title, sub }: { state: 'done' | 'current' | 'todo'; title
   return (
     <div className="flex items-center gap-3.5">
       {state === 'done' && (
-        <span className="w-7 h-7 rounded-full flex items-center justify-center text-white" style={{ background: '#E85D04' }}>
+        <span className="w-7 h-7 rounded-full flex items-center justify-center text-[color:var(--c-on-accent)]" style={{ background: 'var(--c-accent)' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7" /></svg>
         </span>
       )}
-      {state === 'current' && <span className="w-7 h-7 rounded-full flex items-center justify-center" style={{ border: '2px solid #E85D04' }}><span className="w-2.5 h-2.5 rounded-full" style={{ background: '#E85D04' }} /></span>}
+      {state === 'current' && <span className="w-7 h-7 rounded-full flex items-center justify-center" style={{ border: '2px solid var(--c-accent)' }}><span className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--c-accent)' }} /></span>}
       {state === 'todo' && <span className="w-7 h-7 rounded-full" style={{ border: '2px solid var(--c-border)' }} />}
       <span className="flex flex-col">
         <span className="text-[15px]" style={{ fontWeight: state === 'todo' ? 400 : 600, color: state === 'todo' ? 'var(--c-muted)' : undefined }}>{title}</span>

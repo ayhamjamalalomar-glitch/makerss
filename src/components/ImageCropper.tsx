@@ -88,7 +88,7 @@ export default function ImageCropper({ file, aspect, outWidth, width = 240, crop
       </div>
       <label className="flex items-center gap-3 text-xs w-full" style={{ maxWidth: W + 40, color: 'var(--c-muted)' }}>
         <span>{t('تكبير', 'Zoom')}</span>
-        <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoomAround(Number(e.target.value))} className="flex-1" style={{ accentColor: '#E85D04', background: 'transparent', border: 'none', padding: 0 }} />
+        <input type="range" min={1} max={3} step={0.01} value={zoom} onChange={(e) => setZoomAround(Number(e.target.value))} className="flex-1" style={{ accentColor: 'var(--c-accent)', background: 'transparent', border: 'none', padding: 0 }} />
       </label>
       <span className="text-[11px]" style={{ color: 'var(--c-muted-2)' }}>{t('اسحب الصورة لاختيار الجزء الظاهر.', 'Drag the image to choose what shows.')}</span>
     </div>
@@ -109,7 +109,7 @@ export function DropZone({ onFile, children, className = '' }: { onFile: (f: Fil
         const f = e.dataTransfer.files?.[0]
         if (f && f.type.startsWith('image/')) onFile(f)
       }}
-      style={{ outline: over ? '2px dashed #E85D04' : 'none', outlineOffset: 4, borderRadius: 18, transition: 'outline-color .15s' }}
+      style={{ outline: over ? '2px dashed var(--c-accent)' : 'none', outlineOffset: 4, borderRadius: 18, transition: 'outline-color .15s' }}
     >
       {children}
     </div>

@@ -189,6 +189,6 @@ export async function listOpenCalls(limit = 50) {
 }
 
 export const CALL_COLORS: Record<string, string> = {
-  commercial: '#E85D04', film: '#2563EB', short: '#0891B2', series: '#9333EA', documentary: '#2563EB',
+  commercial: 'var(--c-accent)', film: '#2563EB', short: '#0891B2', series: '#9333EA', documentary: '#2563EB',
   'music-video': '#DC2626', social: '#059669', program: '#D97706', 'ai-film': '#7C3AED', 'ai-video': '#A855F7', other: '#7A6E66',
 }

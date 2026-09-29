@@ -92,7 +92,7 @@ export default function JoinPage() {
             <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('أنا', 'I am')}</span>
             <div className="flex flex-wrap gap-2">
               {(['maker', 'creator'] as const).map((k) => (
-                <button key={k} type="button" aria-pressed={type === k} onClick={() => setType(k)} className="h-[38px] px-4 rounded-full text-[13px] cursor-pointer" style={type === k ? { background: '#E85D04', color: '#fff', border: '1px solid #E85D04', fontWeight: 600 } : { background: 'transparent', color: 'var(--c-muted)', border: '1px solid var(--c-border-mid)' }}>
+                <button key={k} type="button" aria-pressed={type === k} onClick={() => setType(k)} className="h-[38px] px-4 rounded-full text-[13px] cursor-pointer" style={type === k ? { background: 'var(--c-accent)', color: 'var(--c-on-accent)', border: '1px solid var(--c-accent)', fontWeight: 600 } : { background: 'transparent', color: 'var(--c-muted)', border: '1px solid var(--c-border-mid)' }}>
                   {k === 'maker' ? t('صانع إنتاج (Maker)', 'Production maker') : t('صانع محتوى', 'Content creator')}
                 </button>
               ))}
@@ -133,7 +133,7 @@ export default function JoinPage() {
             : t('يوتيوبر، تيك توكر، إنستغرامر وغيرهم. أضف حساباتك وعدد متابعيك، وتظهر صفحتك في الدليل بعد أن يراجعها فريق Makers.', 'YouTubers, TikTokers, Instagrammers and more. Add your accounts and follower counts, and your page appears in the directory after the Makers team reviews it.')}
         </span>
         {error && <Notice tone="error">{error}</Notice>}
-        <button type="submit" disabled={busy} className="h-[52px] rounded-full text-[15px] font-semibold cursor-pointer disabled:opacity-60" style={{ background: '#E85D04', color: '#fff', border: 'none' }}>
+        <button type="submit" disabled={busy} className="h-[52px] rounded-full text-[15px] font-semibold cursor-pointer disabled:opacity-60" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', border: 'none' }}>
           {busy ? t('جارٍ الإنشاء…', 'Creating…') : t('أنشئ صفحتك', 'Create your page')}
         </button>
         <p className="m-0 text-[13px]" style={{ color: 'var(--c-muted)' }}>

@@ -86,7 +86,7 @@ export default function Admin() {
         <div className="flex flex-col gap-3 py-16 text-center items-center">
           <span className="text-2xl font-bold">هذه الصفحة لفريق Makers فقط</span>
           <span className="text-sm" style={{ color: MUTED }}>حسابك لا يملك صلاحية الإدارة.</span>
-          <Link to="/" className="text-sm font-semibold" style={{ color: '#E85D04' }}>العودة إلى الدليل</Link>
+          <Link to="/" className="text-sm font-semibold" style={{ color: 'var(--c-accent)' }}>العودة إلى الدليل</Link>
         </div>
       </Wrap>
     )
@@ -113,9 +113,9 @@ export default function Admin() {
         </div>
         <div className="flex gap-1 p-1 rounded-full overflow-x-auto self-start max-w-full" style={{ background: 'var(--c-surface-alt)' }}>
           {tabs.map(([k, l, n]) => (
-            <button key={k} type="button" onClick={() => setTab(k)} className="flex items-center gap-1.5 whitespace-nowrap text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: tab === k ? '#E85D04' : 'transparent', fontWeight: tab === k ? 600 : 400, color: tab === k ? '#fff' : MUTED }}>
+            <button key={k} type="button" onClick={() => setTab(k)} className="flex items-center gap-1.5 whitespace-nowrap text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: tab === k ? 'var(--c-accent)' : 'transparent', fontWeight: tab === k ? 600 : 400, color: tab === k ? 'var(--c-on-accent)' : MUTED }}>
               {l}
-              {!!n && <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold text-white flex items-center justify-center" style={{ background: tab === k ? 'rgba(0,0,0,0.35)' : '#E85D04' }}>{n}</span>}
+              {!!n && <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold text-[color:var(--c-on-accent)] flex items-center justify-center" style={{ background: tab === k ? 'rgba(0,0,0,0.35)' : 'var(--c-accent)' }}>{n}</span>}
             </button>
           ))}
         </div>
@@ -204,7 +204,7 @@ function Insights() {
           <div className="flex items-end h-28" dir="ltr" style={{ gap: 2, borderBottom: '1px solid var(--c-border)' }} onMouseLeave={() => setHover(null)} role="img" aria-label={`${d.funnel.signed_up} تسجيل في آخر 30 يوماً`}>
             {series.map((x, i) => (
               <div key={x.day} className="flex-1 h-full flex items-end" onMouseEnter={() => setHover(i)}>
-                <div className="w-full" style={{ height: x.n ? `${Math.max(6, (x.n / max) * 100)}%` : 2, background: x.n ? '#E85D04' : 'var(--c-border-mid)', borderRadius: '4px 4px 0 0', opacity: hover === null || hover === i ? 1 : 0.45 }} />
+                <div className="w-full" style={{ height: x.n ? `${Math.max(6, (x.n / max) * 100)}%` : 2, background: x.n ? 'var(--c-accent)' : 'var(--c-border-mid)', borderRadius: '4px 4px 0 0', opacity: hover === null || hover === i ? 1 : 0.45 }} />
               </div>
             ))}
           </div>
@@ -286,7 +286,7 @@ function Reports({ onChanged }: { onChanged: () => void }) {
               <span className="text-[15px] font-bold">{REPORT_REASON[r.reason || 'other'] || r.reason}</span>
               <span className="text-xs" style={{ color: MUTED }}>من {names[r.opened_by]?.name || 'عضو'} · {relativeAr(r.created_at)}</span>
             </div>
-            <a href={targetLink(r)} target="_blank" rel="noreferrer" className="text-xs font-semibold whitespace-nowrap" style={{ color: '#E85D04' }}>{targetLabel(r)} ↗</a>
+            <a href={targetLink(r)} target="_blank" rel="noreferrer" className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--c-accent)' }}>{targetLabel(r)} ↗</a>
           </div>
           {r.message && <p dir="auto" className="m-0 text-sm whitespace-pre-line" style={{ color: 'var(--c-text-2)', lineHeight: 1.8 }}>{r.message}</p>}
           {r.status === 'open' ? (
@@ -324,7 +324,7 @@ function Overview({ stats, onOpen, goReview }: { stats: Stats | null; onOpen: (i
   return (
     <div className="flex flex-col gap-6">
       {stats.pending > 0 && (
-        <button type="button" onClick={goReview} className="flex items-center justify-between gap-3 px-6 py-5 rounded-2xl cursor-pointer text-right" style={{ background: '#E85D04', color: '#fff', border: 'none' }}>
+        <button type="button" onClick={goReview} className="flex items-center justify-between gap-3 px-6 py-5 rounded-2xl cursor-pointer text-right" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', border: 'none' }}>
           <span className="flex flex-col gap-1">
             <span className="text-lg font-bold">{stats.pending === 1 ? 'صفحة واحدة بانتظار المراجعة' : stats.pending === 2 ? 'صفحتان بانتظار المراجعة' : `${stats.pending} صفحات بانتظار المراجعة`}</span>
             <span className="text-[13px]" style={{ color: 'rgba(255,255,255,0.82)' }}>أصحابها ينتظرون قرارك لتظهر صفحاتهم في الدليل</span>
@@ -357,7 +357,7 @@ function MemberRow({ m, specs, onClick, compact }: { m: Profile; specs: Specialt
     <button type="button" onClick={onClick} className="w-full flex items-center gap-3.5 py-3 px-2 rounded-2xl cursor-pointer text-right bg-transparent hover:bg-[var(--c-surface-alt)]" style={{ border: 'none', borderBottom: '1px solid var(--c-surface-alt)' }}>
       <Avatar url={m.avatar_url} name={m.full_name} size={compact ? 38 : 44} />
       <span className="flex-1 min-w-0 flex flex-col">
-        <span className="text-[15px] font-semibold truncate">{m.full_name || 'بدون اسم'}{m.role !== 'member' && <span className="text-xs font-normal" style={{ color: '#E85D04' }}> · {ROLE[m.role]}</span>}{isCreator(m) && <span className="text-xs font-normal" style={{ color: MUTED }}> · صانع محتوى</span>}</span>
+        <span className="text-[15px] font-semibold truncate">{m.full_name || 'بدون اسم'}{m.role !== 'member' && <span className="text-xs font-normal" style={{ color: 'var(--c-accent)' }}> · {ROLE[m.role]}</span>}{isCreator(m) && <span className="text-xs font-normal" style={{ color: MUTED }}> · صانع محتوى</span>}</span>
         <span className="text-xs truncate" dir="ltr" style={{ color: MUTED, textAlign: 'right' }}>{m.email}</span>
         {!compact && role && <span className="text-xs truncate" style={{ color: 'var(--c-text-2)' }}>{role}{m.country ? ` · ${m.country}` : ''}</span>}
       </span>
@@ -454,7 +454,7 @@ function ProfilePreview({ m, specs, works, awards }: { m: Profile; specs: Specia
         </div>
       </div>
       <div className="flex flex-wrap gap-1.5">
-        <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ background: 'rgba(232,93,4,0.14)', color: '#FB923C' }}>{creator ? 'صانع محتوى' : 'صانع إنتاج'}</span>
+        <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ background: 'rgba(var(--c-accent-rgb),0.14)', color: '#FB923C' }}>{creator ? 'صانع محتوى' : 'صانع إنتاج'}</span>
         {checks.map(([l, ok]) => (
           <span key={l} className="text-xs px-3 py-1.5 rounded-full" style={{ background: ok ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)', color: ok ? '#4ADE80' : '#F87171' }}>{ok ? '✓' : '✕'} {l}</span>
         ))}
@@ -467,7 +467,7 @@ function ProfilePreview({ m, specs, works, awards }: { m: Profile; specs: Specia
         {works.map((w) => (
           <a key={w.id} href={w.url || undefined} target="_blank" rel="noreferrer" className="flex justify-between gap-3 py-2.5 text-sm" style={{ borderBottom: '1px solid var(--c-surface-alt)' }}>
             <span className="font-semibold truncate">{w.title}{w.role ? <span className="font-normal" style={{ color: MUTED }}> · {w.role}</span> : ''}</span>
-            <span className="shrink-0 text-xs" style={{ color: '#E85D04' }}>{w.platform || 'رابط'} {w.year || ''} ↗</span>
+            <span className="shrink-0 text-xs" style={{ color: 'var(--c-accent)' }}>{w.platform || 'رابط'} {w.year || ''} ↗</span>
           </a>
         ))}
       </Section>
@@ -525,7 +525,7 @@ function ReviewDetail({ m, specs, onDone }: { m: Profile; specs: Specialty[]; on
         <div className="flex flex-wrap gap-2.5">
           <Btn disabled={busy} onClick={() => decide('approved')}>انشر الصفحة</Btn>
           <Btn variant="outline" disabled={busy} onClick={() => decide('rejected')}>تحتاج تعديلاً</Btn>
-          <a href={`/${m.username}`} target="_blank" rel="noreferrer" className="text-sm px-5 py-3 rounded-full" style={{ color: '#E85D04' }}>افتح الصفحة ↗</a>
+          <a href={`/${m.username}`} target="_blank" rel="noreferrer" className="text-sm px-5 py-3 rounded-full" style={{ color: 'var(--c-accent)' }}>افتح الصفحة ↗</a>
         </div>
       </div>
     </Card>
@@ -649,7 +649,7 @@ function MemberModal({ id, specs, isAdmin, selfId, onClose, onChanged }: { id: s
 
       {error && <Notice tone="error">{error}</Notice>}
       {done && <Notice tone="success">{done}</Notice>}
-      <a href={`/${m.username}`} target="_blank" rel="noreferrer" className="self-start text-sm font-semibold" style={{ color: '#E85D04' }}>افتح صفحته ↗</a>
+      <a href={`/${m.username}`} target="_blank" rel="noreferrer" className="self-start text-sm font-semibold" style={{ color: 'var(--c-accent)' }}>افتح صفحته ↗</a>
     </Modal>
   )
 }
@@ -711,7 +711,7 @@ function Specialties({ specs, reload, isAdmin }: { specs: Specialty[]; reload: (
               <span className="text-sm font-semibold">{s.name}</span>
               {isAdmin && (
                 <span className="flex gap-1.5">
-                  <button type="button" onClick={() => resolve(s.id, s.name, true)} className="text-xs px-3 py-1.5 rounded-full cursor-pointer text-white" style={{ background: '#E85D04', border: 'none' }}>أضف</button>
+                  <button type="button" onClick={() => resolve(s.id, s.name, true)} className="text-xs px-3 py-1.5 rounded-full cursor-pointer text-[color:var(--c-on-accent)]" style={{ background: 'var(--c-accent)', border: 'none' }}>أضف</button>
                   <button type="button" onClick={() => resolve(s.id, s.name, false)} className="text-xs px-3 py-1.5 rounded-full cursor-pointer" style={{ background: 'var(--c-surface-alt)', border: 'none' }}>تجاهل</button>
                 </span>
               )}
@@ -807,7 +807,7 @@ function CallsReview({ onChanged }: { onChanged: () => void }) {
             <span className="text-xs whitespace-nowrap" style={{ color: MUTED }}>{relativeAr(c.created_at)}</span>
           </div>
           <p dir="auto" className="m-0 text-sm whitespace-pre-line" style={{ color: 'var(--c-text-2)', lineHeight: 1.8 }}>{c.description}</p>
-          {c.owner && <Link to={`/${c.owner.username}`} className="text-xs font-semibold" style={{ color: '#E85D04' }}>نشرها: {displayName(c.owner)}</Link>}
+          {c.owner && <Link to={`/${c.owner.username}`} className="text-xs font-semibold" style={{ color: 'var(--c-accent)' }}>نشرها: {displayName(c.owner)}</Link>}
           {filter === 'pending' && (
             <div className="flex flex-col md:flex-row gap-2 md:items-center">
               <TextInput value={notes[c.id] || ''} onChange={(e) => setNotes({ ...notes, [c.id]: e.target.value })} placeholder="ملاحظة لصاحب الفرصة عند الرفض (اختياري)" style={{ height: 40 }} />
@@ -851,7 +851,7 @@ function ProjectsAdmin() {
                 <Link to={`/projects/${p.id}`} className="block text-sm font-semibold truncate hover:underline">{p.title}</Link>
                 <span className="block text-xs truncate" style={{ color: MUTED }}>{[displayName(p.owner), p.year, `${p.credits?.length || 0} في الطاقم`, relativeAr(p.created_at)].filter(Boolean).join(' · ')}</span>
               </span>
-              <Link to={`/projects/${p.id}/edit`} className="text-xs" style={{ color: '#E85D04' }}>تعديل</Link>
+              <Link to={`/projects/${p.id}/edit`} className="text-xs" style={{ color: 'var(--c-accent)' }}>تعديل</Link>
               <button type="button" onClick={() => setConfirm(p)} className="text-xs cursor-pointer" style={{ background: 'none', border: 'none', color: '#F87171' }}>حذف</button>
             </div>
           ))}

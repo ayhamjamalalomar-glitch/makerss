@@ -28,7 +28,7 @@ export default function BottomNav() {
   if (approved) items.push({ key: 'messages', to: '/messages', label: t('الرسائل', 'Messages'), active: first === 'messages', badge: unread })
 
   return (
-    <div className="fixed bottom-5 inset-x-0 z-50 flex justify-center pointer-events-none px-3">
+    <div className="md:hidden fixed bottom-5 inset-x-0 z-50 flex justify-center pointer-events-none px-3">
       <motion.nav
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -39,7 +39,7 @@ export default function BottomNav() {
         {items.map((item) => (
           <Link key={item.key} to={item.to} aria-label={item.label} className="relative flex items-center justify-center" style={{ height: 40, minWidth: 44, borderRadius: 999, padding: '0 12px' }}>
             {item.active && (
-              <motion.div layoutId="active-pill" className="absolute inset-0 rounded-full" style={{ background: '#E85D04' }} transition={{ type: 'spring', stiffness: 380, damping: 30 }} />
+              <motion.div layoutId="active-pill" className="absolute inset-0 rounded-full" style={{ background: 'var(--c-accent)' }} transition={{ type: 'spring', stiffness: 380, damping: 30 }} />
             )}
             <span className="relative z-10 flex items-center justify-center flex-shrink-0" style={{ color: item.active ? '#fff' : 'var(--c-muted)' }}>{Icon[item.key]}</span>
             <motion.span
@@ -52,7 +52,7 @@ export default function BottomNav() {
               {item.label}
             </motion.span>
             {!!item.badge && (
-              <span className="absolute z-20 -top-1 -end-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center" style={{ background: '#E85D04', border: '2px solid var(--c-surface)' }}>{item.badge > 9 ? '9+' : item.badge}</span>
+              <span className="absolute z-20 -top-1 -end-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-[color:var(--c-on-accent)] flex items-center justify-center" style={{ background: 'var(--c-accent)', border: '2px solid var(--c-surface)' }}>{item.badge > 9 ? '9+' : item.badge}</span>
             )}
           </Link>
         ))}

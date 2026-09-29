@@ -40,12 +40,12 @@ export default function OpenCallEditor() {
     return (
       <PageShell narrow>
         <div className="py-16 text-center flex flex-col items-center gap-5">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center" style={{ background: '#E85D04' }}>
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center" style={{ background: 'var(--c-accent)' }}>
             <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><path d="M8 18l7 7L28 11" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </div>
           <h1 className="font-bold text-2xl m-0">{t('وصلتنا فرصتك', 'We got your opportunity')}</h1>
           <p className="m-0 max-w-sm leading-relaxed" style={{ color: 'var(--c-muted)' }}>{t('يراجعها فريق Makers وتُنشر خلال وقت قصير. ستصلك الطلبات في صندوق الوارد.', 'The Makers team will review it and publish it shortly. Applications will arrive in your inbox.')}</p>
-          <Link to="/opportunities" className="font-semibold px-8 py-3 rounded-full" style={{ background: '#E85D04', color: '#fff' }}>{t('كل الفرص', 'All opportunities')}</Link>
+          <Link to="/opportunities" className="font-semibold px-8 py-3 rounded-full" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>{t('كل الفرص', 'All opportunities')}</Link>
         </div>
       </PageShell>
     )
@@ -70,7 +70,7 @@ export default function OpenCallEditor() {
   return (
     <PageShell narrow>
       <div className="flex items-center gap-2">
-        <span className="inline-block w-1 rounded-full" style={{ background: '#E85D04', height: 24 }} />
+        <span className="inline-block w-1 rounded-full" style={{ background: 'var(--c-accent)', height: 24 }} />
         <h1 className="font-black m-0" style={{ fontSize: 26 }}>{t('انشر فرصة', 'Post an opportunity')}</h1>
       </div>
       <p className="m-0 -mt-3 text-sm" style={{ color: 'var(--c-muted)' }}>{t('مشروع يحتاج طاقم؟ اكتب التفاصيل، ويراجعها فريقنا قبل النشر.', 'A project that needs a crew? Add the details and our team reviews it before it goes live.')}</p>

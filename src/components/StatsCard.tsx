@@ -53,7 +53,7 @@ export default function StatsCard() {
         <span className="text-[13px] font-semibold">{t('إحصائيات صفحتك', 'Your page stats')}</span>
         <div className="flex gap-1 p-1 rounded-full" role="tablist" style={{ background: 'var(--c-surface-alt)' }}>
           {RANGES.map((d) => (
-            <button key={d} type="button" role="tab" aria-selected={days === d} onClick={() => setDays(d)} className="text-xs px-3 py-1.5 rounded-full cursor-pointer" style={{ border: 'none', background: days === d ? '#E85D04' : 'transparent', color: days === d ? '#fff' : 'var(--c-muted)', fontWeight: days === d ? 600 : 400 }}>
+            <button key={d} type="button" role="tab" aria-selected={days === d} onClick={() => setDays(d)} className="text-xs px-3 py-1.5 rounded-full cursor-pointer" style={{ border: 'none', background: days === d ? 'var(--c-accent)' : 'transparent', color: days === d ? 'var(--c-on-accent)' : 'var(--c-muted)', fontWeight: days === d ? 600 : 400 }}>
               {t(`${d} يوماً`, `${d} days`)}
             </button>
           ))}
@@ -90,7 +90,7 @@ export default function StatsCard() {
                   className="w-full"
                   style={{
                     height: d.views ? `${Math.max(6, (d.views / max) * 100)}%` : 2,
-                    background: d.views ? '#E85D04' : 'var(--c-border-mid)',
+                    background: d.views ? 'var(--c-accent)' : 'var(--c-border-mid)',
                     opacity: hover === null || hover === i ? 1 : 0.45,
                     borderRadius: '4px 4px 0 0',
                     transition: 'opacity .15s',

@@ -124,7 +124,7 @@ export default function EditorPage() {
             <span className="text-sm font-semibold">{t('صفحتي', 'My page')}</span>
             <button type="button" onClick={() => setModal('username')} className="mono text-xs bg-transparent border-0 p-0 cursor-pointer flex items-center gap-1.5" style={{ color: 'var(--c-muted)' }} dir="ltr">
               {SITE_URL.replace('https://', '')}/{profile.username || '…'}
-              <span className="text-[11px]" style={{ color: '#E85D04', fontFamily: 'inherit' }}>{t('تعديل', 'Edit')}</span>
+              <span className="text-[11px]" style={{ color: 'var(--c-accent)', fontFamily: 'inherit' }}>{t('تعديل', 'Edit')}</span>
             </button>
             {statusPill}
           </span>
@@ -146,7 +146,7 @@ export default function EditorPage() {
           <div className="flex-1 flex flex-col gap-3">
             {hasSpec ? (
               <button type="button" onClick={() => setModal('spec')} className="self-start text-start text-sm bg-transparent border-0 p-0 cursor-pointer" style={{ color: 'var(--c-text-2)' }}>
-                {role}{vlen ? ` · ${vlen}` : ''} · {[cityLabel(profile.city), label(COUNTRIES, profile.country)].filter(Boolean).join(listSep())} <span className="text-xs" style={{ color: '#E85D04' }}>{t('تعديل', 'Edit')}</span>
+                {role}{vlen ? ` · ${vlen}` : ''} · {[cityLabel(profile.city), label(COUNTRIES, profile.country)].filter(Boolean).join(listSep())} <span className="text-xs" style={{ color: 'var(--c-accent)' }}>{t('تعديل', 'Edit')}</span>
               </button>
             ) : (
               <Btn variant="dashed" onClick={() => setModal('spec')} className="self-start !px-3.5 !py-1.5 text-[13px]">{creator ? t('+ المحتوى والدولة', '+ Content & country') : t('+ التخصص والدولة', '+ Role & country')}</Btn>
@@ -201,7 +201,7 @@ export default function EditorPage() {
               {creator && <span className="font-normal" style={{ color: 'var(--c-muted)' }}> {t('(اختياري)', '(optional)')}</span>}
             </span>
             {status === 'approved'
-              ? <Link to="/projects/new" className="text-[13px] font-semibold" style={{ color: '#E85D04' }}>{t('+ مشروع كامل مع الطاقم', '+ Full project with crew')}</Link>
+              ? <Link to="/projects/new" className="text-[13px] font-semibold" style={{ color: 'var(--c-accent)' }}>{t('+ مشروع كامل مع الطاقم', '+ Full project with crew')}</Link>
               : !creator && <span className="mono text-xs" style={{ color: 'var(--c-muted)' }}>{t(`${Math.min(works.length, 3)} من 3 على الأقل`, `${Math.min(works.length, 3)} of at least 3`)}</span>}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
@@ -213,7 +213,7 @@ export default function EditorPage() {
                 <span className="flex flex-col gap-0.5 px-1">
                   <span className="text-sm font-semibold">{w.title}</span>
                   {w.role && <span className="text-xs" style={{ color: 'var(--c-muted)' }}>{w.role}</span>}
-                  {status === 'approved' && <Link to={`/projects/${w.id}/edit`} className="text-xs" style={{ color: '#E85D04' }}>{t('أضف البوستر والطاقم', 'Add poster & crew')}</Link>}
+                  {status === 'approved' && <Link to={`/projects/${w.id}/edit`} className="text-xs" style={{ color: 'var(--c-accent)' }}>{t('أضف البوستر والطاقم', 'Add poster & crew')}</Link>}
                 </span>
               </div>
             ))}
@@ -231,7 +231,7 @@ export default function EditorPage() {
         <Card className="px-5 py-5 md:px-10 md:py-7 flex flex-col gap-1">
           <div className="flex justify-between items-baseline pb-2">
             <span className="text-[13px] font-semibold">{t('الجوائز والاعتمادات', 'Awards & credits')} <span className="font-normal" style={{ color: 'var(--c-muted)' }}>{t('(اختياري)', '(optional)')}</span></span>
-            <button type="button" onClick={() => setModal('award')} className="text-[13px] bg-transparent border-0 cursor-pointer" style={{ color: '#E85D04' }}>{t('+ أضف', '+ Add')}</button>
+            <button type="button" onClick={() => setModal('award')} className="text-[13px] bg-transparent border-0 cursor-pointer" style={{ color: 'var(--c-accent)' }}>{t('+ أضف', '+ Add')}</button>
           </div>
           {awards.length === 0 && <span className="text-sm py-1.5" style={{ color: 'var(--c-muted)' }}>{t('أضف جوائزك أو اعتماداتك إن وُجدت، وستظهر في صفحتك تلقائياً.', 'Add any awards or credits, and they will appear on your page automatically.')}</span>}
           {awards.map((a) => (
@@ -266,7 +266,7 @@ export default function EditorPage() {
         </div>
         <div className="relative grid grid-cols-5 gap-1.5 pt-2.5">
           {progress.steps.map((s, i) => (
-            <button key={s.key} type="button" onClick={() => openFor(s.key)} className="h-12 md:h-[54px] rounded-2xl text-[11px] md:text-xs cursor-pointer flex flex-col items-start justify-center gap-0.5 px-2 md:px-3.5 text-start" style={s.done ? { background: 'rgba(232,93,4,0.15)', color: '#FDBA74', border: '1px solid rgba(232,93,4,0.35)', fontWeight: 600 } : { background: 'transparent', color: 'var(--c-muted)', border: '1.5px dashed var(--c-border-mid)' }}>
+            <button key={s.key} type="button" onClick={() => openFor(s.key)} className="h-12 md:h-[54px] rounded-2xl text-[11px] md:text-xs cursor-pointer flex flex-col items-start justify-center gap-0.5 px-2 md:px-3.5 text-start" style={s.done ? { background: 'rgba(var(--c-accent-rgb),0.15)', color: '#FDBA74', border: '1px solid rgba(var(--c-accent-rgb),0.35)', fontWeight: 600 } : { background: 'transparent', color: 'var(--c-muted)', border: '1.5px dashed var(--c-border-mid)' }}>
               <span className="hidden md:inline text-[10px]" style={{ color: 'var(--c-muted)' }}>{t('الخطوة', 'Step')} {i + 1}</span>
               {s.label}
             </button>

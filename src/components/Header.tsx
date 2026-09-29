@@ -2,98 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { useAuth } from '../lib/auth'
 import { t, useLang } from '../lib/i18n'
-import { displayName, posterOf, searchSite } from '../lib/data'
-import { useSpecialties, memberLine } from '../lib/specialties'
+import { displayName } from '../lib/data'
+import { motion } from 'framer-motion'
 import Logo from './Logo'
+import { useHasDarkHero } from '../lib/hero'
 import { Avatar } from './mk'
-
-type Result = { kind: 'maker'; id: string; to: string; name: string; sub: string; photo: string | null } | { kind: 'title'; id: string; to: string; name: string; sub: string; photo: string | null }
-
-function useSearch(query: string) {
-  const specialties = useSpecialties()
-  const [results, setResults] = useState<Result[]>([])
-  useEffect(() => {
-    const q = query.trim()
-    if (q.length < 2) return setResults([])
-    let alive = true
-    const timer = setTimeout(async () => {
-      const found = await searchSite(q)
-      if (!alive) return
-      const makers = found.makers.map((x) => ({
-        kind: 'maker' as const, id: x.id, to: `/${x.username}`, name: displayName(x), sub: memberLine(specialties, x), photo: x.avatar_url,
-      }))
-      const titles = found.projects.map((x) => ({
-        kind: 'title' as const, id: x.id, to: `/projects/${x.id}`, name: x.title, sub: x.year ? String(x.year) : '', photo: posterOf(x),
-      }))
-      setResults([...makers, ...titles])
-    }, 220)
-    return () => { alive = false; clearTimeout(timer) }
-  }, [query, specialties])
-  return results
-}
-
-function SearchBox({ onDone, autoFocus }: { onDone?: () => void; autoFocus?: boolean }) {
-  const { go } = useRouter()
-  const [query, setQuery] = useState('')
-  const [focused, setFocused] = useState(false)
-  const [active, setActive] = useState(0)
-  const results = useSearch(query)
-  useEffect(() => { setActive(0) }, [results])
-  const pick = (r: Result) => { setQuery(''); onDone?.(); go(r.to) }
-  const onKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(results.length - 1, a + 1)) }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(0, a - 1)) }
-    else if (e.key === 'Enter' && results[active]) pick(results[active])
-    else if (e.key === 'Escape') { setQuery(''); onDone?.() }
-  }
-  return (
-    <div className="relative w-full" style={{ maxWidth: 440 }}>
-      <div className="flex items-center gap-2.5 rounded-full px-4" style={{ height: 38, background: 'var(--c-surface-alt)', border: `1px solid ${focused ? 'rgba(232,93,4,0.5)' : 'var(--c-border-mid)'}`, boxShadow: focused ? '0 0 0 3px rgba(232,93,4,0.12)' : 'none', transition: 'border-color .15s' }}>
-        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" style={{ color: focused ? '#E85D04' : 'var(--c-muted)', flexShrink: 0 }}>
-          <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5" /><path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-        <input
-          value={query}
-          autoFocus={autoFocus}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setTimeout(() => setFocused(false), 150)}
-          onKeyDown={onKey}
-          placeholder={t('ابحث عن صنّاع، مشاريع، تخصصات…', 'Search makers, projects, specialties…')}
-          aria-label={t('بحث', 'Search')}
-          className="flex-1 min-w-0"
-          style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: 'var(--c-text)', padding: 0 }}
-        />
-        {!query && !autoFocus && <kbd className="hidden md:inline-block text-[10px] px-1.5 py-0.5 rounded shrink-0" dir="ltr" style={{ border: '1px solid var(--c-border-mid)', color: 'var(--c-muted-2)' }}>Ctrl K</kbd>}
-      </div>
-      {focused && query.trim().length > 1 && (
-        <div className="absolute start-0 end-0 rounded-xl overflow-hidden" style={{ top: 'calc(100% + 6px)', background: 'var(--c-surface)', border: '1px solid var(--c-border)', boxShadow: '0 12px 32px var(--c-shadow)', zIndex: 100 }}>
-          {results.length === 0 ? (
-            <div className="px-4 py-3 text-xs" style={{ color: 'var(--c-muted)' }}>{t('لا نتائج', 'No results')}</div>
-          ) : results.map((r, i) => (
-            <button
-              key={r.kind + r.id}
-              onMouseDown={() => pick(r)}
-              onMouseEnter={() => setActive(i)}
-              className="flex items-center gap-2.5 w-full text-start transition-colors"
-              style={{ padding: '10px 14px', background: i === active ? 'rgba(232,93,4,0.1)' : 'none', border: 'none', borderBottom: i < results.length - 1 ? '1px solid var(--c-border)' : 'none', cursor: 'pointer', color: 'var(--c-text)' }}
-            >
-              {r.kind === 'maker' ? <Avatar url={r.photo} name={r.name} size={32} /> : (
-                <span className="shrink-0 overflow-hidden rounded-md" style={{ width: 32, height: 32, background: 'var(--c-surface-alt)' }}>
-                  {r.photo && <img src={r.photo} alt="" className="w-full h-full object-cover" />}
-                </span>
-              )}
-              <span className="min-w-0">
-                <span className="block truncate text-[13px] font-semibold">{r.name}</span>
-                <span className="block truncate text-[11px]" style={{ color: 'var(--c-muted)' }}>{r.kind === 'maker' ? t('صانع', 'Maker') : t('مشروع', 'Project')}{r.sub ? ` · ${r.sub}` : ''}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function AccountMenu() {
   const { profile, signOut } = useAuth()
@@ -113,7 +26,7 @@ function AccountMenu() {
   )
   return (
     <div ref={ref} className="relative shrink-0">
-      <button onClick={() => setOpen(!open)} aria-label={t('حسابي', 'My account')} aria-expanded={open} className="rounded-full p-0 cursor-pointer" style={{ background: 'none', border: '2px solid ' + (approved ? 'rgba(232,93,4,0.6)' : 'var(--c-border-mid)') }}>
+      <button onClick={() => setOpen(!open)} aria-label={t('حسابي', 'My account')} aria-expanded={open} className="rounded-full p-0 cursor-pointer" style={{ background: 'none', border: '2px solid ' + (approved ? 'rgba(var(--c-accent-rgb),0.6)' : 'var(--c-border-mid)') }}>
         <Avatar url={profile.avatar_url} name={profile.full_name} size={32} />
       </button>
       {open && (
@@ -139,40 +52,102 @@ function AccountMenu() {
   )
 }
 
+const NAV = [
+  { to: '/makers', match: (p: string, q: string) => p === '/makers' && !q.includes('type=creator'), ar: 'الصنّاع', en: 'Makers' },
+  { to: '/makers?type=creator', match: (p: string, q: string) => p === '/makers' && q.includes('type=creator'), ar: 'صنّاع المحتوى', en: 'Creators' },
+  { to: '/projects', match: (p: string) => p.startsWith('/projects'), ar: 'المشاريع', en: 'Projects' },
+  { to: '/opportunities', match: (p: string) => p.startsWith('/opportunities'), ar: 'الفرص', en: 'Open calls' },
+]
+
+const openPalette = () => window.dispatchEvent(new Event('mk-open-palette'))
+
 export default function Header() {
   const { lang, setLang } = useLang()
   const { session, loading } = useAuth()
+  const { path } = useRouter()
   const ar = lang === 'ar'
+  const [scrolled, setScrolled] = useState(false)
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 24)
+      const max = document.documentElement.scrollHeight - window.innerHeight
+      setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [path])
+
+  // Over a dark hero the bar starts clear, like titles over a film frame.
+  const hasHero = useHasDarkHero()
+  const clear = hasHero && !scrolled
+  const query = typeof window !== 'undefined' ? window.location.search : ''
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40" style={{ height: 56, background: 'var(--c-overlay)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--c-border)' }}>
-      <div className="max-w-[1120px] mx-auto w-full h-full flex items-center px-4 sm:px-8" style={{ gap: 10 }}>
-      <>
-          <Logo size="sm" />
-          <div className="hidden sm:flex" style={{ flex: 1, justifyContent: 'center' }}><SearchBox /></div>
-          <div className="flex sm:hidden" style={{ flex: 1 }} />
-          <button className="flex sm:hidden items-center justify-center rounded-full shrink-0 cursor-pointer" style={{ width: 36, height: 36, background: 'var(--c-surface-alt)', border: '1px solid var(--c-border-mid)' }} onClick={() => window.dispatchEvent(new Event('mk-open-palette'))} aria-label={t('بحث', 'Search')}>
-            <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ color: 'var(--c-muted)' }}><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5" /><path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
-          </button>
-          <button
-            onClick={() => setLang(ar ? 'en' : 'ar')}
-            className="flex items-center justify-center font-bold shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-            style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border-mid)', borderRadius: 999, fontSize: 11, color: 'var(--c-muted)', height: 32, minWidth: 36, padding: '0 10px', letterSpacing: '0.04em' }}
-            aria-label={ar ? 'English' : 'العربية'}
-          >
-            {ar ? 'EN' : 'ع'}
-          </button>
-          {!loading && (session ? <AccountMenu /> : (
-            <>
-              <Link to="/login" className="hidden sm:inline-flex items-center text-[12px] font-semibold px-3 py-2 rounded-full shrink-0 hover:opacity-80" style={{ color: 'var(--c-text)' }}>{t('دخول', 'Sign in')}</Link>
-              <Link to="/join" className="flex items-center gap-2 font-semibold px-3 sm:px-4 py-2 rounded-full shrink-0 hover:opacity-90 transition-opacity" style={{ background: '#E85D04', color: '#fff', fontSize: 12 }}>
-                {t('انضم', 'Join')}
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="rtl:-scale-x-100"><path d="M2 5h6M5 2l3 3-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    <header
+      className="fixed top-0 left-0 right-0 z-40 transition-colors duration-300"
+      style={{
+        height: 64,
+        background: clear ? 'linear-gradient(to bottom, rgba(5,5,7,0.75), rgba(5,5,7,0))' : 'var(--c-overlay)',
+        backdropFilter: clear ? 'none' : 'blur(14px)',
+        WebkitBackdropFilter: clear ? 'none' : 'blur(14px)',
+        borderBottom: `1px solid ${clear ? 'transparent' : 'var(--c-border)'}`,
+      }}
+    >
+      <div className="max-w-[1120px] mx-auto w-full h-full flex items-center px-4 sm:px-8 gap-2.5">
+        <Logo size="sm" color={clear ? '#F3EFE7' : undefined} />
+
+        <nav className="hidden md:flex items-center gap-1 ms-6" aria-label={t('التنقل الرئيسي', 'Main navigation')}>
+          {NAV.map((n) => {
+            const on = n.match(path, query)
+            return (
+              <Link key={n.to} to={n.to} className="relative px-3 py-2 text-[13px] font-medium transition-colors" style={{ color: on ? 'var(--c-text)' : clear ? 'rgba(243,239,231,0.75)' : 'var(--c-muted)' }}>
+                {t(n.ar, n.en)}
+                {on && <motion.span layoutId="nav-underline" className="absolute start-3 end-3 -bottom-0.5 h-[2px] rounded-full" style={{ background: 'var(--c-accent)' }} />}
               </Link>
-            </>
-          ))}
-      </>
+            )
+          })}
+        </nav>
+
+        <div className="flex-1" />
+
+        <button
+          type="button"
+          onClick={openPalette}
+          className="hidden sm:flex items-center gap-2.5 rounded-full px-3.5 cursor-pointer transition-colors"
+          style={{ height: 38, minWidth: 220, background: clear ? 'rgba(243,239,231,0.08)' : 'var(--c-surface-alt)', border: `1px solid ${clear ? 'rgba(243,239,231,0.18)' : 'var(--c-border-mid)'}`, color: clear ? 'rgba(243,239,231,0.7)' : 'var(--c-muted)' }}
+          aria-label={t('بحث', 'Search')}
+        >
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5" /><path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+          <span className="text-[12.5px] flex-1 text-start">{t('ابحث عن صانع أو مشروع', 'Search makers or projects')}</span>
+          <kbd className="font-mono text-[10px] px-1.5 py-0.5 rounded" dir="ltr" style={{ border: '1px solid currentColor', opacity: 0.7 }}>Ctrl K</kbd>
+        </button>
+        <button type="button" className="flex sm:hidden items-center justify-center rounded-full shrink-0 cursor-pointer" style={{ width: 38, height: 38, background: clear ? 'rgba(243,239,231,0.08)' : 'var(--c-surface-alt)', border: `1px solid ${clear ? 'rgba(243,239,231,0.18)' : 'var(--c-border-mid)'}`, color: clear ? '#F3EFE7' : 'var(--c-muted)' }} onClick={openPalette} aria-label={t('بحث', 'Search')}>
+          <svg width="15" height="15" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5" /><path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => setLang(ar ? 'en' : 'ar')}
+          className="flex items-center justify-center font-mono font-semibold shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+          style={{ background: 'transparent', border: `1px solid ${clear ? 'rgba(243,239,231,0.18)' : 'var(--c-border-mid)'}`, borderRadius: 999, fontSize: 11, color: clear ? '#F3EFE7' : 'var(--c-muted)', height: 38, minWidth: 38, padding: '0 10px' }}
+          aria-label={ar ? 'English' : 'العربية'}
+        >
+          {ar ? 'EN' : 'ع'}
+        </button>
+        {!loading && (session ? <AccountMenu /> : (
+          <>
+            <Link to="/login" className="hidden sm:inline-flex items-center text-[13px] font-medium px-3 py-2 rounded-full shrink-0 hover:opacity-80" style={{ color: clear ? '#F3EFE7' : 'var(--c-text)' }}>{t('دخول', 'Sign in')}</Link>
+            <Link to="/join" className="flex items-center gap-2 font-semibold px-4 rounded-full shrink-0 hover:brightness-110 transition" style={{ height: 38, background: 'var(--c-accent)', color: 'var(--c-on-accent)', fontSize: 13 }}>
+              {t('انضم', 'Join')}
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="rtl:-scale-x-100" aria-hidden="true"><path d="M2 5h6M5 2l3 3-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </Link>
+          </>
+        ))}
       </div>
+      {/* reading progress, like a playhead on a timeline */}
+      <span aria-hidden="true" className="absolute bottom-0 start-0 h-[2px] transition-[width] duration-150" style={{ width: `${progress * 100}%`, background: 'var(--c-accent)', opacity: scrolled ? 0.9 : 0 }} />
     </header>
   )
 }

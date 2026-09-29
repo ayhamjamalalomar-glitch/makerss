@@ -8,6 +8,9 @@ import { youtubeId } from '../lib/thumbs'
 import { displayName, getProject, kindLabel, posterOf, type CreditRow, type Project } from '../lib/data'
 import { Btn, Modal, PageShell, PageSkeleton, PosterFallback, VerifiedBadge } from '../components/mk'
 import ReportButton from '../components/ReportButton'
+import { RecBadge } from '../components/cine'
+import { motion } from 'framer-motion'
+import { useDarkHero } from '../lib/hero'
 import { track } from '../lib/track'
 import { shareLink } from '../lib/share'
 import { useToast } from '../lib/toast'
@@ -20,7 +23,7 @@ const DIRECTOR = ['مخرج', 'إخراج', 'director']
 const WRITER = ['كاتب', 'كتابة', 'سيناريو', 'writer', 'screenplay', 'script']
 
 function CreditName({ c }: { c: CreditRow }) {
-  if (c.profile) return <Link to={`/${c.profile.username}`} className="text-sm hover:underline" style={{ color: '#E85D04' }}>{displayName(c.profile)}</Link>
+  if (c.profile) return <Link to={`/${c.profile.username}`} className="text-sm hover:underline" style={{ color: 'var(--c-accent)' }}>{displayName(c.profile)}</Link>
   return <span className="text-sm" style={{ color: 'var(--c-text)' }}><bdi>{c.display_name}</bdi></span>
 }
 
@@ -31,6 +34,7 @@ export default function TitlePage({ id }: { id: string }) {
   const [p, setP] = useState<Project | null | undefined>(undefined)
   const [playing, setPlaying] = useState(false)
   const toast = useToast()
+  useDarkHero(!!p)
   const [confirm, setConfirm] = useState<'delete' | 'leave' | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -52,7 +56,7 @@ export default function TitlePage({ id }: { id: string }) {
       <PageShell narrow>
         <div className="py-20 flex flex-col gap-4 items-start">
           <h1 className="m-0 text-3xl font-bold">{t('المشروع غير موجود', 'Project not found')}</h1>
-          <Link to="/projects" className="font-semibold" style={{ color: '#E85D04' }}>{t('كل المشاريع', 'All projects')}</Link>
+          <Link to="/projects" className="font-semibold" style={{ color: 'var(--c-accent)' }}>{t('كل المشاريع', 'All projects')}</Link>
         </div>
       </PageShell>
     )
@@ -108,32 +112,33 @@ export default function TitlePage({ id }: { id: string }) {
 
   return (
     <div className="min-h-screen">
-      <div style={{ borderBottom: '1px solid var(--c-border)' }}><div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-3 flex items-center justify-between">
-        <button onClick={() => (window.history.length > 1 ? window.history.back() : go('/projects'))} className="inline-flex items-center gap-2 text-sm cursor-pointer" style={{ background: 'none', border: 'none', padding: 0, color: 'var(--c-muted)' }}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="rtl:-scale-x-100"><path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
-          {t('رجوع', 'Back')}
-        </button>
-        <div className="flex items-center gap-5">
-          {credits.length > 0 && <a href="#full-crew" className="text-xs" style={{ color: 'var(--c-muted)' }}>{t('الطاقم الكامل', 'Full crew')}</a>}
-          <button onClick={copy} className="flex items-center gap-1.5 text-xs cursor-pointer" style={{ background: 'none', border: 'none', padding: 0, color: 'var(--c-muted)' }}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" /><path d="M5 7h4M7 5v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>
-            {t('مشاركة', 'Share')}
-          </button>
-        </div>
-      </div></div>
-
-      <div className="relative" style={{ background: '#0D0A08' }}>
+      <div className="relative -mt-16" style={{ background: 'var(--c-screen)', color: '#F3EFE7' }}>
         {img && (
           <div className="absolute inset-0 overflow-hidden">
-            <img src={img} alt="" className="w-full h-full object-cover" style={{ filter: 'blur(40px) brightness(0.3)', transform: 'scale(1.1)' }} />
+            <img src={img} alt="" aria-hidden="true" className="w-full h-full object-cover" style={{ filter: 'blur(44px) saturate(0.8) brightness(0.32)', transform: 'scale(1.15)' }} />
           </div>
         )}
-        <div className="relative max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-8">
-          <div className="mb-4 pt-4 sm:pt-0">
-            <h1 className="font-black leading-none mb-2 mt-0" style={{ fontSize: 'clamp(24px, 4vw, 48px)', letterSpacing: '-0.02em', color: 'white' }}>{p.title}</h1>
-            <p className="text-sm m-0" style={{ color: 'rgba(255,255,255,0.6)' }}>{[p.year, kindLabel(p.kind), ...(p.platforms || []).slice(0, 2), p.brand].filter(Boolean).join(' · ')}</p>
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(5,5,7,0.4), rgba(5,5,7,0.2) 50%, rgba(5,5,7,0.85))' }} />
+        <div className="relative max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-24">
+          <div className="flex items-center justify-between mb-6">
+            <button onClick={() => (window.history.length > 1 ? window.history.back() : go('/projects'))} className="inline-flex items-center gap-2 text-sm cursor-pointer hover:opacity-80" style={{ background: 'none', border: 'none', padding: 0, color: 'rgba(243,239,231,0.7)' }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="rtl:-scale-x-100" aria-hidden="true"><path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
+              {t('رجوع', 'Back')}
+            </button>
+            <div className="flex items-center gap-5 text-[13px]">
+              {credits.length > 0 && <a href="#full-crew" className="hover:opacity-80" style={{ color: 'rgba(243,239,231,0.7)' }}>{t('الطاقم الكامل', 'Full crew')}</a>}
+              <button onClick={copy} className="inline-flex items-center gap-1.5 cursor-pointer hover:opacity-80" style={{ background: 'none', border: 'none', padding: 0, color: 'rgba(243,239,231,0.7)' }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10V2M5 5l3-3 3 3M3 9v4a1 1 0 001 1h8a1 1 0 001-1V9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                {t('مشاركة', 'Share')}
+              </button>
+              <span className="hidden sm:inline"><RecBadge light /></span>
+            </div>
           </div>
-
+          <div className="mb-6 flex flex-col gap-2">
+            {p.kind && <span className="text-[14px] font-medium" style={{ color: 'var(--c-accent)' }}>{kindLabel(p.kind)}</span>}
+            <h1 className="font-display font-black m-0" style={{ fontSize: 'clamp(30px, 5.4vw, 68px)', lineHeight: 1.1, letterSpacing: '-0.02em', color: '#F3EFE7' }}>{p.title}</h1>
+            <p className="font-mono text-[12.5px] m-0" style={{ color: 'rgba(243,239,231,0.6)' }}>{[p.year, ...(p.platforms || []).slice(0, 2), p.brand].filter(Boolean).join('  ·  ')}</p>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-[27.27fr_72.73fr] gap-3">
             <div className="hidden sm:block relative rounded-xl overflow-hidden" style={{ aspectRatio: '2/3' }}>
               {img ? <img src={img} alt={p.title} className="w-full h-full object-cover" /> : <PosterFallback title={p.title} />}
@@ -183,14 +188,14 @@ export default function TitlePage({ id }: { id: string }) {
             {director && row(t('إخراج', 'Director'), <CreditName c={director} />)}
             {writer && row(t('كتابة', 'Writer'), <CreditName c={writer} />)}
             {rest.length > 0 && row(t('الطاقم', 'Crew'), rest.map((c, i) => <span key={c.id} className="flex items-center gap-1"><CreditName c={c} />{i < rest.length - 1 && <span style={{ color: 'var(--c-muted)' }}>·</span>}</span>))}
-            {p.owner && row(t('أضافه', 'Added by'), <Link to={`/${p.owner.username}`} className="text-sm hover:underline" style={{ color: '#E85D04' }}>{displayName(p.owner)}</Link>)}
+            {p.owner && row(t('أضافه', 'Added by'), <Link to={`/${p.owner.username}`} className="text-sm hover:underline" style={{ color: 'var(--c-accent)' }}>{displayName(p.owner)}</Link>)}
           </div>
         </div>
 
         <div className="shrink-0 w-full lg:w-72">
           {isOwner && (
             <div className="flex gap-2 mb-4">
-              <Link to={`/projects/${p.id}/edit`} className="flex-1 text-center font-bold px-4 py-3 rounded-xl" style={{ background: '#E85D04', color: '#fff', fontSize: 14 }}>{t('تعديل', 'Edit')}</Link>
+              <Link to={`/projects/${p.id}/edit`} className="flex-1 text-center font-bold px-4 py-3 rounded-xl" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', fontSize: 14 }}>{t('تعديل', 'Edit')}</Link>
               <button onClick={() => setConfirm('delete')} className="px-4 py-3 rounded-xl cursor-pointer text-sm" style={{ background: 'transparent', border: '1px solid rgba(248,113,113,0.35)', color: '#F87171' }}>{t('حذف', 'Delete')}</button>
             </div>
           )}
@@ -216,37 +221,43 @@ export default function TitlePage({ id }: { id: string }) {
       </div>
 
       {credits.length > 0 && (
-        <div id="full-crew" style={{ borderTop: '1px solid var(--c-border)', scrollMarginTop: 70 }}><div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8">
-          <h2 className="font-bold flex items-center gap-2 mt-0 mb-6" style={{ fontSize: 20 }}>
-            <span className="inline-block w-1 rounded-full" style={{ background: '#E85D04', height: 22 }} />
-            {t('الطاقم الكامل', 'Full crew')}
-            <span style={{ color: 'var(--c-muted)' }}>{credits.length}</span>
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-            {credits.map((c) => {
-              const inner = (
-                <>
-                  <span className="relative shrink-0">
-                    <span className="block rounded-full overflow-hidden" style={{ width: 64, height: 64, border: '2px solid var(--c-border)', background: 'var(--c-surface-alt)' }}>
-                      {c.profile?.avatar_url ? <img src={c.profile.avatar_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" /> : <span className="w-full h-full flex items-center justify-center font-bold" style={{ color: 'var(--c-muted)', fontSize: 22 }}>{(c.profile ? displayName(c.profile) : c.display_name || '').charAt(0)}</span>}
+        <div id="full-crew" style={{ borderTop: '1px solid var(--c-border)', scrollMarginTop: 70, background: 'var(--c-screen)', color: '#F3EFE7' }}>
+          <div className="max-w-[760px] mx-auto w-full px-4 sm:px-8 py-16 flex flex-col items-center gap-10">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <span className="font-mono text-[11px] tracking-[0.3em]" dir="ltr" style={{ color: 'var(--c-accent)' }}>FULL CREW</span>
+              <h2 className="font-display font-bold m-0" style={{ fontSize: 'clamp(24px, 3vw, 34px)' }}>{t('الطاقم الكامل', 'Full crew')}</h2>
+              <span className="text-[13px]" style={{ color: 'rgba(243,239,231,0.5)' }}>{t(`${credits.length} في الطاقم`, `${credits.length} credited`)}</span>
+            </div>
+            {/* end credits: role on one side, name on the other */}
+            <div className="w-full flex flex-col gap-1">
+              {credits.map((c, i) => {
+                const name = c.profile ? displayName(c.profile) : c.display_name
+                const row = (
+                  <>
+                    <span className="text-end text-[13px] truncate" style={{ color: 'rgba(243,239,231,0.5)' }}>{c.role || t('الطاقم', 'Crew')}</span>
+                    <span className="w-1 h-1 rounded-full" style={{ background: 'rgba(243,239,231,0.25)' }} />
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <span className="relative shrink-0 w-8 h-8 rounded-full overflow-hidden" style={{ background: 'rgba(243,239,231,0.08)' }}>
+                        {c.profile?.avatar_url ? <img src={c.profile.avatar_url} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition" /> : <span className="w-full h-full flex items-center justify-center text-[12px] font-bold" style={{ color: 'rgba(243,239,231,0.5)' }}>{(name || '').charAt(0)}</span>}
+                      </span>
+                      <span className="min-w-0 flex flex-col">
+                        <span className="font-display font-semibold text-[15px] truncate transition-colors group-hover:text-[color:var(--c-accent)]"><bdi>{name}</bdi></span>
+                        {!c.profile && <span className="text-[11px]" style={{ color: 'rgba(243,239,231,0.4)' }}>{t('ليس على Makers بعد', 'Not on Makers yet')}</span>}
+                      </span>
+                      {c.profile?.is_founding && <VerifiedBadge size={14} />}
                     </span>
-                    {c.profile?.is_founding && <span className="absolute -bottom-1 -end-1"><VerifiedBadge size={20} /></span>}
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block font-bold group-hover:text-orange transition-colors mb-0.5" style={{ fontSize: 15 }}><bdi>{c.profile ? displayName(c.profile) : c.display_name}</bdi></span>
-                    <span className="block text-sm" style={{ color: 'var(--c-muted)' }}>{c.role}</span>
-                    {!c.profile && <span className="block text-[11px] mt-0.5" style={{ color: 'var(--c-muted-2)' }}>{t('ليس عضواً في Makers بعد', 'Not on Makers yet')}</span>}
-                  </span>
-                </>
-              )
-              return c.profile ? (
-                <Link key={c.id} to={`/${c.profile.username}`} className="flex items-center gap-4 py-5 group" style={{ borderBottom: '1px solid var(--c-border)' }}>{inner}</Link>
-              ) : (
-                <div key={c.id} className="flex items-center gap-4 py-5" style={{ borderBottom: '1px solid var(--c-border)' }}>{inner}</div>
-              )
-            })}
+                  </>
+                )
+                const cls = 'group grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2.5'
+                return (
+                  <motion.div key={c.id} initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.5, delay: Math.min(i, 10) * 0.04 }}>
+                    {c.profile ? <Link to={`/${c.profile.username}`} className={cls}>{row}</Link> : <div className={cls}>{row}</div>}
+                  </motion.div>
+                )
+              })}
+            </div>
           </div>
-        </div></div>
+        </div>
       )}
 
       {confirm && (
