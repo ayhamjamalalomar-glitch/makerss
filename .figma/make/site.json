@@ -9,9 +9,6 @@
   },
   "title": "Makers · دليل صنّاع الإنتاج العرب",
   "language": "ar",
-  "icons": {
-    "icon": "/favicon.svg"
-  },
   "openGraph": {
     "image": "https://makerss.net/og.png"
   }

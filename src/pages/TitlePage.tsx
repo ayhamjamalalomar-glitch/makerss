@@ -7,6 +7,8 @@ import { SITE_URL, listSep } from '../lib/constants'
 import { youtubeId } from '../lib/thumbs'
 import { displayName, getProject, kindLabel, posterOf, type CreditRow, type Project } from '../lib/data'
 import { Btn, Modal, PageShell, PosterFallback, Spinner, VerifiedBadge } from '../components/mk'
+import ReportButton from '../components/ReportButton'
+import { track } from '../lib/track'
 
 const vimeoId = (url: string) => url.match(/vimeo\.com\/(?:video\/)?(\d{6,})/)?.[1] || null
 
@@ -34,7 +36,10 @@ export default function TitlePage({ id }: { id: string }) {
     setP(undefined)
     getProject(id).then((x) => {
       setP(x)
-      if (x) document.title = `${x.title} | Makers`
+      if (x) {
+        document.title = `${x.title} | Makers`
+        track('project', x.id, 'view')
+      }
     })
     return () => { document.title = 'Makers · دليل صنّاع الإنتاج العرب' }
   }, [id])
@@ -67,6 +72,7 @@ export default function TitlePage({ id }: { id: string }) {
   const frame = yt ? `https://i.ytimg.com/vi/${yt}/maxresdefault.jpg` : p.thumbnail_url && p.thumbnail_url !== p.thumb_url ? p.thumbnail_url : null
 
   const copy = async () => {
+    track('project', p.id, 'share')
     try { await navigator.clipboard.writeText(`${SITE_URL}/projects/${p.id}`) } catch { /* blocked */ }
     setCopied(true)
     setTimeout(() => setCopied(false), 2500)
@@ -86,6 +92,7 @@ export default function TitlePage({ id }: { id: string }) {
   }
 
   const onPlay = () => {
+    track('project', p.id, 'work')
     if (embed) setPlaying(true)
     else if (p.url) window.open(p.url, '_blank', 'noopener')
   }
@@ -202,6 +209,7 @@ export default function TitlePage({ id }: { id: string }) {
               </div>
             ))}
           </div>
+          {!isOwner && <div className="mt-4"><ReportButton type="project" id={p.id} /></div>}
         </div>
       </div>
 

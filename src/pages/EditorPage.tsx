@@ -3,6 +3,8 @@ import Link, { useRouter } from '../lib/router'
 import { supabase, type Award, type Profile, type Work } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import WorkThumb from '../components/WorkThumb'
+import StatsCard from '../components/StatsCard'
+import EmailPrefs from '../components/EmailPrefs'
 import { COUNTRIES, CONTENT_TYPES, MAX_CONTENT_TYPES, SITE_URL, cityLabel, VIDEO_LENGTHS, detectPlatform, listSep, platformLabel, videoLengthLabel } from '../lib/constants'
 import { isRtl, label, t } from '../lib/i18n'
 import { isCreator, memberLine, useSpecialties } from '../lib/specialties'
@@ -132,6 +134,8 @@ export default function EditorPage() {
         {status === 'rejected' && <Notice tone="error">{t('راجع ملاحظة الفريق في', 'Read the team note on the')} <Link to="/me/status" className="underline font-semibold">{t('صفحة الحالة', 'status page')}</Link>{t('، ثم عدّل صفحتك وأرسلها مجدداً.', ', then update your page and send it again.')}</Notice>}
         {error && <Notice tone="error">{error}</Notice>}
 
+        {status === 'approved' && <StatsCard />}
+
         <Card className="p-5 md:p-10 flex flex-col-reverse md:flex-row gap-6 md:gap-10 md:items-center">
           <div className="flex-1 flex flex-col gap-3">
             {hasSpec ? (
@@ -235,6 +239,7 @@ export default function EditorPage() {
         </Card>
 
         <SocialsCard profile={profile} required={creator} onSave={(socials, followers) => update({ socials, followers })} />
+        <EmailPrefs userId={profile.id} email={profile.email} />
         {status !== 'approved' && <div className="h-44 md:h-40" />}
       </PageShell>
 

@@ -7,6 +7,8 @@ import { useSpecialties, specName, isCreator } from '../lib/specialties'
 import { useAuth } from '../lib/auth'
 import { displayName, formatFollowers, kindLabel, posterOf, projectsForMember, roleOn, totalFollowers, type MemberCard, type Project } from '../lib/data'
 import ContactForm from '../components/ContactForm'
+import ReportButton from '../components/ReportButton'
+import { track } from '../lib/track'
 import { Btn, Modal, Notice, PageShell, PosterFallback, SectionHeader, Spinner, TextArea, VerifiedBadge } from '../components/mk'
 
 const SOCIAL_LABEL: Record<string, string> = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', x: 'X', snapchat: 'Snapchat', facebook: 'Facebook', linkedin: 'LinkedIn', vimeo: 'Vimeo', behance: 'Behance', website: 'Website' }
@@ -48,6 +50,7 @@ export default function MakerProfile({ username }: { username: string }) {
       setP(prof)
       if (!prof) return
       document.title = `${prof.full_name} | Makers`
+      if (prof.status === 'approved') track('profile', prof.id, 'view')
       const [list, a] = await Promise.all([projectsForMember(prof.id), supabase.from('awards').select('*').eq('owner_id', prof.id).order('year', { ascending: false })])
       setProjects(list)
       setAwards((a.data as Award[]) || [])
@@ -110,12 +113,14 @@ export default function MakerProfile({ username }: { username: string }) {
   }
 
   const startChat = async () => {
+    track('profile', p.id, 'message')
     setMsgBusy(true)
     const { data, error } = await supabase.rpc('start_conversation', { p_other: p.id })
     setMsgBusy(false)
     if (!error && data) go(`/messages?c=${data}`)
   }
   const copy = async () => {
+    track('profile', p.id, 'share')
     try { await navigator.clipboard.writeText(`${SITE_URL}/${p.username}`) } catch { /* blocked */ }
     setCopied(true)
     setTimeout(() => setCopied(false), 2500)
@@ -202,7 +207,7 @@ export default function MakerProfile({ username }: { username: string }) {
                     {p.status === 'approved' && <Link to="/projects/new" className="font-semibold px-5 py-2.5 rounded-full" style={{ border: '1px solid var(--c-border-mid)', fontSize: 13 }}>{t('+ أضف مشروعاً', '+ Add a project')}</Link>}
                   </>
                 ) : p.status === 'approved' && (
-                  <button onClick={() => setContactOpen(true)} className="font-semibold px-5 py-2.5 rounded-full hover:opacity-90 cursor-pointer" style={{ background: '#E85D04', border: 'none', color: '#fff', fontSize: 13 }}>{t('اطلب تعاوناً', 'Request collaboration')}</button>
+                  <button onClick={() => { track('profile', p.id, 'contact'); setContactOpen(true) }} className="font-semibold px-5 py-2.5 rounded-full hover:opacity-90 cursor-pointer" style={{ background: '#E85D04', border: 'none', color: '#fff', fontSize: 13 }}>{t('اطلب تعاوناً', 'Request collaboration')}</button>
                 )}
                 {canMessage && (
                   <button onClick={startChat} disabled={msgBusy} className="font-semibold px-5 py-2.5 rounded-full cursor-pointer disabled:opacity-60" style={{ background: 'transparent', border: '1px solid var(--c-border-mid)', color: 'var(--c-text)', fontSize: 13 }}>{t('راسِل', 'Message')}</button>
@@ -261,7 +266,7 @@ export default function MakerProfile({ username }: { username: string }) {
                       {featured.map((pr) => {
                         const img = posterOf(pr)
                         return (
-                          <Link key={pr.id} to={`/projects/${pr.id}`} className="flex gap-3 p-3 rounded-xl group" style={box}>
+                          <Link key={pr.id} to={`/projects/${pr.id}`} onClick={() => track('profile', p.id, 'work')} className="flex gap-3 p-3 rounded-xl group" style={box}>
                             <div className="shrink-0 rounded-lg overflow-hidden" style={{ width: 72, height: 96 }}>
                               {img ? <img src={img} alt={pr.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <PosterFallback title="" />}
                             </div>
@@ -307,7 +312,7 @@ export default function MakerProfile({ username }: { username: string }) {
                     {projects.map((pr) => {
                       const img = posterOf(pr)
                       return (
-                        <Link key={pr.id} to={`/projects/${pr.id}`} className="group">
+                        <Link key={pr.id} to={`/projects/${pr.id}`} onClick={() => track('profile', p.id, 'work')} className="group">
                           <div className="relative rounded-xl overflow-hidden mb-2" style={{ aspectRatio: '2/3', background: 'var(--c-surface)' }}>
                             {img ? <img src={img} alt={pr.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <PosterFallback title={pr.title} />}
                             {p.featured_work_ids?.includes(pr.id) && <span className="absolute top-2 start-2 px-1.5 py-0.5 rounded font-bold" style={{ background: '#E85D04', color: '#fff', fontSize: 9 }}>{t('مختار', 'Featured')}</span>}
@@ -376,7 +381,7 @@ export default function MakerProfile({ username }: { username: string }) {
                     </>
                   )
                   return href ? (
-                    <a key={k} href={href} target="_blank" rel="noreferrer noopener" className="flex justify-between py-2 hover:opacity-80" style={{ borderBottom: i < socials.length - 1 ? '1px solid var(--c-border)' : 'none' }}>{row}</a>
+                    <a key={k} href={href} onClick={() => track('profile', p.id, 'social')} target="_blank" rel="noreferrer noopener" className="flex justify-between py-2 hover:opacity-80" style={{ borderBottom: i < socials.length - 1 ? '1px solid var(--c-border)' : 'none' }}>{row}</a>
                   ) : (
                     <div key={k} className="flex justify-between py-2" style={{ borderBottom: i < socials.length - 1 ? '1px solid var(--c-border)' : 'none' }}>{row}</div>
                   )
@@ -400,6 +405,7 @@ export default function MakerProfile({ username }: { username: string }) {
                 </div>
               </div>
             )}
+            {!isOwner && p.status === 'approved' && <div className="px-1"><ReportButton type="profile" id={p.id} /></div>}
           </aside>
         </div>
       </div>

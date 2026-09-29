@@ -1,6 +1,7 @@
 import { supabase, type Profile } from './supabase'
 import { t, type Pair } from './i18n'
 import { quickThumb } from './thumbs'
+import { CONTENT_TYPES } from './constants'
 
 /** Lightweight public card fields for a member. */
 export const CARD_COLUMNS = 'id, full_name, name_ar, username, avatar_url, is_founding, specialty_ids, other_specialty, city, country, followers, created_at, available, is_featured, status, account_type, content_types'
@@ -123,7 +124,32 @@ export async function topMakers(limit = 10): Promise<{ list: MemberCard[]; ranke
   return { list: ids.map((id) => list.find((m) => m.id === id)).filter(Boolean) as MemberCard[], ranked: active.length > 0 }
 }
 
-export const totalFollowers = (m: Pick<Profile, 'followers'>) => Object.values(m.followers || {}).reduce((s, n) => s + (Number(n) || 0), 0)
+export type ProjectHit = Pick<Project, 'id' | 'title' | 'year' | 'thumb_url' | 'thumbnail_url' | 'url'>
+
+/** Site search on the server: Arabic spelling variants and small typos still match (see `search_makers`). */
+export async function searchSite(query: string, limits = { makers: 4, projects: 3 }) {
+  const q = query.trim()
+  if (q.length < 2) return { makers: [] as MemberCard[], projects: [] as ProjectHit[] }
+  const lower = q.toLowerCase()
+  const kinds = CONTENT_TYPES.filter((c) => `${c.ar} ${c.en}`.toLowerCase().includes(lower)).map((c) => c.key)
+  const [m, w] = await Promise.all([
+    supabase.rpc('search_makers', { p_q: q, p_limit: limits.makers, p_kinds: kinds }),
+    supabase.rpc('search_projects', { p_q: q, p_limit: limits.projects }),
+  ])
+  const mIds = ((m.data as { id: string }[]) || []).map((r) => r.id)
+  const wIds = ((w.data as { id: string }[]) || []).map((r) => r.id)
+  const [cards, works] = await Promise.all([
+    mIds.length ? supabase.from('profiles').select(CARD_COLUMNS).in('id', mIds) : Promise.resolve({ data: [] }),
+    wIds.length ? supabase.from('works').select('id, title, year, thumb_url, thumbnail_url, url').in('id', wIds) : Promise.resolve({ data: [] }),
+  ])
+  const byOrder = <T extends { id: string }>(ids: string[], rows: T[]) => ids.map((id) => rows.find((r) => r.id === id)).filter(Boolean) as T[]
+  return {
+    makers: byOrder(mIds, (cards.data as unknown as MemberCard[]) || []),
+    projects: byOrder(wIds, (works.data as unknown as ProjectHit[]) || []),
+  }
+}
+
+export const totalFollowers =(m: Pick<Profile, 'followers'>) => Object.values(m.followers || {}).reduce((s, n) => s + (Number(n) || 0), 0)
 
 export function formatFollowers(n: number) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1).replace(/\.0$/, '')}M`

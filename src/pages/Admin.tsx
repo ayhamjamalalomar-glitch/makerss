@@ -5,11 +5,11 @@ import { supabase, type Award, type MemberRole, type MemberStatus, type Profile,
 import { budgetLabel, relativeAr } from '../lib/constants'
 import { isCreator, memberLine } from '../lib/specialties'
 import { hasAudience } from '../lib/progress'
-import { Avatar, Btn, Card, Chip, Field, Modal, Notice, Pill, SelectInput, Spinner, TextArea, TextInput } from '../components/mk'
+import { Avatar, Btn, Card, Chip, Field, Modal, Notice, Pill, SelectInput, Skeleton, Spinner, TextArea, TextInput } from '../components/mk'
 import { CALL_SELECT, displayName, kindLabel, listProjects, posterOf, type OpenCall, type Project } from '../lib/data'
 import { formatDateAr } from '../lib/constants'
 
-type Tab = 'overview' | 'review' | 'calls' | 'projects' | 'members' | 'specialties' | 'audit'
+type Tab = 'overview' | 'review' | 'calls' | 'projects' | 'members' | 'reports' | 'specialties' | 'audit'
 
 interface Stats {
   total: number
@@ -72,6 +72,13 @@ export default function Admin() {
 
   useEffect(() => { if (isStaff) loadStats() }, [isStaff, loadStats])
 
+  const [openReports, setOpenReports] = useState(0)
+  const loadReports = useCallback(async () => {
+    const { count } = await supabase.from('tickets').select('id', { count: 'exact', head: true }).eq('kind', 'report').eq('status', 'open')
+    setOpenReports(count ?? 0)
+  }, [])
+  useEffect(() => { if (isStaff) loadReports() }, [isStaff, loadReports])
+
   if (loading || !profile) return <Wrap><Spinner /></Wrap>
   if (!isStaff) {
     return (
@@ -91,6 +98,7 @@ export default function Admin() {
     ['calls', 'الفرص', stats?.pending_calls],
     ['projects', 'المشاريع'],
     ['members', 'الأعضاء'],
+    ['reports', 'البلاغات', openReports],
     ['specialties', 'التخصصات', stats?.pending_suggestions],
     ...(isAdmin ? ([['audit', 'السجل']] as [Tab, string][]) : []),
   ]
@@ -119,6 +127,7 @@ export default function Admin() {
       {tab === 'projects' && <ProjectsAdmin />}
       {tab === 'members' && <Members specs={specs.list} onOpen={setOpenId} />}
       {tab === 'specialties' && <Specialties specs={specs.list} reload={async () => { await specs.reload(); changed() }} isAdmin={isAdmin} />}
+      {tab === 'reports' && <Reports onChanged={loadReports} />}
       {tab === 'audit' && isAdmin && <Audit />}
 
       {openId && <MemberModal id={openId} specs={specs.list} isAdmin={isAdmin} selfId={profile.id} onClose={() => setOpenId(null)} onChanged={changed} />}
@@ -131,6 +140,163 @@ function Wrap({ children }: { children: React.ReactNode }) {
     <div className="px-4 sm:px-8 py-8 flex justify-center">
       {/* the admin panel stays Arabic whatever the site language */}
       <div dir="rtl" lang="ar" className="w-full max-w-[1120px] flex flex-col gap-6">{children}</div>
+    </div>
+  )
+}
+
+/* ---------------- Insights ---------------- */
+
+interface InsightData {
+  makers: number
+  creators: number
+  funnel: { signed_up: number; submitted: number; approved: number }
+  views_7d: number
+  views_30d: number
+  visitors_30d: number
+  requests_30d: number
+  accept_rate: number | null
+  avg_response_hours: number | null
+  applications_30d: number
+  messages_30d: number
+  signups: { day: string; n: number }[] | null
+  top_profiles: { id: string; name: string; username: string; views: number }[]
+}
+
+function Insights() {
+  const [d, setD] = useState<InsightData | null>(null)
+  const [hover, setHover] = useState<number | null>(null)
+  useEffect(() => { supabase.rpc('admin_insights').then(({ data }) => setD((data as InsightData) || null)) }, [])
+  if (!d) return <Card className="p-6"><Skeleton className="h-40 w-full" /></Card>
+
+  const series = d.signups || []
+  const max = Math.max(1, ...series.map((x) => x.n))
+  const hovered = hover !== null ? series[hover] : null
+  const tiles: [string, string, string?][] = [
+    ['صنّاع إنتاج منشورون', String(d.makers)],
+    ['صنّاع محتوى منشورون', String(d.creators)],
+    ['زيارات الصفحات', String(d.views_30d), `${d.views_7d} في آخر 7 أيام`],
+    ['زوّار مختلفون', String(d.visitors_30d), 'آخر 30 يوماً'],
+    ['طلبات تعاون', String(d.requests_30d), 'آخر 30 يوماً'],
+    ['نسبة قبول الطلبات', d.accept_rate === null ? 'لا بيانات' : `${d.accept_rate}%`, 'آخر 90 يوماً'],
+    ['متوسط زمن الرد', d.avg_response_hours === null ? 'لا بيانات' : `${d.avg_response_hours} ساعة`],
+    ['رسائل متبادلة', String(d.messages_30d), `${d.applications_30d} تقديم على الفرص`],
+  ]
+  const funnel: [string, number][] = [['سجّلوا', d.funnel.signed_up], ['أرسلوا للمراجعة', d.funnel.submitted], ['نُشرت صفحاتهم', d.funnel.approved]]
+
+  return (
+    <div className="flex flex-col gap-4">
+      <span className="text-[15px] font-bold">الأداء</span>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+        {tiles.map(([label, v, sub]) => (
+          <div key={label} className="p-5 rounded-2xl flex flex-col gap-1" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
+            <span className="text-[24px] font-bold" style={{ lineHeight: 1.1 }}>{v}</span>
+            <span className="text-[13px] font-semibold">{label}</span>
+            {sub && <span className="text-xs" style={{ color: MUTED }}>{sub}</span>}
+          </div>
+        ))}
+      </div>
+      <div className="grid md:grid-cols-[1fr_300px] gap-4">
+        <Card className="p-5 md:p-6 flex flex-col gap-3">
+          <div className="flex justify-between items-baseline text-xs" style={{ color: MUTED }}>
+            <span className="text-[13px] font-semibold" style={{ color: 'var(--c-text)' }}>التسجيلات يومياً، آخر 30 يوماً</span>
+            <span aria-live="polite">{hovered ? `${formatDateAr(hovered.day)} · ${hovered.n} تسجيل` : ''}</span>
+          </div>
+          <div className="flex items-end h-28" dir="ltr" style={{ gap: 2, borderBottom: '1px solid var(--c-border)' }} onMouseLeave={() => setHover(null)} role="img" aria-label={`${d.funnel.signed_up} تسجيل في آخر 30 يوماً`}>
+            {series.map((x, i) => (
+              <div key={x.day} className="flex-1 h-full flex items-end" onMouseEnter={() => setHover(i)}>
+                <div className="w-full" style={{ height: x.n ? `${Math.max(6, (x.n / max) * 100)}%` : 2, background: x.n ? '#E85D04' : 'var(--c-border-mid)', borderRadius: '4px 4px 0 0', opacity: hover === null || hover === i ? 1 : 0.45 }} />
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {funnel.map(([l, n], i) => (
+              <span key={l} className="flex items-center gap-2 text-xs">
+                <span className="px-3 py-1.5 rounded-full" style={{ background: 'var(--c-surface-alt)' }}>{l}: <b>{n}</b></span>
+                {i < funnel.length - 1 && <span style={{ color: MUTED }}>←</span>}
+              </span>
+            ))}
+          </div>
+        </Card>
+        <Card className="p-5 md:p-6 flex flex-col gap-2">
+          <span className="text-[13px] font-semibold mb-1">أكثر الصفحات زيارة</span>
+          {d.top_profiles.length === 0 && <span className="text-sm" style={{ color: MUTED }}>لا زيارات بعد.</span>}
+          {d.top_profiles.map((p) => (
+            <Link key={p.id} to={`/${p.username}`} className="flex justify-between gap-3 py-2 text-sm" style={{ borderBottom: '1px solid var(--c-surface-alt)' }}>
+              <span className="truncate font-semibold">{p.name}</span>
+              <span className="shrink-0" style={{ color: MUTED }}>{p.views}</span>
+            </Link>
+          ))}
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+/* ---------------- Reports ---------------- */
+
+const REPORT_REASON: Record<string, string> = { fake: 'حساب أو معلومات غير حقيقية', stolen: 'عمل منسوب لغير صاحبه', offensive: 'محتوى مسيء', spam: 'إزعاج أو إعلانات', other: 'سبب آخر' }
+
+interface Ticket { id: number; opened_by: string; target_type: string | null; target_id: string | null; reason: string | null; message: string | null; status: string; resolution: string | null; created_at: string }
+
+function Reports({ onChanged }: { onChanged: () => void }) {
+  const [filter, setFilter] = useState<'open' | 'resolved'>('open')
+  const [rows, setRows] = useState<Ticket[] | null>(null)
+  const [names, setNames] = useState<Record<string, { name: string; username: string | null }>>({})
+  const [notes, setNotes] = useState<Record<number, string>>({})
+  const [busy, setBusy] = useState<number | null>(null)
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('tickets').select('id, opened_by, target_type, target_id, reason, message, status, resolution, created_at').eq('kind', 'report').eq('status', filter).order('created_at', { ascending: false }).limit(200)
+    const list = (data as Ticket[]) || []
+    setRows(list)
+    const ids = [...new Set(list.flatMap((r) => [r.opened_by, r.target_type === 'profile' ? r.target_id : null]).filter(Boolean))] as string[]
+    if (ids.length) {
+      const { data: ps } = await supabase.from('profiles').select('id, full_name, name_ar, username').in('id', ids)
+      const map: Record<string, { name: string; username: string | null }> = {}
+      for (const p of (ps as Profile[]) || []) map[p.id] = { name: displayName(p), username: p.username }
+      setNames(map)
+    }
+  }, [filter])
+  useEffect(() => { setRows(null); load() }, [load])
+
+  const resolve = async (id: number) => {
+    setBusy(id)
+    await supabase.rpc('resolve_ticket', { p_id: id, p_resolution: notes[id] || null })
+    setBusy(null)
+    load()
+    onChanged()
+  }
+  const targetLink = (r: Ticket) =>
+    r.target_type === 'profile' ? `/${names[r.target_id || '']?.username || ''}` : r.target_type === 'project' ? `/projects/${r.target_id}` : `/opportunities/${r.target_id}`
+  const targetLabel = (r: Ticket) =>
+    r.target_type === 'profile' ? `صفحة ${names[r.target_id || '']?.name || 'عضو'}` : r.target_type === 'project' ? 'مشروع' : 'فرصة'
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-2">
+        <Chip on={filter === 'open'} onClick={() => setFilter('open')}>مفتوحة</Chip>
+        <Chip on={filter === 'resolved'} onClick={() => setFilter('resolved')}>تمت معالجتها</Chip>
+      </div>
+      {!rows ? <Spinner /> : rows.length === 0 ? (
+        <Card className="p-8 text-center text-sm" style={{ color: MUTED }}>{filter === 'open' ? 'لا توجد بلاغات مفتوحة.' : 'لا توجد بلاغات معالجة بعد.'}</Card>
+      ) : rows.map((r) => (
+        <Card key={r.id} className="p-5 md:p-6 flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <span className="text-[15px] font-bold">{REPORT_REASON[r.reason || 'other'] || r.reason}</span>
+              <span className="text-xs" style={{ color: MUTED }}>من {names[r.opened_by]?.name || 'عضو'} · {relativeAr(r.created_at)}</span>
+            </div>
+            <a href={targetLink(r)} target="_blank" rel="noreferrer" className="text-xs font-semibold whitespace-nowrap" style={{ color: '#E85D04' }}>{targetLabel(r)} ↗</a>
+          </div>
+          {r.message && <p dir="auto" className="m-0 text-sm whitespace-pre-line" style={{ color: 'var(--c-text-2)', lineHeight: 1.8 }}>{r.message}</p>}
+          {r.status === 'open' ? (
+            <div className="flex flex-col md:flex-row gap-2 md:items-center">
+              <TextInput value={notes[r.id] || ''} onChange={(e) => setNotes({ ...notes, [r.id]: e.target.value })} placeholder="ماذا فعلت؟ (يظهر في السجل)" style={{ height: 40 }} />
+              <Btn className="!py-2 !px-4 text-[13px] shrink-0" disabled={busy === r.id} onClick={() => resolve(r.id)}>تمت المعالجة</Btn>
+            </div>
+          ) : r.resolution && <span className="text-xs" style={{ color: MUTED }}>الإجراء: {r.resolution}</span>}
+        </Card>
+      ))}
     </div>
   )
 }
@@ -161,7 +327,7 @@ function Overview({ stats, onOpen, goReview }: { stats: Stats | null; onOpen: (i
         <button type="button" onClick={goReview} className="flex items-center justify-between gap-3 px-6 py-5 rounded-2xl cursor-pointer text-right" style={{ background: '#E85D04', color: '#fff', border: 'none' }}>
           <span className="flex flex-col gap-1">
             <span className="text-lg font-bold">{stats.pending === 1 ? 'صفحة واحدة بانتظار المراجعة' : stats.pending === 2 ? 'صفحتان بانتظار المراجعة' : `${stats.pending} صفحات بانتظار المراجعة`}</span>
-            <span className="text-[13px]" style={{ color: 'var(--c-muted)' }}>أصحابها ينتظرون قرارك لتظهر صفحاتهم في الدليل</span>
+            <span className="text-[13px]" style={{ color: 'rgba(255,255,255,0.82)' }}>أصحابها ينتظرون قرارك لتظهر صفحاتهم في الدليل</span>
           </span>
           <span className="text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: 'var(--c-surface)', color: 'var(--c-text)' }}>ابدأ المراجعة</span>
         </button>
@@ -175,6 +341,7 @@ function Overview({ stats, onOpen, goReview }: { stats: Stats | null; onOpen: (i
           </div>
         ))}
       </div>
+      <Insights />
       <Card className="p-5 md:p-7 flex flex-col gap-2">
         <span className="text-[15px] font-bold mb-2">آخر التسجيلات</span>
         {recent.map((m) => <MemberRow key={m.id} m={m} specs={[]} onClick={() => onOpen(m.id)} compact />)}
@@ -574,6 +741,8 @@ function actionAr(a: string) {
   if (k === 'set_role') return `غيّر الصلاحية إلى «${ROLE[v as MemberRole] || v}»`
   if (k === 'set_founding') return v === 'true' ? 'منح صفة العضو المؤسس' : 'أزال صفة العضو المؤسس'
   if (k === 'set_featured') return v === 'true' ? 'جعله اختيار الأسبوع' : 'أزاله من اختيار الأسبوع'
+  if (k === 'resolve_ticket') return 'عالج بلاغاً'
+  if (k === 'project_delete') return 'حذف مشروعاً'
   return a
 }
 

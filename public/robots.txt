@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /me
+Disallow: /inbox
+Disallow: /messages
+Disallow: /login
+
+Sitemap: https://makerss.net/sitemap.xml

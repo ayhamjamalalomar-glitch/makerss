@@ -61,9 +61,13 @@ src/lib/data.ts         Project/CreditRow/OpenCall/MemberCard types, PROJECT_KIN
 src/lib/messages.ts     Message type (kind: 'text' | 'collab', ref_id), messaging helpers
 src/lib/constants.ts    COUNTRIES, PROJECT_TYPES, BUDGETS, RESERVED_PATHS (usernames that cannot be taken)
 src/lib/image.ts        toJpeg (client side resize before upload)
+src/lib/track.ts        track(type, id, kind): page analytics through RPC `track_event` (random visitor id in localStorage 'mk-visitor')
 src/components/mk.tsx   design primitives: Btn, Card, Chip, Field, TextInput, SelectInput, TextArea, Pill, Avatar, Notice, Spinner, Modal, PageShell, SectionHeader, VerifiedBadge, PosterFallback
 src/components/         Header (search, lang toggle, account menu), Footer (theme toggle, stored in localStorage 'mk-theme'), BottomNav (mobile), Logo, ContactForm (collab request), RangeCalendar, WorkThumb, ResendConfirm, DarkCard
-public/                 favicon-32.png, apple-touch-icon.png, icon-512.png, og.png (all generated from the wordmark)
+public/                 favicon-32.png, apple-touch-icon.png, icon-512.png, og.png (all generated from the wordmark), robots.txt
+middleware.ts           Vercel Routing Middleware: per-page share previews (title, description, og:image) for /:username, /projects/:id, /opportunities/:id, and /sitemap.xml. Falls through with next() on any error.
+supabase/migrations/    SQL for every schema change made from this repo (applied through the Supabase MCP)
+supabase/functions/send-emails/  Edge Function that drains public.email_outbox through Resend
 ```
 
 ### Routes (`src/App.tsx`)
@@ -126,6 +130,14 @@ Buckets `avatars` and `works`: public read, each user writes only inside their o
 - Messaging: `start_conversation`, `send_message`, `mark_conversation_read`, `unread_messages_count`, `can_message`, `set_block`, `is_participant`
 - Collab: `send_contact_request(...)`, `collab_card(p_id)`, `pending_collab_count()`, `contact_request_email`, `contact_request_sender_member`, `expire_contact_requests`
 - Helpers: `is_admin`, `is_staff`, `is_approved`, `current_role_name`
+
+### Added 2026-09-29 (Phase 2)
+- Search: `ar_norm(text)` (Arabic normalisation), `search_makers(p_q, p_limit, p_kinds)`, `search_projects(p_q, p_limit)`; the header uses `searchSite()` in `data.ts`. Client filters use `arNorm()` from `constants.ts` with the same rules.
+- Analytics: table `page_events` (RLS on, no direct access), RPCs `track_event`, `my_page_stats(p_days)` (StatsCard on /me), `admin_insights()` (admin overview).
+- Emails: tables `email_outbox`, `notification_prefs` (member switch on /me), `message_email_log`. Triggers on contact_requests, profiles (status), open_call_applications, open_calls enqueue emails. pg_cron job `email-worker` runs `kick_email_worker()` every minute; it posts to the `send-emails` function with a secret kept in Vault (`email_worker_secret`). The function needs `RESEND_API_KEY` (and optionally `EMAIL_FROM`, default `Makers <hello@makerss.net>`) set by Ayham in the Supabase dashboard. Without the key the queue just waits.
+- Reports: `tickets` gained target_type, target_id, reason. RPCs `report_content`, `resolve_ticket`; admin tab "البلاغات".
+- Housekeeping: pg_cron job `housekeeping` (hourly) closes open calls past their deadline and expires unanswered requests.
+- Hardening: indexes on all foreign keys, internal functions revoked from anon/authenticated, pg_net in the `extensions` schema.
 
 ### Triggers
 `contact_request_to_conversation` on contact_requests, `profiles_guard` on profiles (blocks members from editing status/role/etc.), `collab_limit`, `review_check`, and `handle_new_user` on auth signup.

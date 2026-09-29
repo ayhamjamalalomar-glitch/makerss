@@ -3,6 +3,7 @@ import Link from '../lib/router'
 import { useAuth } from '../lib/auth'
 import { t, useLang } from '../lib/i18n'
 import { displayName, kindLabel, listProjects, posterOf, PROJECT_KINDS, type Project } from '../lib/data'
+import { arNorm } from '../lib/constants'
 import { PosterFallback, Spinner } from '../components/mk'
 
 export default function TitlesPage() {
@@ -17,7 +18,7 @@ export default function TitlesPage() {
 
   const kinds = PROJECT_KINDS.filter((k) => (all || []).some((p) => p.kind === k.key))
   const filtered = useMemo(() => (all || [])
-    .filter((p) => (kind === 'all' || p.kind === kind) && (!search || `${p.title} ${p.brand || ''}`.toLowerCase().includes(search.toLowerCase())))
+    .filter((p) => (kind === 'all' || p.kind === kind) && (!search || arNorm(`${p.title} ${p.brand || ''} ${displayName(p.owner)}`).includes(arNorm(search.trim()))))
     .sort((a, b) => sort === 'az' ? a.title.localeCompare(b.title) : sort === 'year' ? (b.year ?? 0) - (a.year ?? 0) : b.created_at.localeCompare(a.created_at)), [all, kind, sort, search])
 
   const hero = (all || []).find((p) => posterOf(p))

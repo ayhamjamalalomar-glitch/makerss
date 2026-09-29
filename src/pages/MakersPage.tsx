@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from '../lib/router'
 import { t, label, useLang } from '../lib/i18n'
-import { CONTENT_TYPES, COUNTRIES, cityLabel, contentLabel, listSep } from '../lib/constants'
+import { CONTENT_TYPES, COUNTRIES, arNorm, cityLabel, contentLabel, listSep } from '../lib/constants'
 import { useSpecialties, specName, memberLine, isCreator } from '../lib/specialties'
 import { displayName, formatFollowers, listMembers, totalFollowers, type MemberCard } from '../lib/data'
 import { Spinner, VerifiedBadge } from '../components/mk'
@@ -45,8 +45,8 @@ export default function MakersPage() {
       if (country !== 'all' && m.country !== country) return false
       if (verifiedOnly && !m.is_founding) return false
       if (search) {
-        const q = search.toLowerCase()
-        const hay = [m.full_name, m.name_ar, m.username, m.city, label(COUNTRIES, m.country), m.country, memberLine(specialties, m)].join(' ').toLowerCase()
+        const q = arNorm(search.trim())
+        const hay = arNorm([m.full_name, m.name_ar, m.username, m.city, cityLabel(m.city), label(COUNTRIES, m.country), m.country, memberLine(specialties, m)].join(' '))
         if (!hay.includes(q)) return false
       }
       return true

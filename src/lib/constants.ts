@@ -48,6 +48,17 @@ export const contentLabel = (key: string) => {
 }
 export const MAX_CONTENT_TYPES = 3
 
+/** Text for matching: same rules as the database's ar_norm (أحمد = احمد, محمّد = محمد, مدرسة = مدرسه). */
+export const arNorm = (s: string | null | undefined) =>
+  (s || '')
+    .replace(/[ً-ْٰـ]/g, '')
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .toLowerCase()
+
 /** Separator for inline lists: Arabic comma in Arabic, plain comma in English. */
 export const listSep = () => t('، ', ', ')
 
