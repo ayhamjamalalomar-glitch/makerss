@@ -115,6 +115,10 @@ body {
 .font-inter, .font-arabic { font-family: 'Readex Pro', 'Alexandria', sans-serif; }
 .font-display { font-family: 'Alexandria', 'Readex Pro', sans-serif; }
 h1, h2, h3 { font-family: 'Alexandria', 'Readex Pro', sans-serif; letter-spacing: -0.01em; }
+/* Arabic display type: the black weight clogs the letters and tight tracking or leading breaks the joins
+   and clips the dots, so Arabic headings use bold with open leading. */
+[dir='rtl'] .font-black, [dir='rtl'] .font-extrabold { font-weight: 700; }
+[dir='rtl'] h1, [dir='rtl'] h2, [dir='rtl'] h3 { letter-spacing: 0 !important; line-height: 1.4 !important; }
 .font-mono, .mono { font-family: 'JetBrains Mono', 'Readex Pro', ui-monospace, monospace; }
 /* Arabic letters must stay joined: never space them out. */
 [dir='rtl'] .font-mono:not([dir='ltr']) { letter-spacing: 0 !important; }

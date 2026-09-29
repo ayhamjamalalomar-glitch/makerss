@@ -186,8 +186,8 @@ export default function MakerProfile({ username }: { username: string }) {
                   ? [t('صانع محتوى', 'Content creator'), ...kinds.map((k) => k.name)].join(' · ')
                   : specs.map((s) => s.name).concat(p.other_specialty ? [p.other_specialty] : []).join(' · ')}
               </motion.p>
-              <h1 className="font-display font-black m-0 overflow-hidden" style={{ fontSize: 'clamp(38px, 6.4vw, 80px)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
-                <motion.span className="inline-flex items-center gap-3 flex-wrap" initial={{ y: '100%' }} animate={{ y: 0 }} transition={{ delay: 0.15, duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}>
+              <h1 className="font-display font-black m-0" style={{ fontSize: 'clamp(34px, 5.6vw, 70px)', lineHeight: 1.15, letterSpacing: '-0.02em' }}>
+                <motion.span className="inline-flex items-center gap-3 flex-wrap" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}>
                   {displayName(p)}
                   {p.is_founding && <VerifiedBadge size={30} title={t('عضو مؤسس', 'Founding member')} />}
                 </motion.span>

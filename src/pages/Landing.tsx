@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from '../lib/router'
 import { useAuth } from '../lib/auth'
-import { t, useLang } from '../lib/i18n'
+import { isRtl, t, useLang } from '../lib/i18n'
 import { useSpecialties, specName, firstRole, isCreator } from '../lib/specialties'
 import { budgetLabel, formatDateAr } from '../lib/constants'
 import { displayName, formatFollowers, kindLabel, listMembers, listOpenCalls, listProjects, posterOf, topMakers, totalFollowers, type MemberCard, type OpenCall, type Project } from '../lib/data'
@@ -80,13 +80,12 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
         <div className="relative flex-1 flex flex-col justify-center py-10">
           <Corners size={26} inset={-2} color="rgba(243,239,231,0.35)" w={1.5} />
           <div className="px-5 sm:px-10 py-8 flex flex-col gap-6 max-w-[860px]">
-            <h1 className="font-display font-black m-0" style={{ fontSize: 'clamp(40px, 7.4vw, 96px)', lineHeight: 1.05, letterSpacing: '-0.02em' }}>
-              {[t('دليل صنّاع الإنتاج', 'Arab World'), t('في العالم العربي', 'Production Directory')].map((line, i) => (
-                <span key={i} className="block overflow-hidden pb-[0.08em]">
-                  <motion.span className="block" style={{ color: i === 1 ? 'var(--c-accent)' : undefined }} initial={{ y: '105%' }} animate={{ y: 0 }} transition={{ delay: 0.75 + i * 0.14, duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}>
-                    {line}
-                  </motion.span>
-                </span>
+            {/* Arabic needs room above and below the line for its dots and marks, so no clipping mask here. */}
+            <h1 className="font-display m-0" style={{ fontSize: 'clamp(32px, 5vw, 64px)', lineHeight: isRtl() ? 1.45 : 1.12, fontWeight: isRtl() ? 700 : 800, letterSpacing: isRtl() ? 0 : '-0.02em' }}>
+              {[t('دليل صناع الإبداع', 'Arab World'), t('في العالم العربي', 'Production Directory')].map((line, i) => (
+                <motion.span key={i} className="block" style={{ color: i === 1 ? 'var(--c-accent)' : undefined }} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 + i * 0.15, duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}>
+                  {line}
+                </motion.span>
               ))}
             </h1>
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 0.6 }} className="m-0 max-w-[560px] text-[16px] md:text-[18px]" style={{ lineHeight: 1.8, color: 'rgba(243,239,231,0.78)' }}>
