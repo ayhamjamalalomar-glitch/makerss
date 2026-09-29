@@ -163,3 +163,20 @@ Apply schema changes as named migrations (Supabase MCP `apply_migration` or CLI)
 ## 8. Open items
 - Footer has no social links yet; waiting for Ayham to give the real Makers accounts.
 - Favicon at 32px shows the full three-line wordmark, which is hard to read. Ayham may want a short version later; ask first.
+
+## 9. iOS app (mobile/)
+
+Native app in `mobile/`: Expo SDK 57 (React Native 0.86, expo-router, NativeTabs). Same Supabase project, same accounts, same RLS; no separate backend.
+
+- Plan agreed with Ayham (2026-09-30): website launches officially in October; the app follows on the App Store by the end of October.
+  - Week 1: browse screens (Home, Makers, Projects, Open calls tabs; maker profile, project, open call screens). Done.
+  - Week 2: sign in / sign up, edit profile, Messages with collab requests.
+  - Week 3: push notifications (new message, collab request, application), in-app account deletion (Apple requires it), polish, TestFlight.
+  - Week 4: App Store submission and review fixes.
+  - Stays on the website at first: posting an open call, adding a project, admin.
+- Arabic first and RTL: `I18nManager.forceRTL(true)` plus `direction: 'rtl'` on the root view (`src/app/_layout.tsx`), `extra.supportsRTL/forcesRTL` in app.json. Use start/end, never left/right. English toggle comes with the account screen (needs an app reload for LTR).
+- Code map: `src/lib/` (supabase with AsyncStorage session, data.ts ported from the website's data layer, theme.ts tokens, i18n.ts, constants.ts), `src/components/ui.tsx` (Txt, Screen, PageTitle, SectionHeader, Rail, PosterCard, CastCard, MakerRow, CallCard, Btn, Chip, Tag, Avatar, FoundingBadge), routes in `src/app/`.
+- Fonts: custom fonts pick weight by family (`F` in theme.ts): Alexandria (display), Readex Pro (body), JetBrains Mono (Latin labels only), Archivo Black (wordmark).
+- Add packages with `npx expo install` (offline sandbox: `EXPO_OFFLINE=1 npx expo install ...`). Check with `npx tsc --noEmit` in mobile/.
+- Bundle id `net.makerss.app`. Builds and store submission go through EAS once Ayham's Apple Developer account exists; he signs in himself.
+- `.vercelignore` excludes mobile/ from the website deploy.

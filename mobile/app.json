@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Makers",
+    "slug": "makers",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/makers-icon-512.png",
+    "scheme": "makers",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "bundleIdentifier": "net.makerss.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "CFBundleDevelopmentRegion": "ar",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "associatedDomains": [
+        "applinks:makerss.net"
+      ]
+    },
+    "android": {
+      "package": "net.makerss.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#09090B",
+        "foregroundImage": "./assets/images/makers-icon-512.png"
+      }
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/makers-icon-512.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#09090B",
+          "image": "./assets/images/makers-icon-512.png",
+          "imageWidth": 140
+        }
+      ],
+      "expo-font",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "supportsRTL": true,
+      "forcesRTL": true
+    }
+  }
+}
