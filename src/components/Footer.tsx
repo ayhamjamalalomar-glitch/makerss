@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import Link from '../lib/router'
-import { t } from '../lib/i18n'
+import { isRtl, t } from '../lib/i18n'
 import { useAuth } from '../lib/auth'
 import Logo from './Logo'
 
@@ -48,13 +48,7 @@ export default function Footer() {
       <div className="relative max-w-[1120px] mx-auto px-6 sm:px-10 pt-16 pb-40 md:pb-56">
         <div className="grid grid-cols-1 md:grid-cols-[1.3fr_1fr] gap-12 md:gap-20">
           <div className="flex flex-col gap-6">
-            <Logo size="md" />
-            <p className="m-0 max-w-[460px] text-[14px]" style={{ lineHeight: 1.9, color: 'var(--c-muted)' }}>
-              {t(
-                'كل صورة رأيتها صنعها أحد. Makers دليل مواهب الإنتاج في العالم العربي، مساحة تتعرّف فيها على من يقف خلف الصورة، وتصل إليه مباشرة. كل ملف فيه يراجعه فريقنا بعناية.',
-                'Every image you have ever seen was made by someone. Makers is the talent directory for production across the Arab world, a place to meet the people behind the image and reach them directly. Every profile is carefully reviewed by our team.',
-              )}
-            </p>
+            <Logo size="md" align={isRtl() ? 'right' : 'left'} />
           </div>
           <div className="grid grid-cols-2 gap-8">
             {credits.map(([role, links]) => (

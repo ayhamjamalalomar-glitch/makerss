@@ -50,12 +50,6 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
     for (const m of members || []) for (const id of m.specialty_ids || []) map.set(id, (map.get(id) || 0) + 1)
     return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([id]) => id)
   }, [members])
-  const countries = new Set((members || []).map((m) => m.country).filter(Boolean)).size
-  const stats = [
-    members?.length ? t(`${members.length} صانع`, `${members.length} makers`) : '',
-    projects?.length ? t(`${projects.length} مشروع`, `${projects.length} projects`) : '',
-    countries ? t(`${countries} ${countries === 1 ? 'دولة' : 'دول'}`, `${countries} ${countries === 1 ? 'country' : 'countries'}`) : '',
-  ].filter(Boolean)
 
   return (
     <section className="relative -mt-16 overflow-hidden" style={{ minHeight: 'min(92vh, 860px)', background: 'var(--c-screen)', color: '#F3EFE7' }}>
@@ -119,7 +113,6 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
             </Link>
             <Link to="/makers" className="inline-flex items-center font-semibold px-6 rounded-full transition-colors hover:bg-white/10" style={{ height: 48, border: '1px solid rgba(243,239,231,0.3)', color: '#F3EFE7' }}>{t('تصفّح الصنّاع', 'Browse makers')}</Link>
           </div>
-          {stats.length > 0 && <span className="text-[13px] tabular-nums" style={{ color: 'rgba(243,239,231,0.6)' }}>{stats.join('  ·  ')}</span>}
         </div>
       </div>
     </section>
@@ -167,10 +160,6 @@ export default function Landing() {
           ) : (
             <Rail label={t('جديد على Makers', 'New on Makers')}>
               {projects.map((p) => <PosterCard key={p.id} p={p} width={180} />)}
-              <Link to={approved ? '/projects/new' : session ? '/me' : '/join'} className="group shrink-0 flex flex-col items-center justify-center gap-3 rounded-xl text-center px-5 transition-colors hover:border-[color:var(--c-accent)]" style={{ width: 180, aspectRatio: '2/3', border: '1.5px dashed var(--c-border-mid)', color: 'var(--c-muted)' }}>
-                <span className="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-colors group-hover:bg-[var(--c-accent)] group-hover:text-[color:var(--c-on-accent)]" style={{ border: '1px solid var(--c-border-mid)' }}>+</span>
-                <span className="text-sm font-medium">{approved ? t('أضف مشروعك إلى الشاشة', 'Put your project on screen') : t('انضم وأضف أعمالك', 'Join and add your work')}</span>
-              </Link>
             </Rail>
           )}
         </section>
