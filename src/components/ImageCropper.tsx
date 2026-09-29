@@ -18,12 +18,17 @@ export default function ImageCropper({ file, aspect, outWidth, width = 240, crop
   const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(null)
 
   useEffect(() => {
+    // A new file starts clean: no stale error, and no stale image that Save could crop.
+    setImg(null)
+    setError(false)
+    setZoom(1)
+    let live = true
     const url = URL.createObjectURL(file)
     const i = new Image()
-    i.onload = () => setImg(i)
-    i.onerror = () => setError(true)
+    i.onload = () => { if (live) setImg(i) }
+    i.onerror = () => { if (live) setError(true) }
     i.src = url
-    return () => URL.revokeObjectURL(url)
+    return () => { live = false; URL.revokeObjectURL(url) }
   }, [file])
 
   const base = img ? Math.max(W / img.naturalWidth, H / img.naturalHeight) : 1
@@ -107,7 +112,7 @@ export function DropZone({ onFile, children, className = '' }: { onFile: (f: Fil
         e.preventDefault()
         setOver(false)
         const f = e.dataTransfer.files?.[0]
-        if (f && f.type.startsWith('image/')) onFile(f)
+        if (f && /^image\/(jpeg|png|webp)$/.test(f.type)) onFile(f)
       }}
       style={{ outline: over ? '2px dashed var(--c-accent)' : 'none', outlineOffset: 4, borderRadius: 18, transition: 'outline-color .15s' }}
     >

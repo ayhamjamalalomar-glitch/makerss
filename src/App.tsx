@@ -29,7 +29,7 @@ const MessagesPage = lazy(() => import('./pages/MessagesPage'))
 const Admin = lazy(() => import('./pages/Admin'))
 
 export default function App() {
-  const { path, go } = useRouter()
+  const { path, search, go } = useRouter()
   const { lang } = useLang()
 
   useEffect(() => {
@@ -64,6 +64,10 @@ export default function App() {
   else if (!RESERVED_PATHS.includes(first)) page = <MakerProfile username={first} />
   else page = <Landing />
 
+  // Remount on real page changes only. Opening an open call keeps the list (and its filters) mounted;
+  // on /makers a new query from a link (Makers / Creators tabs) remounts so the filters are re-read.
+  const pageKey = first === 'opportunities' ? first : first === 'makers' ? first + search : first + '/' + second
+
   return (
     <div className="min-h-screen" dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang} style={{ backgroundColor: 'var(--c-bg)', color: 'var(--c-text)' }}>
       {bare ? (
@@ -72,7 +76,7 @@ export default function App() {
         <>
           <Header />
           <main className="pt-16 pb-28 md:pb-0 flex flex-col min-h-screen">
-            <motion.div key={first + '/' + second} className="flex-1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: [0.2, 0.7, 0.2, 1] }}>
+            <motion.div key={pageKey} className="flex-1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease: [0.2, 0.7, 0.2, 1] }}>
               <Suspense fallback={<PageSkeleton />}>{page}</Suspense>
             </motion.div>
             {first !== 'messages' && first !== 'admin' && <Footer />}

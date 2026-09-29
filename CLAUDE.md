@@ -53,7 +53,7 @@ src/main.tsx            LangProvider > RouterProvider > AuthProvider > App
 src/App.tsx             path router (see routes below), Header, main, Footer, BottomNav
 src/index.css           Tailwind import, fonts, CSS color tokens (--c-bg, --c-text, --c-surface, --c-border, --c-muted ...), light theme overrides
 src/LangContext.tsx     small shim returning the current lang string
-src/lib/router.tsx      custom router: Link, useRouter() -> { path, go }, go(path)
+src/lib/router.tsx      custom router: Link, useRouter() -> { path, search, go }. `search` changes only on go() / back button, not on in-page replaceState. App.tsx page key: /opportunities keeps the list mounted when a call opens; /makers remounts when a link changes its query
 src/lib/i18n.tsx        t(ar, en), useLang() -> { lang, setLang }, label(), isRtl()
 src/lib/supabase.ts     client, Profile type, PUBLIC_PROFILE_COLUMNS
 src/lib/auth.tsx        AuthProvider, useAuth() -> { session, profile, ... }
@@ -101,9 +101,8 @@ Layout width: every page content sits in `max-w-[1120px] mx-auto w-full` with si
 - Motion respects the visitor's reduce-motion setting through `MotionConfig` in `main.tsx`.
 - The makers directory keeps every filter in the URL (`type`, `q`, `s`, `c`, `country`, `f`, `available`, `sort`).
 - Every user-facing string goes through `t('عربي', 'English')`. Arabic is the default language, RTL. Arabic text right, English text left (use `dir="auto"` on user-generated text).
-- Colors via CSS variables (`var(--c-text)` etc.), accent `#E85D04`. Dark is default, light theme via `data-theme="light"`.
+- Dark is default, light theme via `data-theme="light"`.
 - Reuse primitives from `mk.tsx` instead of new ad-hoc components.
-- Wordmark font: Archivo Black (`.font-archivo`). Body: Inter + IBM Plex Sans Arabic.
 
 ## 5. Product decisions already made
 
@@ -146,6 +145,7 @@ Buckets `avatars` and `works`: public read, each user writes only inside their o
 - Emails: tables `email_outbox`, `notification_prefs` (member switch on /me), `message_email_log`. Triggers on contact_requests, profiles (status), open_call_applications, open_calls enqueue emails. pg_cron job `email-worker` runs `kick_email_worker()` every minute; it posts to the `send-emails` function with a secret kept in Vault (`email_worker_secret`). The function needs `RESEND_API_KEY` (and optionally `EMAIL_FROM`, default `Makers <hello@makerss.net>`) set by Ayham in the Supabase dashboard. Without the key the queue just waits.
 - Reports: `tickets` gained target_type, target_id, reason. RPCs `report_content`, `resolve_ticket`; admin tab "البلاغات".
 - Housekeeping: pg_cron job `housekeeping` (hourly) closes open calls past their deadline and expires unanswered requests.
+- Abuse limits (2026-09-30, migration `abuse_limits`): `client_ip_hash()` reads the caller IP from PostgREST headers. `track_event` caps 300 events per IP per day, counts one view per target, kind, IP and day, and 5000 per target per day. `send_contact_request` caps 5 per sender email and 5 per IP per day, 10 per recipient per day ('recipient busy today'), cleans the sender name (no control chars, 60 max) and validates the email. `housekeeping` deletes page_events older than 400 days.
 - Hardening: indexes on all foreign keys, internal functions revoked from anon/authenticated, pg_net in the `extensions` schema.
 
 ### Triggers

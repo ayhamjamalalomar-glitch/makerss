@@ -119,12 +119,16 @@ export function Rail({ children, label, itemWidth = 180, gap = 14 }: { children:
           const d = drag.current
           const el = ref.current
           if (!d || !el) return
+          // Button already released (e.g. the browser took over with a native drag): stop.
+          if (e.buttons === 0) { el.classList.remove('dragging'); drag.current = null; return }
           const dx = e.clientX - d.x
           if (Math.abs(dx) > 5) { d.moved = true; el.classList.add('dragging') }
           if (d.moved) el.scrollLeft = d.left - dx
         }}
         onPointerUp={() => { ref.current?.classList.remove('dragging'); setTimeout(() => { drag.current = null }, 0) }}
         onPointerLeave={() => { ref.current?.classList.remove('dragging'); drag.current = null }}
+        onPointerCancel={() => { ref.current?.classList.remove('dragging'); drag.current = null }}
+        onDragStart={(e) => e.preventDefault()}
         onClickCapture={(e) => { if (drag.current?.moved) { e.preventDefault(); e.stopPropagation() } }}
       >
         {children}

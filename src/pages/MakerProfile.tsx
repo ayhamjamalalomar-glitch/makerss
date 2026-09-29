@@ -155,7 +155,7 @@ export default function MakerProfile({ username }: { username: string }) {
       {/* HERO: opening titles */}
       <section className="relative -mt-16 overflow-hidden" style={{ background: 'var(--c-screen)', color: '#F3EFE7' }}>
         {backdrop && <img src={backdrop} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(48px) saturate(0.7) brightness(0.45)', transform: 'scale(1.2)' }} />}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(5,5,7,0.55), rgba(5,5,7,0.7) 60%, var(--c-bg))' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(5,5,7,0.55), rgba(5,5,7,0.7) 60%, var(--c-screen))' }} />
         <div className="relative max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-24 pb-10">
           {p.status !== 'approved' && isOwner && (
             <div className="mb-5"><Notice>{t('هذه معاينة لصفحتك. لن تظهر للزوار قبل موافقة فريق Makers.', 'This is a preview of your page. Visitors will see it once the Makers team approves it.')} <Link to="/me" className="font-semibold underline">{t('عد إلى التعديل', 'Back to editing')}</Link></Notice></div>

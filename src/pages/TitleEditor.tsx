@@ -164,7 +164,7 @@ export default function TitleEditor({ id }: { id?: string }) {
             </div>
             <label className="text-xs font-semibold px-4 py-2 rounded-full cursor-pointer" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>
               {uploading ? t('جارٍ الرفع…', 'Uploading…') : poster ? t('غيّر الصورة', 'Change image') : t('ارفع بوستر', 'Upload poster')}
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) setPending(e.target.files[0]); e.target.value = '' }} />
+              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { if (e.target.files?.[0]) setPending(e.target.files[0]); e.target.value = '' }} />
             </label>
             {poster && <button type="button" onClick={() => setPoster(null)} className="text-[11px] cursor-pointer" style={{ background: 'none', border: 'none', color: 'var(--c-muted)' }}>{t('إزالة', 'Remove')}</button>}
             {!poster && videoThumb && <span className="text-[11px]" style={{ color: 'var(--c-muted)' }}>{t('نستخدم صورة الفيديو', 'Using the video frame')}</span>}

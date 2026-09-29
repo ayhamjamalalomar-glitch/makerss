@@ -64,7 +64,7 @@ const openPalette = () => window.dispatchEvent(new Event('mk-open-palette'))
 export default function Header() {
   const { lang, setLang } = useLang()
   const { session, loading } = useAuth()
-  const { path } = useRouter()
+  const { path, search } = useRouter()
   const ar = lang === 'ar'
   const [scrolled, setScrolled] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -83,7 +83,7 @@ export default function Header() {
   // Over a dark hero the bar starts clear, like titles over a film frame.
   const hasHero = useHasDarkHero()
   const clear = hasHero && !scrolled
-  const query = typeof window !== 'undefined' ? window.location.search : ''
+  const query = search
 
   return (
     <header

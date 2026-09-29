@@ -2,16 +2,22 @@ import { createContext, useCallback, useContext, useEffect, useState, type Ancho
 
 interface RouterState {
   path: string
+  /** Query string of the last navigation made with go() or the back button. In-page filter updates that use replaceState do not change it. */
+  search: string
   go: (to: string) => void
 }
 
-const RouterContext = createContext<RouterState>({ path: '/', go: () => {} })
+const RouterContext = createContext<RouterState>({ path: '/', search: '', go: () => {} })
 
 export function RouterProvider({ children }: { children: ReactNode }) {
   const [path, setPath] = useState(() => window.location.pathname || '/')
+  const [search, setSearch] = useState(() => window.location.search)
 
   useEffect(() => {
-    const onPop = () => setPath(window.location.pathname || '/')
+    const onPop = () => {
+      setPath(window.location.pathname || '/')
+      setSearch(window.location.search)
+    }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [])
@@ -19,10 +25,11 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   const go = useCallback((to: string) => {
     if (to !== window.location.pathname + window.location.hash) window.history.pushState(null, '', to)
     setPath(window.location.pathname)
+    setSearch(window.location.search)
     if (!to.includes('#')) window.scrollTo({ top: 0 })
   }, [])
 
-  return <RouterContext.Provider value={{ path, go }}>{children}</RouterContext.Provider>
+  return <RouterContext.Provider value={{ path, search, go }}>{children}</RouterContext.Provider>
 }
 
 export const useRouter = () => useContext(RouterContext)

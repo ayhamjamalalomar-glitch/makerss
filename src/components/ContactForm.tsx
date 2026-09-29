@@ -46,6 +46,7 @@ export default function ContactForm({ to, onDone }: { to: Pick<Profile, "id" | "
       const m = error.message
       setError(
         m.includes('too many') ? t('أرسلت طلبات كثيرة اليوم. حاول غداً.', 'You sent many requests today. Try again tomorrow.')
+          : m.includes('busy') ? t('هذا الشخص وصلته طلبات كثيرة اليوم. جرّب بكرا.', 'This person got many requests today. Try again tomorrow.')
           : m.includes('recently') ? t('أرسلت طلباً لهذا الشخص مؤخراً. انتظر رده.', 'You recently sent this person a request. Wait for their reply.')
             : m.includes('past') ? t('تاريخ البدء في الماضي.', 'The start date is in the past.')
               : m.includes('sender_email') ? t('تحقق من البريد الإلكتروني.', 'Check the email address.')
