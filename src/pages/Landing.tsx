@@ -39,17 +39,11 @@ function CallSheet({ c }: { c: OpenCall }) {
 }
 
 function Hero({ members, projects }: { members: MemberCard[] | null; projects: Project[] | null }) {
-  const specialties = useSpecialties()
   // Real faces and real posters only: the strips are built from what is on Makers.
   const faces = useMemo(() => (members || []).map((m) => m.avatar_url).filter(Boolean) as string[], [members])
   const posters = useMemo(() => (projects || []).map((p) => posterOf(p)).filter(Boolean) as string[], [projects])
   const stripA = [...posters, ...faces]
   const stripB = [...faces].reverse().concat(posters)
-  const topSpecs = useMemo(() => {
-    const map = new Map<number, number>()
-    for (const m of members || []) for (const id of m.specialty_ids || []) map.set(id, (map.get(id) || 0) + 1)
-    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([id]) => id)
-  }, [members])
 
   return (
     <section className="relative -mt-16 overflow-hidden" style={{ minHeight: 'min(92vh, 860px)', background: 'var(--c-screen)', color: '#F3EFE7' }}>
@@ -76,7 +70,7 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
           <div className="px-5 sm:px-10 py-8 flex flex-col gap-6 max-w-[860px]">
             {/* Arabic needs room above and below the line for its dots and marks, so no clipping mask here. */}
             <h1 className="font-display m-0" style={{ fontSize: 'clamp(32px, 5vw, 64px)', lineHeight: isRtl() ? 1.45 : 1.12, fontWeight: isRtl() ? 700 : 800, letterSpacing: isRtl() ? 0 : '-0.02em' }}>
-              {[t('دليل صناع الإبداع', 'Arab World'), t('في العالم العربي', 'Production Directory')].map((line, i) => (
+              {[t('دليل صناع الإبداع', 'Arab World'), t('في العالم العربي', 'Creative Directory')].map((line, i) => (
                 <motion.span key={i} className="block" style={{ color: i === 1 ? 'var(--c-accent)' : undefined }} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 + i * 0.15, duration: 0.8, ease: [0.2, 0.7, 0.2, 1] }}>
                   {line}
                 </motion.span>
@@ -94,13 +88,6 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
                 </span>
                 <kbd className="hidden sm:inline font-mono text-[10px] px-1.5 py-0.5 rounded" dir="ltr" style={{ border: '1px solid rgba(243,239,231,0.3)' }}>Ctrl K</kbd>
               </button>
-              {topSpecs.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {topSpecs.map((id) => (
-                    <Link key={id} to={`/makers?s=${id}`} className="text-[12px] px-3 py-1.5 rounded-full transition-colors hover:bg-[var(--c-accent)] hover:text-[color:var(--c-on-accent)]" style={{ border: '1px solid rgba(243,239,231,0.22)', color: 'rgba(243,239,231,0.85)' }}>{specName(specialties, id)}</Link>
-                  ))}
-                </div>
-              )}
             </motion.div>
           </div>
         </div>
