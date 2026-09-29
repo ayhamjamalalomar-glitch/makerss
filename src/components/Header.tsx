@@ -36,8 +36,16 @@ function SearchBox({ onDone, autoFocus }: { onDone?: () => void; autoFocus?: boo
   const { go } = useRouter()
   const [query, setQuery] = useState('')
   const [focused, setFocused] = useState(false)
+  const [active, setActive] = useState(0)
   const results = useSearch(query)
+  useEffect(() => { setActive(0) }, [results])
   const pick = (r: Result) => { setQuery(''); onDone?.(); go(r.to) }
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(results.length - 1, a + 1)) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(0, a - 1)) }
+    else if (e.key === 'Enter' && results[active]) pick(results[active])
+    else if (e.key === 'Escape') { setQuery(''); onDone?.() }
+  }
   return (
     <div className="relative w-full" style={{ maxWidth: 440 }}>
       <div className="flex items-center gap-2.5 rounded-full px-4" style={{ height: 38, background: 'var(--c-surface-alt)', border: `1px solid ${focused ? 'rgba(232,93,4,0.5)' : 'var(--c-border-mid)'}`, boxShadow: focused ? '0 0 0 3px rgba(232,93,4,0.12)' : 'none', transition: 'border-color .15s' }}>
@@ -50,12 +58,13 @@ function SearchBox({ onDone, autoFocus }: { onDone?: () => void; autoFocus?: boo
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 150)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && results[0]) pick(results[0]); if (e.key === 'Escape') { setQuery(''); onDone?.() } }}
+          onKeyDown={onKey}
           placeholder={t('ابحث عن صنّاع، مشاريع، تخصصات…', 'Search makers, projects, specialties…')}
           aria-label={t('بحث', 'Search')}
           className="flex-1 min-w-0"
           style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 13, color: 'var(--c-text)', padding: 0 }}
         />
+        {!query && !autoFocus && <kbd className="hidden md:inline-block text-[10px] px-1.5 py-0.5 rounded shrink-0" dir="ltr" style={{ border: '1px solid var(--c-border-mid)', color: 'var(--c-muted-2)' }}>Ctrl K</kbd>}
       </div>
       {focused && query.trim().length > 1 && (
         <div className="absolute start-0 end-0 rounded-xl overflow-hidden" style={{ top: 'calc(100% + 6px)', background: 'var(--c-surface)', border: '1px solid var(--c-border)', boxShadow: '0 12px 32px var(--c-shadow)', zIndex: 100 }}>
@@ -65,8 +74,9 @@ function SearchBox({ onDone, autoFocus }: { onDone?: () => void; autoFocus?: boo
             <button
               key={r.kind + r.id}
               onMouseDown={() => pick(r)}
-              className="flex items-center gap-2.5 w-full text-start hover:bg-white/5 transition-colors"
-              style={{ padding: '10px 14px', background: 'none', border: 'none', borderBottom: i < results.length - 1 ? '1px solid var(--c-border)' : 'none', cursor: 'pointer', color: 'var(--c-text)' }}
+              onMouseEnter={() => setActive(i)}
+              className="flex items-center gap-2.5 w-full text-start transition-colors"
+              style={{ padding: '10px 14px', background: i === active ? 'rgba(232,93,4,0.1)' : 'none', border: 'none', borderBottom: i < results.length - 1 ? '1px solid var(--c-border)' : 'none', cursor: 'pointer', color: 'var(--c-text)' }}
             >
               {r.kind === 'maker' ? <Avatar url={r.photo} name={r.name} size={32} /> : (
                 <span className="shrink-0 overflow-hidden rounded-md" style={{ width: 32, height: 32, background: 'var(--c-surface-alt)' }}>
@@ -132,23 +142,16 @@ function AccountMenu() {
 export default function Header() {
   const { lang, setLang } = useLang()
   const { session, loading } = useAuth()
-  const [mobileSearch, setMobileSearch] = useState(false)
   const ar = lang === 'ar'
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40" style={{ height: 56, background: 'var(--c-overlay)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--c-border)' }}>
       <div className="max-w-[1120px] mx-auto w-full h-full flex items-center px-4 sm:px-8" style={{ gap: 10 }}>
-      {mobileSearch ? (
-        <div className="flex sm:hidden items-center gap-2 w-full">
-          <SearchBox autoFocus onDone={() => setMobileSearch(false)} />
-          <button onClick={() => setMobileSearch(false)} className="text-[13px] shrink-0 cursor-pointer" style={{ background: 'none', border: 'none', color: 'var(--c-muted)' }}>{t('إلغاء', 'Cancel')}</button>
-        </div>
-      ) : (
-        <>
+      <>
           <Logo size="sm" />
           <div className="hidden sm:flex" style={{ flex: 1, justifyContent: 'center' }}><SearchBox /></div>
           <div className="flex sm:hidden" style={{ flex: 1 }} />
-          <button className="flex sm:hidden items-center justify-center rounded-full shrink-0 cursor-pointer" style={{ width: 36, height: 36, background: 'var(--c-surface-alt)', border: '1px solid var(--c-border-mid)' }} onClick={() => setMobileSearch(true)} aria-label={t('بحث', 'Search')}>
+          <button className="flex sm:hidden items-center justify-center rounded-full shrink-0 cursor-pointer" style={{ width: 36, height: 36, background: 'var(--c-surface-alt)', border: '1px solid var(--c-border-mid)' }} onClick={() => window.dispatchEvent(new Event('mk-open-palette'))} aria-label={t('بحث', 'Search')}>
             <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ color: 'var(--c-muted)' }}><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5" /><path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
           </button>
           <button
@@ -168,8 +171,7 @@ export default function Header() {
               </Link>
             </>
           ))}
-        </>
-      )}
+      </>
       </div>
     </header>
   )

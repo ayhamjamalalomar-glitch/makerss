@@ -112,8 +112,14 @@ a { color: inherit; text-decoration: none; }
   from { background-position: 100% 0; }
   to { background-position: -100% 0; }
 }
+.mk-spin { animation: mk-rotate 0.8s linear infinite; }
+.mk-typing { animation: mk-bounce 1s ease-in-out infinite; }
+@keyframes mk-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: .5; } 30% { transform: translateY(-3px); opacity: 1; } }
+@keyframes mk-rotate { to { transform: rotate(360deg); } }
+:focus-visible { outline: 2px solid #E85D04; outline-offset: 2px; }
+
 @media (prefers-reduced-motion: reduce) {
-  .mk-skeleton { animation: none; }
+  .mk-skeleton, .mk-spin, .mk-typing { animation: none; }
   html { scroll-behavior: auto; }
 }
 

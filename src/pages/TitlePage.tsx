@@ -6,9 +6,11 @@ import { t, useLang } from '../lib/i18n'
 import { SITE_URL, listSep } from '../lib/constants'
 import { youtubeId } from '../lib/thumbs'
 import { displayName, getProject, kindLabel, posterOf, type CreditRow, type Project } from '../lib/data'
-import { Btn, Modal, PageShell, PosterFallback, Spinner, VerifiedBadge } from '../components/mk'
+import { Btn, Modal, PageShell, PageSkeleton, PosterFallback, VerifiedBadge } from '../components/mk'
 import ReportButton from '../components/ReportButton'
 import { track } from '../lib/track'
+import { shareLink } from '../lib/share'
+import { useToast } from '../lib/toast'
 
 const vimeoId = (url: string) => url.match(/vimeo\.com\/(?:video\/)?(\d{6,})/)?.[1] || null
 
@@ -28,7 +30,7 @@ export default function TitlePage({ id }: { id: string }) {
   const { session } = useAuth()
   const [p, setP] = useState<Project | null | undefined>(undefined)
   const [playing, setPlaying] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const toast = useToast()
   const [confirm, setConfirm] = useState<'delete' | 'leave' | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -44,7 +46,7 @@ export default function TitlePage({ id }: { id: string }) {
     return () => { document.title = 'Makers · دليل صنّاع الإنتاج العرب' }
   }, [id])
 
-  if (p === undefined) return <Spinner />
+  if (p === undefined) return <PageSkeleton />
   if (p === null) {
     return (
       <PageShell narrow>
@@ -73,9 +75,9 @@ export default function TitlePage({ id }: { id: string }) {
 
   const copy = async () => {
     track('project', p.id, 'share')
-    try { await navigator.clipboard.writeText(`${SITE_URL}/projects/${p.id}`) } catch { /* blocked */ }
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
+    const r = await shareLink(`${SITE_URL}/projects/${p.id}`, `${p.title} | Makers`)
+    if (r === 'copied') toast(t('تم نسخ الرابط', 'Link copied'))
+    else if (r === 'failed') toast(t('تعذّر نسخ الرابط', 'Could not copy the link'), 'error')
   }
   const doDelete = async () => {
     setBusy(true)
@@ -115,7 +117,7 @@ export default function TitlePage({ id }: { id: string }) {
           {credits.length > 0 && <a href="#full-crew" className="text-xs" style={{ color: 'var(--c-muted)' }}>{t('الطاقم الكامل', 'Full crew')}</a>}
           <button onClick={copy} className="flex items-center gap-1.5 text-xs cursor-pointer" style={{ background: 'none', border: 'none', padding: 0, color: 'var(--c-muted)' }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" /><path d="M5 7h4M7 5v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>
-            {copied ? t('تم نسخ الرابط', 'Link copied') : t('مشاركة', 'Share')}
+            {t('مشاركة', 'Share')}
           </button>
         </div>
       </div></div>

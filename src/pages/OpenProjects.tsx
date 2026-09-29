@@ -3,10 +3,13 @@ import Link, { useRouter } from '../lib/router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { label, t, useLang } from '../lib/i18n'
-import { COUNTRIES, budgetLabel, cityLabel, formatDateAr, listSep, relativeAr } from '../lib/constants'
+import { COUNTRIES, SITE_URL, budgetLabel, cityLabel, formatDateAr, listSep, relativeAr } from '../lib/constants'
 import { useSpecialties, specName } from '../lib/specialties'
 import { CALL_COLORS, CALL_SELECT, displayName, kindLabel, listOpenCalls, type OpenCall } from '../lib/data'
-import { Avatar, Btn, Notice, Pill, Spinner, TextArea } from '../components/mk'
+import { Avatar, Btn, Notice, Pill, Spinner, TextArea, useDialog } from '../components/mk'
+import ReportButton from '../components/ReportButton'
+import { shareLink } from '../lib/share'
+import { useToast } from '../lib/toast'
 
 const box = { background: 'var(--c-surface)', border: '1px solid var(--c-border)' } as const
 
@@ -22,6 +25,8 @@ function CallDetail({ id, onClose, applied, onApplied }: { id: string; onClose: 
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const toast = useToast()
+  useDialog(onClose)
 
   useEffect(() => {
     supabase.from('open_calls').select(CALL_SELECT).eq('id', id).maybeSingle().then(({ data }) => setC((data as unknown as OpenCall) || null))
@@ -34,6 +39,7 @@ function CallDetail({ id, onClose, applied, onApplied }: { id: string; onClose: 
     setBusy(false)
     if (error) return setError(error.message.includes('closed') ? t('هذه الفرصة أُغلقت.', 'This opportunity is closed.') : t('تعذّر إرسال طلبك. حاول مرة أخرى.', 'Could not send your application. Try again.'))
     onApplied()
+    toast(t('وصل طلبك إلى صاحب الفرصة', 'Your application was sent'))
   }
   const close = async () => {
     setBusy(true)
@@ -91,6 +97,17 @@ function CallDetail({ id, onClose, applied, onApplied }: { id: string; onClose: 
                   </div>
                 </div>
               )}
+
+              <div className="flex items-center gap-4 mb-5">
+                <button type="button" onClick={async () => {
+                  const r = await shareLink(`${SITE_URL}/opportunities/${c.id}`, c.title)
+                  if (r === 'copied') toast(t('تم نسخ الرابط', 'Link copied'))
+                }} className="inline-flex items-center gap-1.5 text-xs cursor-pointer" style={{ background: 'none', border: 'none', padding: 0, color: 'var(--c-muted)' }}>
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10V2M5 5l3-3 3 3M3 9v4a1 1 0 001 1h8a1 1 0 001-1V9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  {t('شارك الفرصة', 'Share')}
+                </button>
+                {!isOwner && c.status === 'open' && <ReportButton type="call" id={c.id} />}
+              </div>
 
               {c.owner && (
                 <Link to={`/${c.owner.username}`} className="flex items-center gap-3 p-3 rounded-xl mb-6" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>

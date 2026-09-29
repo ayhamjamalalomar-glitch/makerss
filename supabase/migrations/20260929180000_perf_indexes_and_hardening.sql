@@ -1,4 +1,4 @@
--- Cover every foreign key flagged by the performance advisor.
+/* Cover every foreign key flagged by the performance advisor. */
 create index if not exists admin_audit_log_admin_id_idx on public.admin_audit_log (admin_id);
 create index if not exists awards_owner_id_idx on public.awards (owner_id);
 create index if not exists blocks_blocked_idx on public.blocks (blocked);
@@ -21,13 +21,13 @@ create index if not exists tickets_credit_id_idx on public.tickets (credit_id);
 create index if not exists tickets_opened_by_idx on public.tickets (opened_by);
 create index if not exists works_owner_id_idx on public.works (owner_id);
 
--- Trigger function and internal helpers do not need to be callable over the API.
+/* Trigger function and internal helpers do not need to be callable over the API. */
 revoke execute on function public.collab_to_conversation() from public, anon, authenticated;
 revoke execute on function public.pending_collab_count() from public, anon;
 grant execute on function public.pending_collab_count() to authenticated;
 revoke execute on function public.expire_collaboration_requests() from public, anon, authenticated;
 
--- One policy per action instead of an ALL policy that overlaps the read policy.
+/* One policy per action instead of an ALL policy that overlaps the read policy. */
 drop policy if exists awards_write on public.awards;
 create policy awards_insert on public.awards for insert to authenticated with check (owner_id = (select auth.uid()));
 create policy awards_update on public.awards for update to authenticated using (owner_id = (select auth.uid())) with check (owner_id = (select auth.uid()));

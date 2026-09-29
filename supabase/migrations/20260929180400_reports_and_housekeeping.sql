@@ -1,4 +1,4 @@
--- Reports ("بلّغ") reuse the tickets table, plus scheduled housekeeping.
+/* Reports ("بلّغ") reuse the tickets table, plus scheduled housekeeping. */
 
 alter table public.tickets add column if not exists target_type text;
 alter table public.tickets add column if not exists target_id text;
@@ -43,7 +43,7 @@ revoke execute on function public.resolve_ticket(bigint, text) from public, anon
 grant execute on function public.resolve_ticket(bigint, text) to authenticated;
 grant select on public.tickets to authenticated;
 
--- Close open calls whose deadline passed, and expire unanswered collaboration requests.
+/* Close open calls whose deadline passed, and expire unanswered collaboration requests. */
 create or replace function public.housekeeping()
 returns void
 language plpgsql security definer

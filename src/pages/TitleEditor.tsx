@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
@@ -7,7 +7,8 @@ import { fetchThumb, quickThumb } from '../lib/thumbs'
 import { toJpeg } from '../lib/image'
 import { CARD_COLUMNS, displayName, getProject, PLATFORMS, PROJECT_KINDS, type MemberCard } from '../lib/data'
 import { useSpecialties, specName } from '../lib/specialties'
-import { Avatar, Btn, Chip, Field, Notice, PageShell, Spinner, TextArea, TextInput } from '../components/mk'
+import { Avatar, Btn, Chip, Field, Modal, Notice, PageShell, Spinner, TextArea, TextInput } from '../components/mk'
+import ImageCropper, { DropZone } from '../components/ImageCropper'
 
 type Crew = { key: string; profile?: MemberCard | null; name?: string; role: string }
 
@@ -66,6 +67,8 @@ export default function TitleEditor({ id }: { id?: string }) {
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState<File | null>(null)
+  const crop = useRef<(() => Promise<Blob>) | null>(null)
 
   // Suggest my role from my first specialty
   useEffect(() => {
@@ -111,7 +114,7 @@ export default function TitleEditor({ id }: { id?: string }) {
     setError(null)
     setUploading(true)
     try {
-      const blob = await toJpeg(file, 1400)
+      const blob = crop.current ? await crop.current() : await toJpeg(file, 1400)
       const path = `${profile.id}/poster-${Date.now()}.jpg`
       const up = await supabase.storage.from('works').upload(path, blob, { contentType: 'image/jpeg' })
       if (up.error) throw up.error
@@ -120,6 +123,7 @@ export default function TitleEditor({ id }: { id?: string }) {
       setError(t('تعذّر رفع الصورة. جرّب صورة JPG أو PNG أصغر.', 'Could not upload the image. Try a smaller JPG or PNG.'))
     }
     setUploading(false)
+    setPending(null)
   }
 
   const save = async (e: React.FormEvent) => {
@@ -157,17 +161,18 @@ export default function TitleEditor({ id }: { id?: string }) {
 
       <form onSubmit={save} className="flex flex-col gap-5">
         <div className="p-5 rounded-2xl flex flex-col sm:flex-row gap-5" style={card}>
-          <div className="shrink-0 flex flex-col gap-2 items-center">
+          <DropZone onFile={setPending} className="shrink-0 flex flex-col gap-2 items-center">
             <div className="rounded-xl overflow-hidden flex items-center justify-center" style={{ width: 150, height: 225, background: 'var(--c-surface-alt)', border: '1px dashed var(--c-border-mid)' }}>
               {shown ? <img src={shown} alt="" className="w-full h-full object-cover" /> : <span className="text-xs text-center px-3" style={{ color: 'var(--c-muted)' }}>{t('بوستر المشروع', 'Project poster')}</span>}
             </div>
             <label className="text-xs font-semibold px-4 py-2 rounded-full cursor-pointer" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>
               {uploading ? t('جارٍ الرفع…', 'Uploading…') : poster ? t('غيّر الصورة', 'Change image') : t('ارفع بوستر', 'Upload poster')}
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) setPending(e.target.files[0]); e.target.value = '' }} />
             </label>
             {poster && <button type="button" onClick={() => setPoster(null)} className="text-[11px] cursor-pointer" style={{ background: 'none', border: 'none', color: 'var(--c-muted)' }}>{t('إزالة', 'Remove')}</button>}
             {!poster && videoThumb && <span className="text-[11px]" style={{ color: 'var(--c-muted)' }}>{t('نستخدم صورة الفيديو', 'Using the video frame')}</span>}
-          </div>
+            <span className="text-[11px] text-center max-w-[150px]" style={{ color: 'var(--c-muted-2)' }}>{t('أو اسحب الصورة وأفلتها هنا', 'or drop an image here')}</span>
+          </DropZone>
           <div className="flex-1 flex flex-col gap-4">
             <Field label={t('اسم المشروع *', 'Title *')}><TextInput required maxLength={140} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('مثال: إعلان رمضان 2026', 'e.g. Ramadan 2026 campaign')} /></Field>
             <div className="grid grid-cols-2 gap-3">
@@ -219,6 +224,16 @@ export default function TitleEditor({ id }: { id?: string }) {
           <Btn type="button" variant="outline" onClick={() => (window.history.length > 1 ? window.history.back() : go('/projects'))}>{t('إلغاء', 'Cancel')}</Btn>
         </div>
       </form>
+
+      {pending && (
+        <Modal
+          title={t('اضبط البوستر', 'Frame the poster')}
+          onClose={() => setPending(null)}
+          footer={<><Btn disabled={uploading} onClick={() => upload(pending)}>{uploading ? t('جارٍ الرفع…', 'Uploading…') : t('استخدم هذه الصورة', 'Use this image')}</Btn><Btn variant="outline" onClick={() => setPending(null)}>{t('إلغاء', 'Cancel')}</Btn></>}
+        >
+          <ImageCropper file={pending} aspect={2 / 3} outWidth={1000} width={220} cropRef={crop} />
+        </Modal>
+      )}
     </PageShell>
   )
 }

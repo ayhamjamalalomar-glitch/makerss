@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { supabase, type Award, type Profile, type Work } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import WorkThumb from '../components/WorkThumb'
 import StatsCard from '../components/StatsCard'
 import EmailPrefs from '../components/EmailPrefs'
+import ImageCropper, { DropZone } from '../components/ImageCropper'
 import { COUNTRIES, CONTENT_TYPES, MAX_CONTENT_TYPES, SITE_URL, cityLabel, VIDEO_LENGTHS, detectPlatform, listSep, platformLabel, videoLengthLabel } from '../lib/constants'
 import { isRtl, label, t } from '../lib/i18n'
 import { isCreator, memberLine, useSpecialties } from '../lib/specialties'
 import { computeProgress } from '../lib/progress'
 import { fetchThumb } from '../lib/thumbs'
 import { toJpeg } from '../lib/image'
+import { useToast } from '../lib/toast'
 import { Btn, Card, Chip, Corners, Field, Modal, Notice, PageShell, Pill, SelectInput, Spinner, TextArea, TextInput } from '../components/mk'
 
 type ModalKind = null | 'spec' | 'work' | 'award' | 'photo' | 'username'
@@ -33,6 +35,7 @@ export default function EditorPage() {
   const [awards, setAwards] = useState<Award[]>([])
   const [modal, setModal] = useState<ModalKind>(null)
   const [deleting, setDeleting] = useState<Work | null>(null)
+  const toast = useToast()
   const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [bio, setBio] = useState('')
@@ -81,10 +84,13 @@ export default function EditorPage() {
 
   if (loading || !profile) return <PageShell><Spinner /></PageShell>
 
-  const update = async (patch: Partial<Profile>) => {
+  const update = async (patch: Partial<Profile>, done?: string) => {
     setError(null)
     const { error } = await supabase.from('profiles').update(patch).eq('id', profile.id)
-    if (error) setError(t('تعذّر الحفظ. حاول مرة أخرى.', 'Could not save. Try again.'))
+    if (error) {
+      setError(t('تعذّر الحفظ. حاول مرة أخرى.', 'Could not save. Try again.'))
+      toast(t('تعذّر الحفظ', 'Could not save'), 'error')
+    } else toast(done || t('تم الحفظ', 'Saved'))
     await refreshProfile()
     return !error
   }
@@ -123,7 +129,7 @@ export default function EditorPage() {
             {statusPill}
           </span>
           <span className="flex gap-2">
-            <button type="button" onClick={() => update({ available: !profile.available })} className="flex items-center gap-2 text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ background: 'var(--c-surface-alt)', border: 'none' }}>
+            <button type="button" onClick={() => update({ available: !profile.available }, profile.available ? t('صرت غير متاح حالياً', 'Marked as not available') : t('صرت متاحاً للعمل', 'Marked as available'))} className="flex items-center gap-2 text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ background: 'var(--c-surface-alt)', border: 'none' }}>
               <span className="w-2 h-2 rounded-full" style={{ background: profile.available ? '#4ADE80' : 'var(--c-muted)' }} />
               {profile.available ? t('متاح للعمل', 'Available for work') : t('غير متاح حالياً', 'Not available right now')}
             </button>
@@ -238,7 +244,7 @@ export default function EditorPage() {
           ))}
         </Card>
 
-        <SocialsCard profile={profile} required={creator} onSave={(socials, followers) => update({ socials, followers })} />
+        <SocialsCard profile={profile} required={creator} onSave={(socials, followers) => update({ socials, followers }, t('تم حفظ الحسابات', 'Accounts saved'))} />
         <EmailPrefs userId={profile.id} email={profile.email} />
         {status !== 'approved' && <div className="h-44 md:h-40" />}
       </PageShell>
@@ -278,7 +284,7 @@ export default function EditorPage() {
         <Modal
           title={t('حذف العمل؟', 'Delete this work?')}
           onClose={() => setDeleting(null)}
-          footer={<><Btn variant="danger" onClick={async () => { await supabase.from('works').delete().eq('id', deleting.id); setDeleting(null); loadLists() }}>{t('احذف', 'Delete')}</Btn><Btn variant="outline" onClick={() => setDeleting(null)}>{t('إلغاء', 'Cancel')}</Btn></>}
+          footer={<><Btn variant="danger" onClick={async () => { await supabase.from('works').delete().eq('id', deleting.id); setDeleting(null); loadLists(); toast(t('حُذف العمل', 'Work deleted')) }}>{t('احذف', 'Delete')}</Btn><Btn variant="outline" onClick={() => setDeleting(null)}>{t('إلغاء', 'Cancel')}</Btn></>}
         >
           <p className="m-0 text-sm" style={{ color: 'var(--c-muted)' }}>{t(`سيُحذف «${deleting.title}» من صفحتك ومن صفحة المشاريع. لا يمكن التراجع.`, `"${deleting.title}" will be removed from your page and the projects page. This cannot be undone.`)}</p>
         </Modal>
@@ -365,9 +371,7 @@ function PhotoModal({ profile, onClose, onSaved }: { profile: Profile; onClose: 
   const [file, setFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const local = useMemo(() => (file ? URL.createObjectURL(file) : null), [file])
-  useEffect(() => () => { if (local) URL.revokeObjectURL(local) }, [local])
-  const preview = local || profile.avatar_url
+  const crop = useRef<(() => Promise<Blob>) | null>(null)
 
   const save = async () => {
     if (!file) return onClose()
@@ -375,7 +379,7 @@ function PhotoModal({ profile, onClose, onSaved }: { profile: Profile; onClose: 
     setError(null)
     let blob: Blob
     try {
-      blob = await toJpeg(file, 1000)
+      blob = crop.current ? await crop.current() : await toJpeg(file, 1000)
     } catch {
       setBusy(false)
       return setError(t('لم نتمكن من قراءة هذه الصورة. جرّب صورة أخرى بصيغة JPG أو PNG.', 'We could not read this image. Try another JPG or PNG.'))
@@ -394,18 +398,22 @@ function PhotoModal({ profile, onClose, onSaved }: { profile: Profile; onClose: 
 
   return (
     <Modal title={t('صورتك', 'Your photo')} onClose={onClose} footer={<><Btn onClick={save} disabled={busy}>{busy ? t('جارٍ الرفع…', 'Uploading…') : t('حفظ', 'Save')}</Btn><Btn variant="soft" onClick={onClose}>{t('إلغاء', 'Cancel')}</Btn></>}>
-      <div className="flex flex-col items-center gap-3.5">
-        <div className="relative w-[220px] h-[270px] rounded-2xl overflow-hidden flex items-center justify-center" style={{ background: 'var(--c-border)' }}>
-          {preview ? <img src={preview} alt="" className="bw w-full h-full object-cover" /> : <span className="text-6xl font-semibold" style={{ color: 'var(--c-muted)' }}>{(profile.full_name || 'م').charAt(0)}</span>}
-          <Corners size={18} inset={12} color={preview ? 'rgba(255,255,255,0.8)' : 'var(--c-border-mid)'} />
-        </div>
-        <span className="text-[13px] text-center" style={{ color: 'var(--c-muted)' }}>{t('صورة واضحة لوجهك، بإضاءة جيدة وخلفية بسيطة.', 'A clear photo of your face, with good light and a simple background.')}</span>
+      <DropZone onFile={setFile} className="flex flex-col items-center gap-3.5">
+        {file ? (
+          <ImageCropper file={file} aspect={3 / 4} outWidth={900} width={220} cropRef={crop} />
+        ) : (
+          <div className="relative w-[220px] h-[293px] rounded-2xl overflow-hidden flex items-center justify-center" style={{ background: 'var(--c-border)' }}>
+            {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-6xl font-semibold" style={{ color: 'var(--c-muted)' }}>{(profile.full_name || 'م').charAt(0)}</span>}
+            <Corners size={18} inset={12} color={profile.avatar_url ? 'rgba(255,255,255,0.8)' : 'var(--c-border-mid)'} />
+          </div>
+        )}
+        <span className="text-[13px] text-center" style={{ color: 'var(--c-muted)' }}>{t('صورة واضحة لوجهك، بإضاءة جيدة وخلفية بسيطة. اسحبها وأفلتها هنا أو اخترها من جهازك.', 'A clear photo of your face, with good light and a simple background. Drop it here or choose it from your device.')}</span>
         <label className="text-[13px] font-semibold px-5 py-2.5 rounded-full cursor-pointer" style={{ background: 'var(--c-surface-alt)' }}>
-          {t('اختر صورة من جهازك', 'Choose a photo')}
+          {file ? t('اختر صورة أخرى', 'Choose another photo') : t('اختر صورة من جهازك', 'Choose a photo')}
           <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
         </label>
         {error && <Notice tone="error">{error}</Notice>}
-      </div>
+      </DropZone>
     </Modal>
   )
 }
@@ -527,13 +535,10 @@ function AwardModal({ ownerId, onClose, onSaved }: { ownerId: string; onClose: (
 function SocialsCard({ profile, required, onSave }: { profile: Profile; required?: boolean; onSave: (s: Record<string, string>, f: Record<string, number>) => void }) {
   const [socials, setSocials] = useState<Record<string, string>>(profile.socials || {})
   const [followers, setFollowers] = useState<Record<string, string>>(Object.fromEntries(Object.entries(profile.followers || {}).map(([k, v]) => [k, String(v)])))
-  const [saved, setSaved] = useState(false)
   const save = () => {
     const s = Object.fromEntries(Object.entries(socials).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v))
     const f = Object.fromEntries(Object.entries(followers).filter(([, v]) => v && !isNaN(Number(v))).map(([k, v]) => [k, Number(v)]))
     onSave(s, f)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
   }
   return (
     <Card className="px-5 py-6 md:px-10 md:py-8 flex flex-col gap-3" style={{ scrollMarginTop: 80 }}>
@@ -552,7 +557,7 @@ function SocialsCard({ profile, required, onSave }: { profile: Profile; required
           {s.followers && <TextInput inputMode="numeric" value={followers[s.key] || ''} onChange={(e) => setFollowers({ ...followers, [s.key]: e.target.value.replace(/\D/g, '') })} placeholder={t('المتابعون', 'Followers')} style={{ maxWidth: 120, height: 44 }} />}
         </div>
       ))}
-      <Btn variant="soft" onClick={save} className="self-start mt-1">{saved ? t('تم الحفظ', 'Saved') : t('حفظ الحسابات', 'Save accounts')}</Btn>
+      <Btn variant="soft" onClick={save} className="self-start mt-1">{t('حفظ الحسابات', 'Save accounts')}</Btn>
     </Card>
   )
 }

@@ -4,7 +4,7 @@ import { useAuth } from '../lib/auth'
 import { t, useLang } from '../lib/i18n'
 import { displayName, kindLabel, listProjects, posterOf, PROJECT_KINDS, type Project } from '../lib/data'
 import { arNorm } from '../lib/constants'
-import { PosterFallback, Spinner } from '../components/mk'
+import { PosterFallback, Skeleton } from '../components/mk'
 
 export default function TitlesPage() {
   useLang()
@@ -28,7 +28,16 @@ export default function TitlesPage() {
     color: on ? 'white' : 'var(--c-muted)', cursor: 'pointer', fontSize: 12, fontWeight: on ? 600 : 400,
   })
 
-  if (!all) return <Spinner />
+  if (!all) {
+    return (
+      <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-10 flex flex-col gap-6" aria-busy="true">
+        <Skeleton className="h-64 w-full rounded-2xl" />
+        <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
+          {Array.from({ length: 12 }).map((_, i) => <Skeleton key={i} style={{ aspectRatio: '2/3' }} />)}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen">

@@ -7,6 +7,7 @@ import { budgetLabel } from '../lib/constants'
 import { CALL_COLORS, displayName, formatFollowers, kindLabel, listMembers, listOpenCalls, listProjects, posterOf, topMakers, totalFollowers, type MemberCard, type OpenCall, type Project } from '../lib/data'
 import { useRouter } from '../lib/router'
 import { PosterFallback, SectionHeader, Skeleton, VerifiedBadge } from '../components/mk'
+import Reveal from '../components/Reveal'
 
 function RankBadge({ rank }: { rank: number }) {
   return (
@@ -159,6 +160,7 @@ export default function Landing() {
         </section>
       )}
 
+      <Reveal>
       <section>
         <SectionHeader title={t('فرص مفتوحة', 'Open Projects')} onSeeAll={() => go('/opportunities')} />
         <p className="text-sm mb-4" style={{ marginTop: -12, color: 'var(--c-muted)' }}>
@@ -175,8 +177,10 @@ export default function Landing() {
           </div>
         ) : null}
       </section>
+      </Reveal>
 
       {audience.length > 0 && (
+        <Reveal>
         <section>
           <SectionHeader title={t('أكبر الجماهير', 'Biggest Audiences')} onSeeAll={() => go('/makers')} />
           <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
@@ -192,8 +196,10 @@ export default function Landing() {
             ))}
           </div>
         </section>
+        </Reveal>
       )}
 
+      <Reveal>
       <section className="rounded-2xl p-7 md:p-12 flex flex-col gap-4" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
         <span className="text-xs md:text-[13px] font-semibold" style={{ color: '#E85D04' }}>{t('من هي Makers؟', 'Who is Makers?')}</span>
         <h2 className="m-0 font-bold text-[24px] md:text-[34px]" style={{ lineHeight: 1.35 }}>{t('دليل صنّاع الإنتاج في العالم العربي', 'The directory of production talent across the Arab world')}</h2>
@@ -204,8 +210,10 @@ export default function Landing() {
           <p className="m-0" style={{ color: 'var(--c-muted)' }}>{t('كل ملف فيه يراجعه فريقنا بعناية.', 'Every profile here is carefully reviewed by our team.')}</p>
         </div>
       </section>
+      </Reveal>
 
       {!(profile && profile.status === 'approved') && (
+        <Reveal>
         <section className="rounded-2xl p-10 text-center relative overflow-hidden" style={{ background: 'radial-gradient(ellipse 80% 80% at 50% 50%, rgba(232,93,4,0.18) 0%, transparent 70%), var(--c-surface)', border: '1px solid rgba(232,93,4,0.2)' }}>
           <p className="text-xs mb-3" style={{ color: '#E85D04', letterSpacing: '0.18em', fontWeight: 600 }}>{t('مقاعد الأعضاء المؤسسين محدودة', 'Founding member seats are limited')}</p>
           <h2 className="font-bold mb-3 leading-tight" style={{ fontSize: 'clamp(22px, 3vw, 34px)' }}>
@@ -219,6 +227,7 @@ export default function Landing() {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="rtl:-scale-x-100"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </Link>
         </section>
+        </Reveal>
       )}
     </div>
   )

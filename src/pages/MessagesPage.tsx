@@ -164,6 +164,9 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
   const [blocked, setBlocked] = useState(false)
   const [menu, setMenu] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
+  const [otherTyping, setOtherTyping] = useState(false)
+  const typingRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const lastTypingSent = useRef(0)
   const otherId = conv.user_a === me ? conv.user_b : conv.user_a
 
   const markRead = useCallback(async () => {
@@ -183,7 +186,7 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conv.id}` }, (payload) => {
         const m = payload.new as Message
         setMsgs((cur) => (cur && !cur.some((x) => x.id === m.id) ? [...cur, m] : cur))
-        if (m.sender_id !== me) markRead()
+        if (m.sender_id !== me) { markRead(); setOtherTyping(false) }
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conv.id}` }, (payload) => {
         const m = payload.new as Message
@@ -193,7 +196,32 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
     return () => { supabase.removeChannel(ch) }
   }, [conv.id, otherId, me, markRead])
 
-  useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }) }, [msgs?.length])
+  useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }) }, [msgs?.length, otherTyping])
+
+  // "Typing…": a short broadcast on the conversation's channel. Nothing is stored.
+  useEffect(() => {
+    let hide: ReturnType<typeof setTimeout> | undefined
+    const ch = supabase
+      .channel(`typing-${conv.id}`, { config: { broadcast: { self: false } } })
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if ((payload as { user?: string })?.user === me) return
+        setOtherTyping(true)
+        clearTimeout(hide)
+        hide = setTimeout(() => setOtherTyping(false), 3500)
+      })
+      .subscribe()
+    typingRef.current = ch
+    return () => { clearTimeout(hide); typingRef.current = null; supabase.removeChannel(ch) }
+  }, [conv.id, me])
+
+  const onType = (value: string) => {
+    setText(value)
+    const now = Date.now()
+    if (value.trim() && now - lastTypingSent.current > 2000) {
+      lastTypingSent.current = now
+      typingRef.current?.send({ type: 'broadcast', event: 'typing', payload: { user: me } })
+    }
+  }
 
   const send = async () => {
     const body = text.trim()
@@ -290,6 +318,13 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
             </div>
           )
         })}
+        {otherTyping && (
+          <div className="flex justify-start mt-1.5" aria-live="polite">
+            <span className="flex items-center gap-1 px-4 py-3 rounded-[20px]" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }} aria-label={t('يكتب الآن…', 'Typing…')}>
+              {[0, 1, 2].map((d) => <span key={d} className="mk-typing w-1.5 h-1.5 rounded-full" style={{ background: 'var(--c-muted)', animationDelay: `${d * 0.15}s` }} />)}
+            </span>
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
@@ -302,7 +337,7 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
             <textarea
               dir="auto"
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => onType(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send() } }}
               rows={1}
               maxLength={4000}

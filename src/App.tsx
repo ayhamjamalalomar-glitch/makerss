@@ -1,4 +1,4 @@
-import { useEffect, type ReactElement } from 'react'
+import { lazy, Suspense, useEffect, type ReactElement } from 'react'
 import { useRouter } from './lib/router'
 import { useLang } from './lib/i18n'
 import { supabase } from './lib/supabase'
@@ -6,21 +6,25 @@ import { RESERVED_PATHS } from './lib/constants'
 import Header from './components/Header'
 import BottomNav from './components/BottomNav'
 import Footer from './components/Footer'
+import CommandPalette from './components/CommandPalette'
+import { PageSkeleton } from './components/mk'
 import Landing from './pages/Landing'
 import MakersPage from './pages/MakersPage'
 import MakerProfile from './pages/MakerProfile'
 import TitlesPage from './pages/TitlesPage'
 import TitlePage from './pages/TitlePage'
-import TitleEditor from './pages/TitleEditor'
 import OpenProjects from './pages/OpenProjects'
-import OpenCallEditor from './pages/OpenCallEditor'
-import JoinPage from './pages/JoinPage'
-import LoginPage from './pages/LoginPage'
-import EditorPage from './pages/EditorPage'
-import StatusPage from './pages/StatusPage'
-import InboxPage from './pages/InboxPage'
-import MessagesPage from './pages/MessagesPage'
-import Admin from './pages/Admin'
+
+// Pages that only signed-in members or the team open load on demand, so first visits stay light.
+const TitleEditor = lazy(() => import('./pages/TitleEditor'))
+const OpenCallEditor = lazy(() => import('./pages/OpenCallEditor'))
+const JoinPage = lazy(() => import('./pages/JoinPage'))
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const EditorPage = lazy(() => import('./pages/EditorPage'))
+const StatusPage = lazy(() => import('./pages/StatusPage'))
+const InboxPage = lazy(() => import('./pages/InboxPage'))
+const MessagesPage = lazy(() => import('./pages/MessagesPage'))
+const Admin = lazy(() => import('./pages/Admin'))
 
 export default function App() {
   const { path, go } = useRouter()
@@ -60,14 +64,17 @@ export default function App() {
 
   return (
     <div className="min-h-screen" dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang} style={{ backgroundColor: 'var(--c-bg)', color: 'var(--c-text)' }}>
-      {bare ?? (
+      {bare ? (
+        <Suspense fallback={null}>{bare}</Suspense>
+      ) : (
         <>
           <Header />
           <main className="pt-14 pb-28 flex flex-col min-h-screen">
-            <div className="flex-1">{page}</div>
+            <div className="flex-1"><Suspense fallback={<PageSkeleton />}>{page}</Suspense></div>
             {first !== 'messages' && first !== 'admin' && <Footer />}
           </main>
           <BottomNav />
+          <CommandPalette />
         </>
       )}
     </div>

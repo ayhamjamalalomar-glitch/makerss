@@ -1,4 +1,4 @@
--- Search that understands Arabic spelling: أحمد = احمد, محمّد = محمد, مدرسة = مدرسه, and small typos.
+/* Search that understands Arabic spelling: أحمد = احمد, محمّد = محمد, مدرسة = مدرسه, and small typos. */
 create extension if not exists pg_trgm with schema extensions;
 
 create or replace function public.ar_norm(p text)
@@ -6,7 +6,7 @@ returns text
 language sql immutable parallel safe
 set search_path = ''
 as $$
-  -- drop diacritics and tatweel, unify alef, ya, ta marbuta and hamza carriers, lower case Latin
+  /* drop diacritics and tatweel, unify alef, ya, ta marbuta and hamza carriers, lower case Latin */
   select lower(translate(regexp_replace(coalesce(p, ''), '[ً-ْٰـ]', '', 'g'), 'أإآٱىةؤئ', 'اااايهوي'))
 $$;
 

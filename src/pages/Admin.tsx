@@ -144,7 +144,7 @@ function Wrap({ children }: { children: React.ReactNode }) {
   )
 }
 
-/* ---------------- Insights ---------------- */
+/* Insights */
 
 interface InsightData {
   makers: number
@@ -232,7 +232,7 @@ function Insights() {
   )
 }
 
-/* ---------------- Reports ---------------- */
+/* Reports */
 
 const REPORT_REASON: Record<string, string> = { fake: 'حساب أو معلومات غير حقيقية', stolen: 'عمل منسوب لغير صاحبه', offensive: 'محتوى مسيء', spam: 'إزعاج أو إعلانات', other: 'سبب آخر' }
 
@@ -301,7 +301,7 @@ function Reports({ onChanged }: { onChanged: () => void }) {
   )
 }
 
-/* ---------------- Overview ---------------- */
+/* Overview */
 
 function Overview({ stats, onOpen, goReview }: { stats: Stats | null; onOpen: (id: string) => void; goReview: () => void }) {
   const [recent, setRecent] = useState<Profile[]>([])
@@ -369,7 +369,7 @@ function MemberRow({ m, specs, onClick, compact }: { m: Profile; specs: Specialt
   )
 }
 
-/* ---------------- Review queue ---------------- */
+/* Review queue */
 
 function Review({ specs, onChanged }: { specs: Specialty[]; onChanged: () => void }) {
   const [queue, setQueue] = useState<Profile[] | null>(null)
@@ -532,7 +532,7 @@ function ReviewDetail({ m, specs, onDone }: { m: Profile; specs: Specialty[]; on
   )
 }
 
-/* ---------------- Members ---------------- */
+/* Members */
 
 function Members({ specs, onOpen }: { specs: Specialty[]; onOpen: (id: string) => void }) {
   const [status, setStatus] = useState<MemberStatus | ''>('')
@@ -654,7 +654,7 @@ function MemberModal({ id, specs, isAdmin, selfId, onClose, onChanged }: { id: s
   )
 }
 
-/* ---------------- Specialties ---------------- */
+/* Specialties */
 
 function Specialties({ specs, reload, isAdmin }: { specs: Specialty[]; reload: () => Promise<void>; isAdmin: boolean }) {
   const [sugg, setSugg] = useState<{ id: number; name: string; created_at: string }[]>([])
@@ -733,7 +733,7 @@ function Specialties({ specs, reload, isAdmin }: { specs: Specialty[]; reload: (
   )
 }
 
-/* ---------------- Audit log ---------------- */
+/* Audit log */
 
 function actionAr(a: string) {
   const [k, v] = a.split(':')
@@ -774,7 +774,7 @@ function Audit() {
   )
 }
 
-/* ---------------- Open calls review ---------------- */
+/* Open calls review */
 
 function CallsReview({ onChanged }: { onChanged: () => void }) {
   const [filter, setFilter] = useState<OpenCall['status']>('pending')
@@ -824,7 +824,7 @@ function CallsReview({ onChanged }: { onChanged: () => void }) {
   )
 }
 
-/* ---------------- Projects moderation ---------------- */
+/* Projects moderation */
 
 function ProjectsAdmin() {
   const [list, setList] = useState<Project[] | null>(null)

@@ -62,6 +62,9 @@ src/lib/messages.ts     Message type (kind: 'text' | 'collab', ref_id), messagin
 src/lib/constants.ts    COUNTRIES, PROJECT_TYPES, BUDGETS, RESERVED_PATHS (usernames that cannot be taken)
 src/lib/image.ts        toJpeg (client side resize before upload)
 src/lib/track.ts        track(type, id, kind): page analytics through RPC `track_event` (random visitor id in localStorage 'mk-visitor')
+src/lib/toast.tsx       ToastProvider + useToast(): short confirmations ("Link copied", "Saved")
+src/lib/share.ts        shareLink(url, title): native share sheet on phones, clipboard elsewhere
+src/components/         (Phase 3) CommandPalette (Ctrl+K or "/", also the mobile search button), ImageCropper + DropZone (photo 3:4, poster 2:3), Reveal (scroll fade-in), StatsCard, EmailPrefs, ReportButton
 src/components/mk.tsx   design primitives: Btn, Card, Chip, Field, TextInput, SelectInput, TextArea, Pill, Avatar, Notice, Spinner, Modal, PageShell, SectionHeader, VerifiedBadge, PosterFallback
 src/components/         Header (search, lang toggle, account menu), Footer (theme toggle, stored in localStorage 'mk-theme'), BottomNav (mobile), Logo, ContactForm (collab request), RangeCalendar, WorkThumb, ResendConfirm, DarkCard
 public/                 favicon-32.png, apple-touch-icon.png, icon-512.png, og.png (all generated from the wordmark), robots.txt
@@ -91,6 +94,10 @@ supabase/functions/send-emails/  Edge Function that drains public.email_outbox t
 Layout width: every page content sits in `max-w-[1120px] mx-auto w-full` with side padding. Keep that.
 
 ### UI conventions
+- Pages that only members or the team use are lazy loaded in `App.tsx`; keep public pages (Landing, Makers, profile, projects, open calls) eager.
+- Loading states use `Skeleton` / `PageSkeleton` from `mk.tsx`, not plain "Loading" text. Windows use `Modal` (Esc closes, page scroll locks); custom overlays call `useDialog(onClose)`.
+- Motion respects the visitor's reduce-motion setting through `MotionConfig` in `main.tsx`.
+- The makers directory keeps every filter in the URL (`type`, `q`, `s`, `c`, `country`, `f`, `available`, `sort`).
 - Every user-facing string goes through `t('عربي', 'English')`. Arabic is the default language, RTL. Arabic text right, English text left (use `dir="auto"` on user-generated text).
 - Colors via CSS variables (`var(--c-text)` etc.), accent `#E85D04`. Dark is default, light theme via `data-theme="light"`.
 - Reuse primitives from `mk.tsx` instead of new ad-hoc components.

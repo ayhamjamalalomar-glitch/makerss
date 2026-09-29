@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { t } from '../lib/i18n'
 import Link, { useRouter } from '../lib/router'
 import { useAuth } from '../lib/auth'
 import { SITE_URL } from '../lib/constants'
+import { shareLink } from '../lib/share'
+import { useToast } from '../lib/toast'
 import { Btn, Card, PageShell, Pill, Spinner } from '../components/mk'
 
 export default function StatusPage() {
   const { session, profile, loading } = useAuth()
   const { go } = useRouter()
-  const [copied, setCopied] = useState(false)
+  const toast = useToast()
 
   useEffect(() => {
     if (!loading && !session) go('/login?next=/me/status')
@@ -20,8 +22,9 @@ export default function StatusPage() {
   const link = `${SITE_URL}/${profile.username}`
   const shareText = encodeURIComponent(t(`صفحتي على Makers: ${link}`, `My page on Makers: ${link}`))
   const copy = async () => {
-    try { await navigator.clipboard.writeText(link) } catch { /* ignore */ }
-    setCopied(true)
+    const r = await shareLink(link, t('صفحتي على Makers', 'My page on Makers'))
+    if (r === 'copied') toast(t('تم نسخ الرابط', 'Link copied'))
+    else if (r === 'failed') toast(t('تعذّر نسخ الرابط', 'Could not copy the link'), 'error')
   }
 
   return (
@@ -58,7 +61,7 @@ export default function StatusPage() {
             <span className="text-[13px] font-semibold">{t('رابط صفحتك', 'Your page link')}</span>
             <div className="flex flex-col md:flex-row gap-2.5">
               <span dir="ltr" className="flex-1 h-[50px] px-5 rounded-full flex items-center mono text-[15px]" style={{ background: 'var(--c-surface-alt)' }}>{link.replace('https://', '')}</span>
-              <Btn onClick={copy}>{copied ? t('تم النسخ', 'Copied') : t('انسخ الرابط', 'Copy link')}</Btn>
+              <Btn onClick={copy}>{t('شارك الرابط', 'Share link')}</Btn>
             </div>
             <div className="flex flex-wrap gap-2">
               <a href={`https://wa.me/?text=${shareText}`} target="_blank" rel="noreferrer" className="text-[13px] px-4 py-2 rounded-full" style={{ border: '1px solid var(--c-border)' }}>{t('مشاركة على واتساب', 'Share on WhatsApp')}</a>

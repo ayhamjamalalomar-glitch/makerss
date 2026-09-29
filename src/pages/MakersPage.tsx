@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import Link from '../lib/router'
 import { t, label, useLang } from '../lib/i18n'
 import { CONTENT_TYPES, COUNTRIES, arNorm, cityLabel, contentLabel, listSep } from '../lib/constants'
 import { useSpecialties, specName, memberLine, isCreator } from '../lib/specialties'
 import { displayName, formatFollowers, listMembers, totalFollowers, type MemberCard } from '../lib/data'
-import { Spinner, VerifiedBadge } from '../components/mk'
+import { Skeleton, VerifiedBadge } from '../components/mk'
 
 const selectStyle = { background: 'var(--c-surface)', border: '1px solid var(--c-border)', cursor: 'pointer', fontSize: 13, height: 42, paddingInline: '14px 32px', borderRadius: 12 } as const
 
@@ -20,30 +21,56 @@ export default function MakersPage() {
   useLang()
   const specialties = useSpecialties()
   const [all, setAll] = useState<MemberCard[] | null>(null)
-  const [search, setSearch] = useState('')
+  // Every filter lives in the URL, so a filtered list can be shared or bookmarked.
+  const [params] = useState(() => new URLSearchParams(window.location.search))
+  const [search, setSearch] = useState(params.get('q') || '')
   const [specialty, setSpecialty] = useState<number | 'all'>(() => {
-    const s = new URLSearchParams(window.location.search).get('s')
+    const s = params.get('s')
     return s && /^\d+$/.test(s) ? Number(s) : 'all'
   })
   const [type, setType] = useState<'all' | 'maker' | 'creator'>(() => {
-    const v = new URLSearchParams(window.location.search).get('type')
+    const v = params.get('type')
     return v === 'maker' || v === 'creator' ? v : 'all'
   })
-  const [content, setContent] = useState('all')
-  const [country, setCountry] = useState('all')
-  const [verifiedOnly, setVerifiedOnly] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [content, setContent] = useState(params.get('c') || 'all')
+  const [country, setCountry] = useState(params.get('country') || 'all')
+  const [verifiedOnly, setVerifiedOnly] = useState(params.get('f') === '1')
+  const [availableOnly, setAvailableOnly] = useState(params.get('available') === '1')
+  const [sort, setSort] = useState<'default' | 'newest' | 'audience'>(() => {
+    const v = params.get('sort')
+    return v === 'newest' || v === 'audience' ? v : 'default'
+  })
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    try { return localStorage.getItem('mk-makers-view') === 'list' ? 'list' : 'grid' } catch { return 'grid' }
+  })
 
   useEffect(() => { listMembers().then(setAll) }, [])
+  useEffect(() => { try { localStorage.setItem('mk-makers-view', viewMode) } catch { /* storage blocked */ } }, [viewMode])
+
+  useEffect(() => {
+    const u = new URLSearchParams()
+    if (type !== 'all') u.set('type', type)
+    if (search.trim()) u.set('q', search.trim())
+    if (type !== 'creator' && specialty !== 'all') u.set('s', String(specialty))
+    if (type === 'creator' && content !== 'all') u.set('c', content)
+    if (country !== 'all') u.set('country', country)
+    if (verifiedOnly) u.set('f', '1')
+    if (availableOnly) u.set('available', '1')
+    if (sort !== 'default') u.set('sort', sort)
+    const qs = u.toString()
+    const next = qs ? `/makers?${qs}` : '/makers'
+    if (next !== window.location.pathname + window.location.search) window.history.replaceState(null, '', next)
+  }, [type, search, specialty, content, country, verifiedOnly, availableOnly, sort])
 
   const filtered = useMemo(() => {
-    return (all || []).filter((m) => {
+    const list = (all || []).filter((m) => {
       if (type === 'creator' && !isCreator(m)) return false
       if (type === 'maker' && isCreator(m)) return false
       if (type !== 'creator' && specialty !== 'all' && !(m.specialty_ids || []).includes(specialty)) return false
       if (type === 'creator' && content !== 'all' && !(m.content_types || []).includes(content)) return false
       if (country !== 'all' && m.country !== country) return false
       if (verifiedOnly && !m.is_founding) return false
+      if (availableOnly && !m.available) return false
       if (search) {
         const q = arNorm(search.trim())
         const hay = arNorm([m.full_name, m.name_ar, m.username, m.city, cityLabel(m.city), label(COUNTRIES, m.country), m.country, memberLine(specialties, m)].join(' '))
@@ -51,14 +78,18 @@ export default function MakersPage() {
       }
       return true
     })
-  }, [all, search, type, specialty, content, country, verifiedOnly, specialties])
+    if (sort === 'newest') return [...list].sort((a, b) => b.created_at.localeCompare(a.created_at))
+    if (sort === 'audience') return [...list].sort((a, b) => totalFollowers(b) - totalFollowers(a))
+    return list
+  }, [all, search, type, specialty, content, country, verifiedOnly, availableOnly, sort, specialties])
 
   const pickType = (k: 'all' | 'maker' | 'creator') => {
     setType(k)
     setSpecialty('all')
     setContent('all')
-    window.history.replaceState(null, '', k === 'all' ? '/makers' : `/makers?type=${k}`)
   }
+  const activeFilters = [search.trim(), specialty !== 'all', content !== 'all', country !== 'all', verifiedOnly, availableOnly].filter(Boolean).length
+  const clearFilters = () => { setSearch(''); setSpecialty('all'); setContent('all'); setCountry('all'); setVerifiedOnly(false); setAvailableOnly(false) }
 
   // Side list: top specialties, or top content categories when browsing creators.
   const counts = useMemo(() => {
@@ -127,12 +158,27 @@ export default function MakersPage() {
           </select>
           <Caret />
         </div>
-        <button onClick={() => setVerifiedOnly(!verifiedOnly)} className="flex items-center gap-2.5 text-sm px-4 rounded-xl transition-all cursor-pointer" style={{ height: 42, background: 'var(--c-surface)', border: `1px solid ${verifiedOnly ? '#E85D04' : 'var(--c-border)'}`, color: verifiedOnly ? 'var(--c-text)' : 'var(--c-muted)', fontSize: 13 }}>
-          <span className="w-8 h-4 rounded-full flex items-center" style={{ backgroundColor: verifiedOnly ? '#E85D04' : 'var(--c-border)', padding: 2, justifyContent: verifiedOnly ? 'flex-end' : 'flex-start' }}>
-            <span className="w-3 h-3 rounded-full" style={{ background: 'var(--c-text)' }} />
-          </span>
-          {t('المؤسسون فقط', 'Founding only')}
-        </button>
+        {([[verifiedOnly, setVerifiedOnly, t('المؤسسون فقط', 'Founding only')], [availableOnly, setAvailableOnly, t('المتاحون فقط', 'Available only')]] as const).map(([on, set, text]) => (
+          <button key={text} type="button" role="switch" aria-checked={on} onClick={() => set(!on)} className="flex items-center gap-2.5 text-sm px-4 rounded-xl transition-all cursor-pointer" style={{ height: 42, background: 'var(--c-surface)', border: `1px solid ${on ? '#E85D04' : 'var(--c-border)'}`, color: on ? 'var(--c-text)' : 'var(--c-muted)', fontSize: 13 }}>
+            <span className="w-8 h-4 rounded-full flex items-center" style={{ backgroundColor: on ? '#E85D04' : 'var(--c-border)', padding: 2, justifyContent: on ? 'flex-end' : 'flex-start', transition: 'background-color .2s' }}>
+              <motion.span layout transition={{ type: 'spring', stiffness: 500, damping: 34 }} className="w-3 h-3 rounded-full" style={{ background: 'var(--c-text)' }} />
+            </span>
+            {text}
+          </button>
+        ))}
+        <div className="relative">
+          <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label={t('الترتيب', 'Sort')} className="appearance-none" style={{ ...selectStyle, color: sort !== 'default' ? 'var(--c-text)' : 'var(--c-muted)' }}>
+            <option value="default">{t('الترتيب: المؤسسون أولاً', 'Sort: founding first')}</option>
+            <option value="newest">{t('الأحدث انضماماً', 'Newest members')}</option>
+            <option value="audience">{t('الأكثر متابعين', 'Biggest audience')}</option>
+          </select>
+          <Caret />
+        </div>
+        {activeFilters > 0 && (
+          <button type="button" onClick={clearFilters} className="text-[13px] font-semibold cursor-pointer" style={{ background: 'none', border: 'none', color: '#E85D04', padding: '0 4px' }}>
+            {t(`مسح الفلاتر (${activeFilters})`, `Clear filters (${activeFilters})`)}
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -152,7 +198,17 @@ export default function MakersPage() {
             </div>
           </div>
 
-          {!all ? <Spinner /> : filtered.length === 0 ? (
+          {!all ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" aria-busy="true">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex flex-col gap-2">
+                  <Skeleton className="rounded-2xl" style={{ aspectRatio: '3/4' }} />
+                  <Skeleton className="h-3.5 w-2/3" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="py-20 px-6 text-center rounded-2xl flex flex-col items-center gap-4" style={{ border: '1px solid var(--c-border)', background: 'var(--c-surface)' }}>
               <p className="text-base m-0" style={{ color: 'var(--c-muted)' }}>
                 {type === 'creator' && !(all || []).some(isCreator)
@@ -164,9 +220,11 @@ export default function MakersPage() {
               )}
             </div>
           ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filtered.map((m) => (
-                <Link key={m.id} to={`/${m.username}`} className="group rounded-2xl overflow-hidden flex flex-col" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
+            <motion.div layout className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+              <AnimatePresence initial={false}>
+              {filtered.map((m, i) => (
+                <motion.div key={m.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: Math.min(i, 12) * 0.025 } }} exit={{ opacity: 0, scale: 0.97 }} transition={{ type: 'spring', stiffness: 380, damping: 34 }}>
+                <Link to={`/${m.username}`} className="group rounded-2xl overflow-hidden flex flex-col h-full transition-transform duration-300 hover:-translate-y-1" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
                   <div className="relative overflow-hidden" style={{ aspectRatio: '3/4', background: 'var(--c-surface-alt)' }}>
                     {m.avatar_url ? (
                       <img src={m.avatar_url} alt={displayName(m)} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -191,8 +249,10 @@ export default function MakersPage() {
                     <p className="m-0 truncate" style={{ fontSize: 11, color: 'var(--c-muted-2)' }}>{[cityLabel(m.city), label(COUNTRIES, m.country)].filter(Boolean).join(listSep())}</p>
                   </div>
                 </Link>
+                </motion.div>
               ))}
-            </div>
+              </AnimatePresence>
+            </motion.div>
           ) : (
             <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--c-border)', background: 'var(--c-surface)' }}>
               {filtered.map((m, i) => (

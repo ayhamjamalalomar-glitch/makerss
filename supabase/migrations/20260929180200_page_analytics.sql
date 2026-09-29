@@ -1,5 +1,5 @@
--- Page analytics: views and actions on profiles and projects, one row per visitor per day per action.
--- `visitor` is a random id the browser keeps in localStorage; no IP or personal data is stored.
+/* Page analytics: views and actions on profiles and projects, one row per visitor per day per action. */
+/* `visitor` is a random id the browser keeps in localStorage; no IP or personal data is stored. */
 create table if not exists public.page_events (
   id bigint generated always as identity primary key,
   target_type text not null check (target_type in ('profile', 'project')),
@@ -33,14 +33,14 @@ begin
     select w.owner_id into v_owner from public.works w join public.profiles p on p.id = w.owner_id where w.id = p_id and p.status = 'approved';
   end if;
   if v_owner is null or v_owner = auth.uid() then return; end if;
-  -- a single browser cannot flood the table
+  /* a single browser cannot flood the table */
   if (select count(*) from public.page_events where visitor = p_visitor and day = current_date) >= 300 then return; end if;
   insert into public.page_events (target_type, target_id, owner_id, kind, visitor, viewer_id)
   values (p_type, p_id, v_owner, p_kind, p_visitor, auth.uid())
   on conflict do nothing;
 end $$;
 
--- Numbers for the signed-in member's own page.
+/* Numbers for the signed-in member's own page. */
 create or replace function public.my_page_stats(p_days int default 30)
 returns json
 language plpgsql stable security definer
@@ -82,7 +82,7 @@ begin
   );
 end $$;
 
--- Wider picture for the team.
+/* Wider picture for the team. */
 create or replace function public.admin_insights()
 returns json
 language plpgsql stable security definer

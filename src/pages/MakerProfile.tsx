@@ -9,7 +9,9 @@ import { displayName, formatFollowers, kindLabel, posterOf, projectsForMember, r
 import ContactForm from '../components/ContactForm'
 import ReportButton from '../components/ReportButton'
 import { track } from '../lib/track'
-import { Btn, Modal, Notice, PageShell, PosterFallback, SectionHeader, Spinner, TextArea, VerifiedBadge } from '../components/mk'
+import { shareLink } from '../lib/share'
+import { useToast } from '../lib/toast'
+import { Btn, Modal, Notice, PageShell, PosterFallback, SectionHeader, Skeleton, TextArea, VerifiedBadge } from '../components/mk'
 
 const SOCIAL_LABEL: Record<string, string> = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', x: 'X', snapchat: 'Snapchat', facebook: 'Facebook', linkedin: 'LinkedIn', vimeo: 'Vimeo', behance: 'Behance', website: 'Website' }
 
@@ -35,7 +37,7 @@ export default function MakerProfile({ username }: { username: string }) {
   const [awards, setAwards] = useState<Award[]>([])
   const [contactOpen, setContactOpen] = useState(false)
   const [msgBusy, setMsgBusy] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const toast = useToast()
   const [tab, setTab] = useState<Tab>('overview')
   const [pickOpen, setPickOpen] = useState(false)
   const [pick, setPick] = useState<string[]>([])
@@ -68,7 +70,18 @@ export default function MakerProfile({ username }: { username: string }) {
     return [...map.values()].slice(0, 8)
   }, [projects, p])
 
-  if (p === undefined) return <PageShell><Spinner /></PageShell>
+  if (p === undefined) {
+    return (
+      <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-10 flex flex-col sm:flex-row gap-7" aria-busy="true">
+        <Skeleton className="w-full sm:w-[180px] h-[240px] rounded-2xl shrink-0" />
+        <div className="flex-1 flex flex-col gap-3 pt-2">
+          <Skeleton className="h-10 w-2/3" />
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-9 w-64 rounded-full mt-4" />
+        </div>
+      </div>
+    )
+  }
   if (p === null) {
     return (
       <PageShell narrow>
@@ -121,9 +134,9 @@ export default function MakerProfile({ username }: { username: string }) {
   }
   const copy = async () => {
     track('profile', p.id, 'share')
-    try { await navigator.clipboard.writeText(`${SITE_URL}/${p.username}`) } catch { /* blocked */ }
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
+    const r = await shareLink(`${SITE_URL}/${p.username}`, `${displayName(p)} | Makers`)
+    if (r === 'copied') toast(t('تم نسخ الرابط', 'Link copied'))
+    else if (r === 'failed') toast(t('تعذّر نسخ الرابط', 'Could not copy the link'), 'error')
   }
 
   return (
@@ -212,7 +225,7 @@ export default function MakerProfile({ username }: { username: string }) {
                 {canMessage && (
                   <button onClick={startChat} disabled={msgBusy} className="font-semibold px-5 py-2.5 rounded-full cursor-pointer disabled:opacity-60" style={{ background: 'transparent', border: '1px solid var(--c-border-mid)', color: 'var(--c-text)', fontSize: 13 }}>{t('راسِل', 'Message')}</button>
                 )}
-                <button onClick={copy} className="font-semibold px-4 py-2.5 rounded-full cursor-pointer" style={{ background: 'transparent', border: '1px solid var(--c-border)', color: 'var(--c-muted)', fontSize: 13 }}>{copied ? t('تم نسخ الرابط', 'Link copied') : t('انسخ الرابط', 'Copy link')}</button>
+                <button onClick={copy} className="font-semibold px-4 py-2.5 rounded-full cursor-pointer" style={{ background: 'transparent', border: '1px solid var(--c-border)', color: 'var(--c-muted)', fontSize: 13 }}>{t('شارك الصفحة', 'Share page')}</button>
               </div>
             </div>
           </div>

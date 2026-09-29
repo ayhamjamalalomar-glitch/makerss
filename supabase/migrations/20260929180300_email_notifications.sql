@@ -1,5 +1,5 @@
--- Email notifications. Database triggers put emails in an outbox; the `send-emails` Edge Function
--- sends them through Resend. Nothing is sent until RESEND_API_KEY is set on the function.
+/* Email notifications. Database triggers put emails in an outbox; the `send-emails` Edge Function */
+/* sends them through Resend. Nothing is sent until RESEND_API_KEY is set on the function. */
 
 create extension if not exists pg_net with schema extensions;
 create extension if not exists pg_cron;
@@ -19,8 +19,8 @@ create index if not exists email_outbox_pending on public.email_outbox (id) wher
 alter table public.email_outbox enable row level security;
 revoke all on public.email_outbox from anon, authenticated;
 
--- A member can switch off optional emails (requests, applicants, unread messages).
--- Account emails (review decisions) always go out.
+/* A member can switch off optional emails (requests, applicants, unread messages). */
+/* Account emails (review decisions) always go out. */
 create table if not exists public.notification_prefs (
   user_id uuid primary key references public.profiles (id) on delete cascade,
   email_enabled boolean not null default true,
@@ -57,7 +57,7 @@ begin
   insert into public.email_outbox (kind, to_email, payload) values (p_kind, lower(btrim(p_to)), coalesce(p_payload, '{}'::jsonb));
 end $$;
 
--- Staff who review pages and open calls.
+/* Staff who review pages and open calls. */
 create or replace function public.notify_staff(p_kind text, p_payload jsonb)
 returns void
 language sql security definer
@@ -75,7 +75,7 @@ as $$
   select coalesce(nullif(btrim(name_ar), ''), nullif(btrim(full_name), ''), username) from public.profiles where id = p_id
 $$;
 
--- New collaboration request: tell the member.
+/* New collaboration request: tell the member. */
 create or replace function public.on_contact_request_insert()
 returns trigger
 language plpgsql security definer
@@ -93,7 +93,7 @@ begin
   return new;
 end $$;
 
--- Member answered a request: tell the sender.
+/* Member answered a request: tell the sender. */
 create or replace function public.on_contact_request_status()
 returns trigger
 language plpgsql security definer
@@ -109,7 +109,7 @@ begin
   return new;
 end $$;
 
--- Review decisions and new submissions.
+/* Review decisions and new submissions. */
 create or replace function public.on_profile_status()
 returns trigger
 language plpgsql security definer
@@ -130,7 +130,7 @@ begin
   return new;
 end $$;
 
--- Someone applied to an open call: tell its owner.
+/* Someone applied to an open call: tell its owner. */
 create or replace function public.on_application_insert()
 returns trigger
 language plpgsql security definer
@@ -184,7 +184,7 @@ create trigger email_application_insert after insert on public.open_call_applica
 drop trigger if exists email_open_call_change on public.open_calls;
 create trigger email_open_call_change after insert or update of status on public.open_calls for each row execute function public.on_open_call_change();
 
--- Unread messages: one reminder when a message waits 10 minutes, then at most one every 3 hours.
+/* Unread messages: one reminder when a message waits 10 minutes, then at most one every 3 hours. */
 create or replace function public.queue_unread_digests()
 returns int
 language plpgsql security definer
@@ -215,7 +215,7 @@ begin
   return n;
 end $$;
 
--- Worker plumbing. The secret lives in Vault; cron sends it, the function checks it.
+/* Worker plumbing. The secret lives in Vault; cron sends it, the function checks it. */
 do $$
 begin
   if not exists (select 1 from vault.secrets where name = 'email_worker_secret') then
@@ -231,7 +231,7 @@ as $$
   select exists (select 1 from vault.decrypted_secrets where name = 'email_worker_secret' and decrypted_secret = p_secret)
 $$;
 
--- Hand a batch to the worker. Rows claimed by a run that crashed are retried after 5 minutes.
+/* Hand a batch to the worker. Rows claimed by a run that crashed are retried after 5 minutes. */
 create or replace function public.claim_emails(p_limit int default 40)
 returns setof public.email_outbox
 language sql security definer
@@ -265,7 +265,7 @@ begin
   end if;
 end $$;
 
--- Only the database and the worker (service role) call these.
+/* Only the database and the worker (service role) call these. */
 revoke execute on function public.email_ok(uuid) from public, anon, authenticated;
 revoke execute on function public.enqueue_email(text, text, jsonb) from public, anon, authenticated;
 revoke execute on function public.notify_staff(text, jsonb) from public, anon, authenticated;

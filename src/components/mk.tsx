@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
 import { t } from '../lib/i18n'
 import type { ButtonHTMLAttributes, CSSProperties, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
@@ -154,16 +156,54 @@ export function Skeleton({ className = '', style }: { className?: string; style?
 }
 
 export function Spinner() {
-  return <div className="py-24 text-center text-sm" style={{ color: 'var(--c-muted)' }}>{t('جارٍ التحميل…', 'Loading…')}</div>
+  return (
+    <div className="py-24 flex flex-col items-center gap-3 text-sm" style={{ color: 'var(--c-muted)' }} role="status">
+      <span className="mk-spin w-7 h-7 rounded-full" style={{ border: '2.5px solid var(--c-border-mid)', borderTopColor: ORANGE }} />
+      {t('جارٍ التحميل…', 'Loading…')}
+    </div>
+  )
+}
+
+/** Placeholder while a page's code loads. */
+export function PageSkeleton() {
+  return (
+    <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8 sm:py-10 flex flex-col gap-5" aria-busy="true">
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-40 w-full" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
+      </div>
+    </div>
+  )
+}
+
+/** Close on Escape and stop the page behind from scrolling while a window is open. */
+export function useDialog(onClose: () => void) {
+  const close = useRef(onClose)
+  close.current = onClose
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close.current() }
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = prev
+    }
+  }, [])
 }
 
 export function Modal({ title, onClose, children, footer }: { title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
+  useDialog(onClose)
   return (
     <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-0 md:p-6" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }} onClick={onClose}>
-      <div
+      <motion.div
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 34 }}
         className="w-full md:w-[560px] max-h-[90vh] overflow-y-auto rounded-t-2xl md:rounded-2xl p-6 md:p-8 flex flex-col gap-5"
         style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}
         onClick={(e) => e.stopPropagation()}
@@ -174,7 +214,7 @@ export function Modal({ title, onClose, children, footer }: { title: string; onC
         </div>
         {children}
         {footer && <div className="flex gap-2">{footer}</div>}
-      </div>
+      </motion.div>
     </div>
   )
 }
