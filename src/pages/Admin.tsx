@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { useAuth } from '../lib/auth'
 import { supabase, type Award, type MemberRole, type MemberStatus, type Profile, type Specialty, type Work } from '../lib/supabase'
-import { relativeAr } from '../lib/constants'
-import { roleLine } from '../lib/specialties'
+import { budgetLabel, relativeAr } from '../lib/constants'
+import { isCreator, memberLine } from '../lib/specialties'
+import { hasAudience } from '../lib/progress'
 import { Avatar, Btn, Card, Chip, Field, Modal, Notice, Pill, SelectInput, Spinner, TextArea, TextInput } from '../components/mk'
 import { CALL_SELECT, displayName, kindLabel, listProjects, posterOf, type OpenCall, type Project } from '../lib/data'
 import { formatDateAr } from '../lib/constants'
@@ -184,12 +185,12 @@ function Overview({ stats, onOpen, goReview }: { stats: Stats | null; onOpen: (i
 }
 
 function MemberRow({ m, specs, onClick, compact }: { m: Profile; specs: Specialty[]; onClick: () => void; compact?: boolean }) {
-  const role = roleLine(specs, m.specialty_ids, m.other_specialty)
+  const role = memberLine(specs, m)
   return (
     <button type="button" onClick={onClick} className="w-full flex items-center gap-3.5 py-3 px-2 rounded-2xl cursor-pointer text-right bg-transparent hover:bg-[var(--c-surface-alt)]" style={{ border: 'none', borderBottom: '1px solid var(--c-surface-alt)' }}>
       <Avatar url={m.avatar_url} name={m.full_name} size={compact ? 38 : 44} />
       <span className="flex-1 min-w-0 flex flex-col">
-        <span className="text-[15px] font-semibold truncate">{m.full_name || 'بدون اسم'}{m.role !== 'member' && <span className="text-xs font-normal" style={{ color: '#E85D04' }}> · {ROLE[m.role]}</span>}</span>
+        <span className="text-[15px] font-semibold truncate">{m.full_name || 'بدون اسم'}{m.role !== 'member' && <span className="text-xs font-normal" style={{ color: '#E85D04' }}> · {ROLE[m.role]}</span>}{isCreator(m) && <span className="text-xs font-normal" style={{ color: MUTED }}> · صانع محتوى</span>}</span>
         <span className="text-xs truncate" dir="ltr" style={{ color: MUTED, textAlign: 'right' }}>{m.email}</span>
         {!compact && role && <span className="text-xs truncate" style={{ color: 'var(--c-text-2)' }}>{role}{m.country ? ` · ${m.country}` : ''}</span>}
       </span>
@@ -256,14 +257,22 @@ function useMemberContent(id: string) {
 }
 
 function ProfilePreview({ m, specs, works, awards }: { m: Profile; specs: Specialty[]; works: Work[]; awards: Award[] }) {
-  const role = roleLine(specs, m.specialty_ids, m.other_specialty)
+  const role = memberLine(specs, m)
   const socials = Object.entries(m.socials || {}).filter(([, v]) => v)
-  const checks: [string, boolean][] = [
-    ['صورة', !!m.avatar_url],
-    ['تخصص ودولة', (m.specialty_ids?.length || 0) > 0 && !!m.country],
-    ['نبذة', (m.bio || '').trim().length >= 20],
-    ['3 أعمال', works.length >= 3],
-  ]
+  const creator = isCreator(m)
+  const checks: [string, boolean][] = creator
+    ? [
+        ['صورة', !!m.avatar_url],
+        ['نوع المحتوى ودولة', (m.content_types?.length || 0) > 0 && !!m.country],
+        ['نبذة', (m.bio || '').trim().length >= 20],
+        ['حساب مع عدد متابعين', hasAudience(m)],
+      ]
+    : [
+        ['صورة', !!m.avatar_url],
+        ['تخصص ودولة', ((m.specialty_ids?.length || 0) > 0 || !!m.other_specialty) && !!m.country],
+        ['نبذة', (m.bio || '').trim().length >= 20],
+        ['3 أعمال', works.length >= 3],
+      ]
   return (
     <div className="flex flex-col gap-5">
       <div className="flex gap-4 md:gap-6 items-center">
@@ -278,6 +287,7 @@ function ProfilePreview({ m, specs, works, awards }: { m: Profile; specs: Specia
         </div>
       </div>
       <div className="flex flex-wrap gap-1.5">
+        <span className="text-xs px-3 py-1.5 rounded-full font-semibold" style={{ background: 'rgba(232,93,4,0.14)', color: '#FB923C' }}>{creator ? 'صانع محتوى' : 'صانع إنتاج'}</span>
         {checks.map(([l, ok]) => (
           <span key={l} className="text-xs px-3 py-1.5 rounded-full" style={{ background: ok ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)', color: ok ? '#4ADE80' : '#F87171' }}>{ok ? '✓' : '✕'} {l}</span>
         ))}
@@ -623,7 +633,7 @@ function CallsReview({ onChanged }: { onChanged: () => void }) {
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
               <span className="text-lg font-bold">{c.title}</span>
-              <span className="text-xs" style={{ color: MUTED }}>{[c.org, kindLabel(c.kind), c.remote ? 'عن بُعد' : [c.city, c.country].filter(Boolean).join('، '), c.budget, c.deadline ? `آخر موعد ${formatDateAr(c.deadline)}` : ''].filter(Boolean).join(' · ')}</span>
+              <span className="text-xs" style={{ color: MUTED }}>{[c.org, kindLabel(c.kind), c.remote ? 'عن بُعد' : [c.city, c.country].filter(Boolean).join('، '), budgetLabel(c.budget), c.deadline ? `آخر موعد ${formatDateAr(c.deadline)}` : ''].filter(Boolean).join(' · ')}</span>
             </div>
             <span className="text-xs whitespace-nowrap" style={{ color: MUTED }}>{relativeAr(c.created_at)}</span>
           </div>

@@ -99,7 +99,9 @@ Layout width: every page content sits in `max-w-[1120px] mx-auto w-full` with si
 - Any approved member can post an open call (opportunity). Open calls need admin review. Applications happen on the site.
 - Collaboration requests (`contact_requests`) also land as a `kind='collab'` message inside the two members' conversation, via DB trigger.
 - Top 10 makers are ranked automatically by activity.
-- Phase 2 (not built yet, do not start without Ayham): news, events, feed, creators section, reviews.
+- Content creators (`account_type = 'creator'`) sign up like makers since 2026-09-29. They pick up to 3 content categories (`CONTENT_TYPES` in `constants.ts`, stored as keys in `profiles.content_types`) instead of specialties, and their fifth completion step is "at least one account with a follower count" instead of 3 works. The directory has a Production / Content creators switch (`/makers?type=creator`).
+- Invite codes are retired (removed from the status page on 2026-09-29). The `invites` table and `create_invite` RPC stay in the DB but nothing in the UI uses them.
+- Phase 2 (not built yet, do not start without Ayham): news, events, feed, reviews.
 - Ayham will add real content before launch. Right now the DB has 7 profiles and 1 work.
 
 ## 6. Supabase
@@ -138,6 +140,5 @@ Apply schema changes as named migrations (Supabase MCP `apply_migration` or CLI)
 4. Commit with a clear message, push to `main`, wait for the Vercel deploy, then check makerss.net.
 
 ## 8. Open items
-- The only project has role "directo" (typo) in both `works.role` and its `credits.role`; confirm with Ayham and fix to "director".
 - Footer has no social links yet; waiting for Ayham to give the real Makers accounts.
 - Favicon at 32px shows the full three-line wordmark, which is hard to read. Ayham may want a short version later; ask first.

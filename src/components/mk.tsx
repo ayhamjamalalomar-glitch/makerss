@@ -148,6 +148,11 @@ export function Notice({ tone = 'info', children }: { tone?: 'info' | 'error' | 
   )
 }
 
+/** Grey placeholder block shown while content loads, so the layout does not jump. */
+export function Skeleton({ className = '', style }: { className?: string; style?: CSSProperties }) {
+  return <span aria-hidden="true" className={`mk-skeleton block rounded-xl ${className}`} style={style} />
+}
+
 export function Spinner() {
   return <div className="py-24 text-center text-sm" style={{ color: 'var(--c-muted)' }}>{t('جارٍ التحميل…', 'Loading…')}</div>
 }

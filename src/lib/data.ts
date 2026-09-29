@@ -3,8 +3,8 @@ import { t, type Pair } from './i18n'
 import { quickThumb } from './thumbs'
 
 /** Lightweight public card fields for a member. */
-export const CARD_COLUMNS = 'id, full_name, name_ar, username, avatar_url, is_founding, specialty_ids, other_specialty, city, country, followers, created_at, available, is_featured, status'
-export type MemberCard = Pick<Profile, 'id' | 'full_name' | 'name_ar' | 'username' | 'avatar_url' | 'is_founding' | 'specialty_ids' | 'other_specialty' | 'city' | 'country' | 'followers' | 'created_at' | 'available' | 'is_featured' | 'status'>
+export const CARD_COLUMNS = 'id, full_name, name_ar, username, avatar_url, is_founding, specialty_ids, other_specialty, city, country, followers, created_at, available, is_featured, status, account_type, content_types'
+export type MemberCard = Pick<Profile, 'id' | 'full_name' | 'name_ar' | 'username' | 'avatar_url' | 'is_founding' | 'specialty_ids' | 'other_specialty' | 'city' | 'country' | 'followers' | 'created_at' | 'available' | 'is_featured' | 'status' | 'account_type' | 'content_types'>
 
 export const PROJECT_KINDS: (Pair & { key: string })[] = [
   { key: 'commercial', ar: 'إعلان', en: 'Commercial' },
@@ -110,13 +110,17 @@ export async function listMembers(limit = 200) {
   return (data as unknown as MemberCard[]) || []
 }
 
-export async function topMakers(limit = 10) {
+/** Makers ranked by activity this week. `ranked` is false when nobody had any activity,
+ *  so the page does not show a ranking that means nothing. */
+export async function topMakers(limit = 10): Promise<{ list: MemberCard[]; ranked: boolean }> {
   const { data } = await supabase.rpc('top_makers', { p_limit: limit })
-  const ids = ((data as { id: string; score: number }[]) || []).map((r) => r.id)
-  if (!ids.length) return []
-  const { data: rows } = await supabase.from('profiles').select(CARD_COLUMNS).in('id', ids)
-  const list = (rows as unknown as MemberCard[]) || []
-  return ids.map((id) => list.find((m) => m.id === id)).filter(Boolean) as MemberCard[]
+  const rows = (data as { id: string; score: number }[]) || []
+  const active = rows.filter((r) => r.score > 0)
+  const ids = (active.length ? active : rows).map((r) => r.id)
+  if (!ids.length) return { list: [], ranked: false }
+  const { data: cards } = await supabase.from('profiles').select(CARD_COLUMNS).in('id', ids)
+  const list = (cards as unknown as MemberCard[]) || []
+  return { list: ids.map((id) => list.find((m) => m.id === id)).filter(Boolean) as MemberCard[], ranked: active.length > 0 }
 }
 
 export const totalFollowers = (m: Pick<Profile, 'followers'>) => Object.values(m.followers || {}).reduce((s, n) => s + (Number(n) || 0), 0)

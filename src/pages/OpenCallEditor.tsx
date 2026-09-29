@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
@@ -28,6 +28,9 @@ export default function OpenCallEditor() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+
+  // The profile can arrive after the first render; default the shoot country to the member's own.
+  useEffect(() => { if (profile?.country) setCountry(profile.country) }, [profile?.country])
 
   if (loading) return <Spinner />
   if (!profile) return <PageShell narrow><Notice>{t('سجّل الدخول لنشر فرصة.', 'Sign in to post an opportunity.')} <Link to="/login" className="font-semibold underline">{t('دخول', 'Sign in')}</Link></Notice></PageShell>
@@ -105,7 +108,7 @@ export default function OpenCallEditor() {
             <Field label={t('الميزانية', 'Budget')}>
               <SelectInput value={budget} onChange={(e) => setBudget(e.target.value)}>
                 <option value="">{t('حسب الاتفاق', 'Open to discuss')}</option>
-                {BUDGETS.slice(1).map((b) => <option key={b.ar} value={t(b.ar, b.en)}>{t(b.ar, b.en)}</option>)}
+                {BUDGETS.slice(1).map((b) => <option key={b.ar} value={b.ar}>{t(b.ar, b.en)}</option>)}
               </SelectInput>
             </Field>
             <Field label={t('آخر موعد للتقديم', 'Apply by')}><TextInput type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} min={new Date().toISOString().slice(0, 10)} dir="ltr" /></Field>

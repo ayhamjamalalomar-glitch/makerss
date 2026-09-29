@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from '../lib/router'
 import { t, label, useLang } from '../lib/i18n'
-import { COUNTRIES, cityLabel } from '../lib/constants'
-import { useSpecialties, specName, roleLine } from '../lib/specialties'
-import { displayName, listMembers, type MemberCard } from '../lib/data'
+import { CONTENT_TYPES, COUNTRIES, cityLabel, contentLabel, listSep } from '../lib/constants'
+import { useSpecialties, specName, memberLine, isCreator } from '../lib/specialties'
+import { displayName, formatFollowers, listMembers, totalFollowers, type MemberCard } from '../lib/data'
 import { Spinner, VerifiedBadge } from '../components/mk'
 
 const selectStyle = { background: 'var(--c-surface)', border: '1px solid var(--c-border)', cursor: 'pointer', fontSize: 13, height: 42, paddingInline: '14px 32px', borderRadius: 12 } as const
@@ -25,6 +25,11 @@ export default function MakersPage() {
     const s = new URLSearchParams(window.location.search).get('s')
     return s && /^\d+$/.test(s) ? Number(s) : 'all'
   })
+  const [type, setType] = useState<'all' | 'maker' | 'creator'>(() => {
+    const v = new URLSearchParams(window.location.search).get('type')
+    return v === 'maker' || v === 'creator' ? v : 'all'
+  })
+  const [content, setContent] = useState('all')
   const [country, setCountry] = useState('all')
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -33,23 +38,40 @@ export default function MakersPage() {
 
   const filtered = useMemo(() => {
     return (all || []).filter((m) => {
-      if (specialty !== 'all' && !(m.specialty_ids || []).includes(specialty)) return false
+      if (type === 'creator' && !isCreator(m)) return false
+      if (type === 'maker' && isCreator(m)) return false
+      if (type !== 'creator' && specialty !== 'all' && !(m.specialty_ids || []).includes(specialty)) return false
+      if (type === 'creator' && content !== 'all' && !(m.content_types || []).includes(content)) return false
       if (country !== 'all' && m.country !== country) return false
       if (verifiedOnly && !m.is_founding) return false
       if (search) {
         const q = search.toLowerCase()
-        const hay = [m.full_name, m.name_ar, m.username, m.city, label(COUNTRIES, m.country), m.country, roleLine(specialties, m.specialty_ids, m.other_specialty)].join(' ').toLowerCase()
+        const hay = [m.full_name, m.name_ar, m.username, m.city, label(COUNTRIES, m.country), m.country, memberLine(specialties, m)].join(' ').toLowerCase()
         if (!hay.includes(q)) return false
       }
       return true
     })
-  }, [all, search, specialty, country, verifiedOnly, specialties])
+  }, [all, search, type, specialty, content, country, verifiedOnly, specialties])
 
+  const pickType = (k: 'all' | 'maker' | 'creator') => {
+    setType(k)
+    setSpecialty('all')
+    setContent('all')
+    window.history.replaceState(null, '', k === 'all' ? '/makers' : `/makers?type=${k}`)
+  }
+
+  // Side list: top specialties, or top content categories when browsing creators.
   const counts = useMemo(() => {
-    const map = new Map<number, number>()
-    for (const m of all || []) for (const id of m.specialty_ids || []) map.set(id, (map.get(id) || 0) + 1)
+    const map = new Map<string, number>()
+    for (const m of all || []) {
+      if (type === 'creator') {
+        if (isCreator(m)) for (const k of m.content_types || []) map.set(k, (map.get(k) || 0) + 1)
+      } else if (type === 'all' || !isCreator(m)) {
+        for (const id of m.specialty_ids || []) map.set(String(id), (map.get(String(id)) || 0) + 1)
+      }
+    }
     return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)
-  }, [all])
+  }, [all, type])
 
   const usedCountries = COUNTRIES.filter((c) => (all || []).some((m) => m.country === c.ar))
 
@@ -74,14 +96,30 @@ export default function MakersPage() {
         />
       </div>
 
+      <div className="flex gap-1.5 p-1 rounded-full self-start mb-5 w-fit max-w-full overflow-x-auto no-scrollbar" role="tablist" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>
+        {([['all', t('الكل', 'All')], ['maker', t('صنّاع الإنتاج', 'Production')], ['creator', t('صنّاع المحتوى', 'Content creators')]] as const).map(([k, l]) => (
+          <button key={k} type="button" role="tab" aria-selected={type === k} onClick={() => pickType(k)} className="text-[13px] px-4 py-2 rounded-full cursor-pointer whitespace-nowrap" style={{ border: 'none', background: type === k ? '#E85D04' : 'transparent', fontWeight: type === k ? 600 : 400, color: type === k ? '#fff' : 'var(--c-muted)' }}>{l}</button>
+        ))}
+      </div>
+
       <div className="flex flex-wrap items-center gap-3 mb-6">
-        <div className="relative">
-          <select value={specialty} onChange={(e) => setSpecialty(e.target.value === 'all' ? 'all' : Number(e.target.value))} className="appearance-none" style={{ ...selectStyle, color: specialty !== 'all' ? 'var(--c-text)' : 'var(--c-muted)' }}>
-            <option value="all">{t('كل التخصصات', 'All specialties')}</option>
-            {specialties.map((s) => <option key={s.id} value={s.id}>{t(s.name_ar || s.name_en, s.name_en)}</option>)}
-          </select>
-          <Caret />
-        </div>
+        {type === 'creator' ? (
+          <div className="relative">
+            <select value={content} onChange={(e) => setContent(e.target.value)} aria-label={t('نوع المحتوى', 'Content type')} className="appearance-none" style={{ ...selectStyle, color: content !== 'all' ? 'var(--c-text)' : 'var(--c-muted)' }}>
+              <option value="all">{t('كل أنواع المحتوى', 'All content')}</option>
+              {CONTENT_TYPES.map((c) => <option key={c.key} value={c.key}>{t(c.ar, c.en)}</option>)}
+            </select>
+            <Caret />
+          </div>
+        ) : (
+          <div className="relative">
+            <select value={specialty} onChange={(e) => setSpecialty(e.target.value === 'all' ? 'all' : Number(e.target.value))} aria-label={t('التخصص', 'Specialty')} className="appearance-none" style={{ ...selectStyle, color: specialty !== 'all' ? 'var(--c-text)' : 'var(--c-muted)' }}>
+              <option value="all">{t('كل التخصصات', 'All specialties')}</option>
+              {specialties.map((s) => <option key={s.id} value={s.id}>{t(s.name_ar || s.name_en, s.name_en)}</option>)}
+            </select>
+            <Caret />
+          </div>
+        )}
         <div className="relative">
           <select value={country} onChange={(e) => setCountry(e.target.value)} className="appearance-none" style={{ ...selectStyle, color: country !== 'all' ? 'var(--c-text)' : 'var(--c-muted)' }}>
             <option value="all">{t('كل الدول', 'All countries')}</option>
@@ -115,8 +153,15 @@ export default function MakersPage() {
           </div>
 
           {!all ? <Spinner /> : filtered.length === 0 ? (
-            <div className="py-20 text-center rounded-2xl" style={{ border: '1px solid var(--c-border)', background: 'var(--c-surface)' }}>
-              <p className="text-base m-0" style={{ color: 'var(--c-muted)' }}>{t('لا يوجد صنّاع بهذه المواصفات بعد.', 'No makers match your filters yet.')}</p>
+            <div className="py-20 px-6 text-center rounded-2xl flex flex-col items-center gap-4" style={{ border: '1px solid var(--c-border)', background: 'var(--c-surface)' }}>
+              <p className="text-base m-0" style={{ color: 'var(--c-muted)' }}>
+                {type === 'creator' && !(all || []).some(isCreator)
+                  ? t('باب صنّاع المحتوى فُتح الآن. كن من أوائل الأسماء هنا.', 'Content creators can now join. Be one of the first names here.')
+                  : t('لا يوجد صنّاع بهذه المواصفات بعد.', 'No makers match your filters yet.')}
+              </p>
+              {type === 'creator' && !(all || []).some(isCreator) && (
+                <Link to="/join?type=creator" className="font-bold px-6 py-2.5 rounded-full text-sm" style={{ background: '#E85D04', color: '#fff' }}>{t('انضم كصانع محتوى', 'Join as a creator')}</Link>
+              )}
             </div>
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -134,11 +179,16 @@ export default function MakersPage() {
                         <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#4ADE80' }} />{t('متاح', 'Available')}
                       </span>
                     )}
+                    {isCreator(m) && totalFollowers(m) > 0 && (
+                      <span className="absolute bottom-2.5 end-2.5 rounded-full px-2 py-0.5 font-bold" dir="ltr" style={{ background: 'rgba(13,10,8,0.75)', fontSize: 10, color: '#E85D04' }}>
+                        {formatFollowers(totalFollowers(m))}
+                      </span>
+                    )}
                   </div>
                   <div className="p-3 flex flex-col gap-1 flex-1">
                     <p className="font-bold group-hover:text-orange transition-colors leading-tight m-0" style={{ fontSize: 14 }}>{displayName(m)}</p>
-                    <p className="m-0 truncate" style={{ fontSize: 11, color: 'var(--c-muted)' }}>{roleLine(specialties, m.specialty_ids, m.other_specialty) || ' '}</p>
-                    <p className="m-0 truncate" style={{ fontSize: 11, color: 'var(--c-muted-2)' }}>{[cityLabel(m.city), label(COUNTRIES, m.country)].filter(Boolean).join('، ')}</p>
+                    <p className="m-0 truncate" style={{ fontSize: 11, color: 'var(--c-muted)' }}>{memberLine(specialties, m) || ' '}</p>
+                    <p className="m-0 truncate" style={{ fontSize: 11, color: 'var(--c-muted-2)' }}>{[cityLabel(m.city), label(COUNTRIES, m.country)].filter(Boolean).join(listSep())}</p>
                   </div>
                 </Link>
               ))}
@@ -153,7 +203,7 @@ export default function MakersPage() {
                   </span>
                   <span className="flex-1 min-w-0">
                     <span className="block font-bold group-hover:text-orange transition-colors" style={{ fontSize: 15 }}>{displayName(m)}</span>
-                    <span className="block text-sm truncate" style={{ color: 'var(--c-muted)' }}>{roleLine(specialties, m.specialty_ids, m.other_specialty)}</span>
+                    <span className="block text-sm truncate" style={{ color: 'var(--c-muted)' }}>{memberLine(specialties, m)}</span>
                   </span>
                   <span className="hidden sm:block text-xs shrink-0" style={{ color: 'var(--c-muted-2)' }}>{label(COUNTRIES, m.country)}</span>
                 </Link>
@@ -164,14 +214,17 @@ export default function MakersPage() {
 
         {counts.length > 0 && (
           <aside className="w-full lg:w-[280px] shrink-0">
-            <h3 className="font-bold mb-4 mt-0" style={{ fontSize: 18 }}>{t('حسب التخصص', 'By specialty')}</h3>
+            <h3 className="font-bold mb-4 mt-0" style={{ fontSize: 18 }}>{type === 'creator' ? t('حسب نوع المحتوى', 'By content') : t('حسب التخصص', 'By specialty')}</h3>
             <div className="flex flex-col rounded-2xl overflow-hidden" style={{ border: '1px solid var(--c-border)', background: 'var(--c-surface)' }}>
-              {counts.map(([id, n], i) => (
-                <button key={id} onClick={() => { setSpecialty(id); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="flex items-center justify-between gap-3 px-4 py-3.5 text-start cursor-pointer group hover:bg-white/[0.03]" style={{ background: specialty === id ? 'rgba(232,93,4,0.08)' : 'transparent', border: 'none', borderBottom: i < counts.length - 1 ? '1px solid var(--c-border)' : 'none', color: 'var(--c-text)' }}>
-                  <span className="font-semibold group-hover:text-orange transition-colors" style={{ fontSize: 13 }}>{specName(specialties, id)}</span>
-                  <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>{n}</span>
-                </button>
-              ))}
+              {counts.map(([key, n], i) => {
+                const on = type === 'creator' ? content === key : specialty === Number(key)
+                return (
+                  <button key={key} onClick={() => { if (type === 'creator') setContent(key); else setSpecialty(Number(key)); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="flex items-center justify-between gap-3 px-4 py-3.5 text-start cursor-pointer group hover:bg-white/[0.03]" style={{ background: on ? 'rgba(232,93,4,0.08)' : 'transparent', border: 'none', borderBottom: i < counts.length - 1 ? '1px solid var(--c-border)' : 'none', color: 'var(--c-text)' }}>
+                    <span className="font-semibold group-hover:text-orange transition-colors" style={{ fontSize: 13 }}>{type === 'creator' ? contentLabel(key) : specName(specialties, Number(key))}</span>
+                    <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>{n}</span>
+                  </button>
+                )
+              })}
             </div>
           </aside>
         )}

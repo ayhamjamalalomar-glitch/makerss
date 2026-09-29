@@ -1,4 +1,4 @@
-import { getLang, t, type Pair } from './i18n'
+import { getLang, label, t, type Pair } from './i18n'
 
 // Stored values stay Arabic (they are already in the database); labels switch with the language.
 export const COUNTRIES: Pair[] = [
@@ -22,6 +22,37 @@ export const BUDGETS: Pair[] = [
   { ar: 'من 500 إلى 1,500 دولار', en: '$500 to $1,500' }, { ar: 'من 1,500 إلى 5,000 دولار', en: '$1,500 to $5,000' },
   { ar: 'أكثر من 5,000 دولار', en: 'Over $5,000' },
 ]
+
+/** Content categories a creator picks (stored as keys in profiles.content_types). */
+export const CONTENT_TYPES: (Pair & { key: string })[] = [
+  { key: 'comedy', ar: 'كوميديا', en: 'Comedy' },
+  { key: 'lifestyle', ar: 'لايف ستايل', en: 'Lifestyle' },
+  { key: 'fashion', ar: 'موضة وجمال', en: 'Fashion & beauty' },
+  { key: 'food', ar: 'طبخ وأكل', en: 'Food' },
+  { key: 'travel', ar: 'سفر', en: 'Travel' },
+  { key: 'tech', ar: 'تقنية', en: 'Tech' },
+  { key: 'gaming', ar: 'ألعاب', en: 'Gaming' },
+  { key: 'sports', ar: 'رياضة ولياقة', en: 'Sports & fitness' },
+  { key: 'education', ar: 'تعليم', en: 'Education' },
+  { key: 'family', ar: 'عائلة وأطفال', en: 'Family & kids' },
+  { key: 'business', ar: 'أعمال ومال', en: 'Business & finance' },
+  { key: 'cars', ar: 'سيارات', en: 'Cars' },
+  { key: 'music', ar: 'موسيقى', en: 'Music' },
+  { key: 'art', ar: 'فن وتصميم', en: 'Art & design' },
+  { key: 'culture', ar: 'ثقافة ومجتمع', en: 'Culture & society' },
+  { key: 'other', ar: 'أخرى', en: 'Other' },
+]
+export const contentLabel = (key: string) => {
+  const hit = CONTENT_TYPES.find((c) => c.key === key)
+  return hit ? t(hit.ar, hit.en) : ''
+}
+export const MAX_CONTENT_TYPES = 3
+
+/** Separator for inline lists: Arabic comma in Arabic, plain comma in English. */
+export const listSep = () => t('، ', ', ')
+
+/** Budget in the reader's language. Stored values are the Arabic labels; empty means open to discuss. */
+export const budgetLabel = (v: string | null | undefined) => (v ? label(BUDGETS, v) : t(BUDGETS[0].ar, BUDGETS[0].en))
 
 export const VIDEO_LENGTHS: { key: 'short' | 'long' | 'both'; ar: string; en: string }[] = [
   { key: 'short', ar: 'فيديو قصير', en: 'Short-form' },
@@ -97,10 +128,19 @@ const CITIES: Record<string, string> = {
   'الدار البيضاء': 'Casablanca', 'الرباط': 'Rabat', 'مراكش': 'Marrakech', 'تونس': 'Tunis', 'الجزائر': 'Algiers', 'الخرطوم': 'Khartoum',
   'بنغازي': 'Benghazi', 'صنعاء': "Sana'a", 'عدن': 'Aden', 'نواكشوط': 'Nouakchott', 'مقديشو': 'Mogadishu', 'جيبوتي': 'Djibouti',
 }
+// English name to Arabic, so a city typed in English still reads in Arabic ("amman" shows as عمّان).
+const CITIES_AR: Record<string, string> = Object.fromEntries(
+  Object.entries(CITIES).reverse().map(([ar, en]) => [en.toLowerCase(), ar]),
+)
+CITIES_AR.amman = 'عمّان'
+
+const titleCase = (s: string) => s.replace(/(^|[\s-])([a-z])/g, (_, sep: string, ch: string) => sep + ch.toUpperCase())
+
 export function cityLabel(city: string | null | undefined) {
   if (!city) return ''
-  if (getLang() !== 'en') return city
   const c = city.trim()
+  const arabic = /[؀-ۿ]/.test(c)
+  if (getLang() !== 'en') return arabic ? c : CITIES_AR[c.toLowerCase()] || titleCase(c)
   if (CITIES[c]) return CITIES[c]
-  return /[؀-ۿ]/.test(c) ? '' : c
+  return arabic ? '' : titleCase(c)
 }

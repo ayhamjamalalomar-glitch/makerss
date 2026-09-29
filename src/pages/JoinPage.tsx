@@ -16,7 +16,7 @@ export default function JoinPage() {
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
   const [touchedUser, setTouchedUser] = useState(false)
-  const [type, setType] = useState<'maker' | 'creator'>('maker')
+  const [type, setType] = useState<'maker' | 'creator'>(() => (new URLSearchParams(window.location.search).get('type') === 'creator' ? 'creator' : 'maker'))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [available, setAvailable] = useState<boolean | null>(null)
@@ -44,17 +44,12 @@ export default function JoinPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    if (type === 'creator') {
-      setError(null)
-      setSentTo('interest')
-      return
-    }
     if (!available) return setError(t('اختر رابطاً آخر لصفحتك، هذا الرابط غير متاح.', 'Choose another link for your page. This one is taken.'))
     setBusy(true)
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name.trim(), username, account_type: 'maker' }, emailRedirectTo: `${window.location.origin}/me` },
+      options: { data: { full_name: name.trim(), username, account_type: type }, emailRedirectTo: `${window.location.origin}/me` },
     })
     setBusy(false)
     if (error) {
@@ -74,14 +69,12 @@ export default function JoinPage() {
     return (
       <DarkCard>
         <div className="flex flex-col gap-3">
-          <h1 className="m-0 text-[28px] md:text-[34px] font-bold" style={{ lineHeight: 1.35 }}>{sentTo === 'interest' ? t('سجّلنا اهتمامك', 'We saved your interest') : t('تحقق من بريدك', 'Check your email')}</h1>
+          <h1 className="m-0 text-[28px] md:text-[34px] font-bold" style={{ lineHeight: 1.35 }}>{t('تحقق من بريدك', 'Check your email')}</h1>
           <p className="m-0 text-sm leading-relaxed" style={{ color: 'var(--c-muted)' }}>
-            {sentTo === 'interest'
-              ? t('ينضم صنّاع المحتوى في المرحلة القادمة. سنبلغك فور فتح التسجيل.', 'Content creators join in the next phase. We will let you know as soon as sign-up opens.')
-              : t(`أرسلنا رابط التفعيل إلى ${sentTo}. افتح الرابط لتبدأ ببناء صفحتك.`, `We sent an activation link to ${sentTo}. Open it to start building your page.`)}
+            {t(`أرسلنا رابط التفعيل إلى ${sentTo}. افتح الرابط لتبدأ ببناء صفحتك.`, `We sent an activation link to ${sentTo}. Open it to start building your page.`)}
           </p>
         </div>
-        {sentTo !== 'interest' && <ResendConfirm email={sentTo} />}
+        <ResendConfirm email={sentTo} />
         <Link to="/" className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>{t('العودة إلى الدليل', 'Back to the directory')}</Link>
       </DarkCard>
     )
@@ -109,43 +102,39 @@ export default function JoinPage() {
             <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('الاسم', 'Name')}</span>
             <input required minLength={2} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('اسمك الكامل', 'Your full name')} style={darkInputStyle} />
           </label>
-          {type === 'maker' && (
-            <>
-              <label className={darkRow} style={darkRowStyle}>
-                <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('رابط صفحتك', 'Your link')}</span>
-                <span dir="ltr" className={`flex-1 flex items-center ${isRtl() ? 'justify-end' : 'justify-start'} mono text-sm min-w-0`}>
-                  <span style={{ color: 'var(--c-muted)' }}>makerss.net/</span>
-                  <input
-                    required
-                    value={username}
-                    onChange={(e) => { setTouchedUser(true); setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')) }}
-                    placeholder="your-name"
-                    style={{ ...darkInputStyle, fontSize: 14, fontFamily: 'inherit', flex: '0 1 150px' }}
-                  />
-                </span>
-              </label>
-              <span className="text-xs -mt-4" style={{ color: available === false ? 'rgba(248,113,113,0.35)' : 'var(--c-muted)' }}>
-                {available === false ? t('هذا الرابط محجوز أو غير صالح.', 'This link is taken or invalid.') : t('حروف إنجليزية صغيرة وأرقام وشرطات فقط.', 'Lowercase letters, numbers and dashes only.')}
-              </span>
-              <label className={darkRow} style={darkRowStyle}>
-                <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('البريد', 'Email')}</span>
-                <input required type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@email.com" style={{ ...darkInputStyle, textAlign: isRtl() ? 'right' : 'left' }} />
-              </label>
-              <label className={darkRow} style={darkRowStyle}>
-                <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('كلمة المرور', 'Password')}</span>
-                <input required type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('8 أحرف على الأقل', 'At least 8 characters')} autoComplete="new-password" style={darkInputStyle} />
-              </label>
-            </>
-          )}
+          <label className={darkRow} style={darkRowStyle}>
+            <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('رابط صفحتك', 'Your link')}</span>
+            <span dir="ltr" className={`flex-1 flex items-center ${isRtl() ? 'justify-end' : 'justify-start'} mono text-sm min-w-0`}>
+              <span style={{ color: 'var(--c-muted)' }}>makerss.net/</span>
+              <input
+                required
+                value={username}
+                onChange={(e) => { setTouchedUser(true); setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')) }}
+                placeholder="your-name"
+                style={{ ...darkInputStyle, fontSize: 14, fontFamily: 'inherit', flex: '0 1 150px' }}
+              />
+            </span>
+          </label>
+          <span className="text-xs -mt-4" style={{ color: available === false ? '#F87171' : available ? '#4ADE80' : 'var(--c-muted)' }}>
+            {available === false ? t('هذا الرابط محجوز أو غير صالح.', 'This link is taken or invalid.') : t('حروف إنجليزية صغيرة وأرقام وشرطات فقط.', 'Lowercase letters, numbers and dashes only.')}
+          </span>
+          <label className={darkRow} style={darkRowStyle}>
+            <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('البريد', 'Email')}</span>
+            <input required type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@email.com" style={{ ...darkInputStyle, textAlign: isRtl() ? 'right' : 'left' }} />
+          </label>
+          <label className={darkRow} style={darkRowStyle}>
+            <span className="text-[13px] w-24 shrink-0" style={{ color: 'var(--c-muted)' }}>{t('كلمة المرور', 'Password')}</span>
+            <input required type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('8 أحرف على الأقل', 'At least 8 characters')} autoComplete="new-password" style={darkInputStyle} />
+          </label>
         </div>
         <span className="text-[13px] leading-relaxed" style={{ color: 'var(--c-muted)' }}>
           {type === 'maker'
             ? t('مخرج، مصوّر، مونتير، ستايلست وغيرهم. تظهر صفحتك في الدليل بعد أن يراجعها فريق Makers.', 'Directors, cinematographers, editors, stylists and more. Your page appears in the directory after the Makers team reviews it.')
-            : t('ينضم صنّاع المحتوى في المرحلة القادمة. سجّل اهتمامك وسنبلغك فور فتح التسجيل.', 'Content creators join in the next phase. Register your interest and we will tell you when sign-up opens.')}
+            : t('يوتيوبر، تيك توكر، إنستغرامر وغيرهم. أضف حساباتك وعدد متابعيك، وتظهر صفحتك في الدليل بعد أن يراجعها فريق Makers.', 'YouTubers, TikTokers, Instagrammers and more. Add your accounts and follower counts, and your page appears in the directory after the Makers team reviews it.')}
         </span>
         {error && <Notice tone="error">{error}</Notice>}
         <button type="submit" disabled={busy} className="h-[52px] rounded-full text-[15px] font-semibold cursor-pointer disabled:opacity-60" style={{ background: '#E85D04', color: '#fff', border: 'none' }}>
-          {busy ? t('جارٍ الإنشاء…', 'Creating…') : type === 'maker' ? t('أنشئ صفحتك', 'Create your page') : t('سجّل اهتمامي', 'Register my interest')}
+          {busy ? t('جارٍ الإنشاء…', 'Creating…') : t('أنشئ صفحتك', 'Create your page')}
         </button>
         <p className="m-0 text-[13px]" style={{ color: 'var(--c-muted)' }}>
           {t('لديك حساب؟', 'Have an account?')} <Link to="/login" className="underline" style={{ color: 'var(--c-text)' }}>{t('سجّل الدخول', 'Sign in')}</Link>

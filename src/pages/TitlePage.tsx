@@ -3,7 +3,7 @@ import Link, { useRouter } from '../lib/router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { t, useLang } from '../lib/i18n'
-import { SITE_URL } from '../lib/constants'
+import { SITE_URL, listSep } from '../lib/constants'
 import { youtubeId } from '../lib/thumbs'
 import { displayName, getProject, kindLabel, posterOf, type CreditRow, type Project } from '../lib/data'
 import { Btn, Modal, PageShell, PosterFallback, Spinner, VerifiedBadge } from '../components/mk'
@@ -192,7 +192,7 @@ export default function TitlePage({ id }: { id: string }) {
             {[
               [t('صنّاع في الطاقم', 'Makers credited'), String(credits.length)],
               [t('النوع', 'Type'), kindLabel(p.kind)],
-              [t('المنصة', 'Platform'), (p.platforms || []).join('، ')],
+              [t('المنصة', 'Platform'), (p.platforms || []).join(listSep())],
               [t('السنة', 'Year'), p.year ? String(p.year) : ''],
               [t('العميل / الجهة', 'Brand / studio'), p.brand || ''],
             ].filter(([, v]) => v).map(([k, v]) => (

@@ -6,7 +6,7 @@ import { BUDGETS, COUNTRIES, cityLabel, PROJECT_TYPES, REMOTE, daysBetween, dura
 import { label, t } from '../lib/i18n'
 import { Avatar, Btn, Card, PageShell, Pill, Spinner } from '../components/mk'
 import { CARD_COLUMNS, displayName, type MemberCard, type OpenCall } from '../lib/data'
-import { useSpecialties, roleLine } from '../lib/specialties'
+import { useSpecialties, memberLine } from '../lib/specialties'
 
 type Filter = 'all' | 'new' | 'accepted' | 'declined'
 const META: Record<ContactRequest['status'], { ar: string; en: string; tone: 'blue' | 'green' | 'neutral' | 'amber' }> = {
@@ -297,7 +297,7 @@ function CallsInbox() {
                     <Avatar url={a.applicant?.avatar_url} name={a.applicant?.full_name} size={44} />
                     <div className="flex-1 min-w-0">
                       <Link to={`/${a.applicant?.username}`} className="block font-bold truncate hover:underline">{displayName(a.applicant)}</Link>
-                      <span className="block text-xs truncate" style={{ color: 'var(--c-muted)' }}>{roleLine(specialties, a.applicant?.specialty_ids, a.applicant?.other_specialty)}</span>
+                      <span className="block text-xs truncate" style={{ color: 'var(--c-muted)' }}>{memberLine(specialties, a.applicant)}</span>
                     </div>
                     <Pill tone={a.status === 'shortlisted' ? 'green' : a.status === 'declined' ? 'neutral' : 'blue'}>{appLabel(a.status)}</Pill>
                   </div>

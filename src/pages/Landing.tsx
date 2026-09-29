@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import Link from '../lib/router'
 import { useAuth } from '../lib/auth'
 import { t, useLang } from '../lib/i18n'
-import { useSpecialties, specName } from '../lib/specialties'
+import { useSpecialties, specName, firstRole } from '../lib/specialties'
+import { budgetLabel } from '../lib/constants'
 import { CALL_COLORS, displayName, formatFollowers, kindLabel, listMembers, listOpenCalls, listProjects, posterOf, topMakers, totalFollowers, type MemberCard, type OpenCall, type Project } from '../lib/data'
 import { useRouter } from '../lib/router'
-import { PosterFallback, SectionHeader, VerifiedBadge } from '../components/mk'
+import { PosterFallback, SectionHeader, Skeleton, VerifiedBadge } from '../components/mk'
 
 function RankBadge({ rank }: { rank: number }) {
   return (
@@ -59,7 +60,7 @@ export function CallCard({ c }: { c: OpenCall }) {
           ))}
         </div>
         <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid var(--c-border)' }}>
-          <span className="font-semibold" style={{ color: '#E85D04', fontSize: 11 }}>{c.budget || t('حسب الاتفاق', 'Open to discuss')}</span>
+          <span className="font-semibold" style={{ color: '#E85D04', fontSize: 11 }}>{budgetLabel(c.budget)}</span>
           {c.deadline && <span style={{ color: 'var(--c-muted)', fontSize: 10 }}>{t('آخر موعد', 'Due')} {c.deadline.slice(5).replace('-', '/')}</span>}
         </div>
       </div>
@@ -73,7 +74,7 @@ export default function Landing() {
   const { session, profile } = useAuth()
   const specialties = useSpecialties()
   const [projects, setProjects] = useState<Project[] | null>(null)
-  const [top, setTop] = useState<MemberCard[] | null>(null)
+  const [top, setTop] = useState<{ list: MemberCard[]; ranked: boolean } | null>(null)
   const [calls, setCalls] = useState<OpenCall[] | null>(null)
   const [audience, setAudience] = useState<MemberCard[]>([])
 
@@ -85,17 +86,29 @@ export default function Landing() {
         setProjects(list.filter((p) => (seen.has(p.owner_id) ? false : (seen.add(p.owner_id), true))).slice(0, 6))
       })
       .catch(() => setProjects([]))
-    topMakers(10).then(setTop)
+    topMakers(10).then(setTop).catch(() => setTop({ list: [], ranked: false }))
     listOpenCalls(8).then(setCalls)
     listMembers().then((all) => setAudience(all.filter((m) => totalFollowers(m) > 0).sort((a, b) => totalFollowers(b) - totalFollowers(a)).slice(0, 8)))
   }, [])
 
-  const firstSpec = (m: MemberCard) => (m.specialty_ids?.[0] ? specName(specialties, m.specialty_ids[0]) : m.other_specialty || '')
+  const firstSpec = (m: MemberCard) => firstRole(specialties, m)
 
   return (
     <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8 sm:py-10 flex flex-col gap-10 sm:gap-14">
 
-      {!!projects?.length && (
+      {projects === null ? (
+        <section aria-busy="true">
+          <SectionHeader title={t('جديد على ميكرز', 'New on Makers')} />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-2">
+                <Skeleton style={{ aspectRatio: '2/3' }} />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : projects.length > 0 && (
         <section>
           <SectionHeader title={t('جديد على ميكرز', 'New on Makers')} onSeeAll={() => go('/projects')} />
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
@@ -104,11 +117,23 @@ export default function Landing() {
         </section>
       )}
 
-      {!!top?.length && (
-        <section>
-          <SectionHeader title={t(`أفضل ${top.length === 10 ? '١٠' : top.length} صنّاع هذا الأسبوع`, `Top ${top.length} Makers this week`)} onSeeAll={() => go('/makers')} />
+      {top === null ? (
+        <section aria-busy="true">
+          <SectionHeader title={t('صنّاع هذا الأسبوع', 'Makers this week')} />
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-            {top.map((m, i) => (
+            {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} style={{ aspectRatio: '2/3' }} />)}
+          </div>
+        </section>
+      ) : top.list.length > 0 && (
+        <section>
+          <SectionHeader
+            title={top.ranked
+              ? t(`أفضل ${top.list.length === 10 ? '١٠' : top.list.length} صنّاع هذا الأسبوع`, `Top ${top.list.length} Makers this week`)
+              : t('صنّاع على Makers', 'Makers to know')}
+            onSeeAll={() => go('/makers')}
+          />
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+            {top.list.map((m, i) => (
               <Link key={m.id} to={`/${m.username}`} className="text-start group">
                 <div className="rounded-xl overflow-hidden relative mb-1.5" style={{ aspectRatio: '2/3', background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
                   {m.avatar_url ? (
@@ -116,7 +141,7 @@ export default function Landing() {
                   ) : (
                     <div className="w-full h-full flex items-center justify-center font-black" style={{ fontSize: 28, color: 'var(--c-muted-2)' }}>{displayName(m).charAt(0)}</div>
                   )}
-                  <div className="absolute top-1.5 start-1.5"><RankBadge rank={i + 1} /></div>
+                  {top.ranked && <div className="absolute top-1.5 start-1.5"><RankBadge rank={i + 1} /></div>}
                 </div>
                 <p className="font-semibold group-hover:text-orange transition-colors truncate m-0 flex items-center gap-1" style={{ fontSize: 11, color: 'var(--c-text)' }}>
                   <span className="truncate">{displayName(m)}</span>

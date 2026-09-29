@@ -3,7 +3,7 @@ import Link, { useRouter } from '../lib/router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { label, t, useLang } from '../lib/i18n'
-import { COUNTRIES, cityLabel, formatDateAr, relativeAr } from '../lib/constants'
+import { COUNTRIES, budgetLabel, cityLabel, formatDateAr, listSep, relativeAr } from '../lib/constants'
 import { useSpecialties, specName } from '../lib/specialties'
 import { CALL_COLORS, CALL_SELECT, displayName, kindLabel, listOpenCalls, type OpenCall } from '../lib/data'
 import { Avatar, Btn, Notice, Pill, Spinner, TextArea } from '../components/mk'
@@ -12,7 +12,7 @@ const box = { background: 'var(--c-surface)', border: '1px solid var(--c-border)
 
 function placeOf(c: OpenCall) {
   if (c.remote) return t('عن بُعد', 'Remote')
-  return [cityLabel(c.city), label(COUNTRIES, c.country)].filter(Boolean).join('، ')
+  return [cityLabel(c.city), label(COUNTRIES, c.country)].filter(Boolean).join(listSep())
 }
 
 function CallDetail({ id, onClose, applied, onApplied }: { id: string; onClose: () => void; applied: boolean; onApplied: () => void }) {
@@ -78,7 +78,7 @@ function CallDetail({ id, onClose, applied, onApplied }: { id: string; onClose: 
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-5 text-sm" style={{ color: 'var(--c-muted)' }}>
                 {placeOf(c) && <span>📍 {placeOf(c)}</span>}
                 {c.deadline && <span>⏰ {t('آخر موعد:', 'Deadline:')} {formatDateAr(c.deadline)}</span>}
-                <span className="font-bold" style={{ color: '#E85D04' }}>{c.budget || t('الميزانية حسب الاتفاق', 'Budget open to discuss')}</span>
+                <span className="font-bold" style={{ color: '#E85D04' }}>{c.budget ? budgetLabel(c.budget) : t('الميزانية حسب الاتفاق', 'Budget open to discuss')}</span>
               </div>
 
               <p dir="auto" className="leading-relaxed mb-6 mt-0 whitespace-pre-line" style={{ fontSize: 14, color: 'var(--c-text-2)' }}>{c.description}</p>
@@ -231,7 +231,7 @@ export default function OpenProjects({ openId }: { openId?: string }) {
                     </div>
                     <div className="flex items-center gap-4 ms-auto flex-wrap">
                       {c.deadline && <span className="flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--c-muted)' }}>⏰ {formatDateAr(c.deadline)}</span>}
-                      <span className="font-semibold" style={{ color: '#E85D04', fontSize: 12 }}>{c.budget || t('حسب الاتفاق', 'Open to discuss')}</span>
+                      <span className="font-semibold" style={{ color: '#E85D04', fontSize: 12 }}>{budgetLabel(c.budget)}</span>
                       <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>{t(`${c.applicants_count} متقدّم`, `${c.applicants_count} applicant${c.applicants_count === 1 ? '' : 's'}`)}</span>
                       <span style={{ fontSize: 11, color: 'var(--c-muted-2)' }}>{relativeAr(c.created_at)}</span>
                     </div>

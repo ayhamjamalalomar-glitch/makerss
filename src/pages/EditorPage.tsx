@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { supabase, type Award, type Profile, type Work } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import WorkThumb from '../components/WorkThumb'
-import { COUNTRIES, SITE_URL, cityLabel, VIDEO_LENGTHS, detectPlatform, platformLabel, videoLengthLabel } from '../lib/constants'
+import { COUNTRIES, CONTENT_TYPES, MAX_CONTENT_TYPES, SITE_URL, cityLabel, VIDEO_LENGTHS, detectPlatform, listSep, platformLabel, videoLengthLabel } from '../lib/constants'
 import { isRtl, label, t } from '../lib/i18n'
-import { roleLine, useSpecialties } from '../lib/specialties'
+import { isCreator, memberLine, useSpecialties } from '../lib/specialties'
 import { computeProgress } from '../lib/progress'
 import { fetchThumb } from '../lib/thumbs'
+import { toJpeg } from '../lib/image'
 import { Btn, Card, Chip, Corners, Field, Modal, Notice, PageShell, Pill, SelectInput, Spinner, TextArea, TextInput } from '../components/mk'
 
 type ModalKind = null | 'spec' | 'work' | 'award' | 'photo' | 'username'
@@ -16,8 +17,9 @@ const SOCIALS = [
   { key: 'youtube', label: 'YouTube', followers: true },
   { key: 'tiktok', label: 'TikTok', followers: true },
   { key: 'snapchat', label: 'Snapchat', followers: true },
+  { key: 'facebook', label: 'Facebook', followers: true },
+  { key: 'x', label: 'X', followers: true },
   { key: 'linkedin', label: 'LinkedIn' },
-  { key: 'x', label: 'X' },
   { key: 'website', label: 'Website' },
 ]
 
@@ -28,6 +30,7 @@ export default function EditorPage() {
   const [works, setWorks] = useState<Work[]>([])
   const [awards, setAwards] = useState<Award[]>([])
   const [modal, setModal] = useState<ModalKind>(null)
+  const [deleting, setDeleting] = useState<Work | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [bio, setBio] = useState('')
@@ -86,9 +89,10 @@ export default function EditorPage() {
 
   const progress = computeProgress(profile, works.length)
   const hasSpec = progress.steps[2].done
-  const role = roleLine(specialties, profile.specialty_ids, profile.other_specialty)
+  const creator = isCreator(profile)
+  const role = memberLine(specialties, profile)
   const vlen = videoLengthLabel(profile.video_length)
-  const openFor = (key: string) => (key === 'photo' ? setModal('photo') : key === 'spec' ? setModal('spec') : key === 'works' ? setModal('work') : key === 'bio' ? document.getElementById('bio')?.focus() : null)
+  const openFor = (key: string) => (key === 'photo' ? setModal('photo') : key === 'spec' ? setModal('spec') : key === 'works' ? setModal('work') : key === 'bio' ? document.getElementById('bio')?.focus() : key === 'accounts' ? document.getElementById('accounts')?.scrollIntoView({ behavior: 'smooth', block: 'center' }) : null)
 
   const submit = async () => {
     setSaving(true)
@@ -132,10 +136,10 @@ export default function EditorPage() {
           <div className="flex-1 flex flex-col gap-3">
             {hasSpec ? (
               <button type="button" onClick={() => setModal('spec')} className="self-start text-start text-sm bg-transparent border-0 p-0 cursor-pointer" style={{ color: 'var(--c-text-2)' }}>
-                {role}{vlen ? ` · ${vlen}` : ''} · {[cityLabel(profile.city), label(COUNTRIES, profile.country)].filter(Boolean).join(t('، ', ', '))} <span className="text-xs" style={{ color: '#E85D04' }}>{t('تعديل', 'Edit')}</span>
+                {role}{vlen ? ` · ${vlen}` : ''} · {[cityLabel(profile.city), label(COUNTRIES, profile.country)].filter(Boolean).join(listSep())} <span className="text-xs" style={{ color: '#E85D04' }}>{t('تعديل', 'Edit')}</span>
               </button>
             ) : (
-              <Btn variant="dashed" onClick={() => setModal('spec')} className="self-start !px-3.5 !py-1.5 text-[13px]">{t('+ التخصص والدولة', '+ Role & country')}</Btn>
+              <Btn variant="dashed" onClick={() => setModal('spec')} className="self-start !px-3.5 !py-1.5 text-[13px]">{creator ? t('+ المحتوى والدولة', '+ Content & country') : t('+ التخصص والدولة', '+ Role & country')}</Btn>
             )}
             <label className="sr-only" htmlFor="fullname">{t('الاسم', 'Name')}</label>
             <input
@@ -147,7 +151,7 @@ export default function EditorPage() {
               style={{ background: 'transparent', border: 'none', padding: 0, lineHeight: 1.15, letterSpacing: '-0.02em', height: 'auto' }}
             />
             <span className="mono text-[13px]" style={{ color: profile.start_year ? 'var(--c-text-2)' : 'var(--c-muted)' }}>
-              {profile.start_year ? t(`يعمل في المجال منذ ${profile.start_year}`, `In the industry since ${profile.start_year}`) : t('أضف سنة البدء من «التخصص والدولة»', 'Add your start year under Role & country')}
+              {profile.start_year ? (creator ? t(`يصنع المحتوى منذ ${profile.start_year}`, `Creating since ${profile.start_year}`) : t(`يعمل في المجال منذ ${profile.start_year}`, `In the industry since ${profile.start_year}`)) : creator ? t('أضف سنة البدء من «المحتوى والدولة»', 'Add your start year under Content & country') : t('أضف سنة البدء من «التخصص والدولة»', 'Add your start year under Role & country')}
             </span>
           </div>
           <button type="button" onClick={() => setModal('photo')} aria-label={t('الصورة', 'Photo')} className="relative w-full md:w-[200px] h-[300px] md:h-[250px] shrink-0 rounded-2xl overflow-hidden flex items-center justify-center cursor-pointer" style={profile.avatar_url ? { border: 'none', background: 'var(--c-border)' } : { border: '1.5px dashed var(--c-border)', background: 'transparent', color: 'var(--c-muted)' }}>
@@ -182,16 +186,19 @@ export default function EditorPage() {
 
         <Card className="px-5 py-6 md:px-10 md:py-8 flex flex-col gap-5">
           <div className="flex justify-between items-baseline">
-            <span className="text-[13px] font-semibold">{t('أعمالك ومشاريعك', 'Your work & projects')}</span>
+            <span className="text-[13px] font-semibold">
+              {creator ? t('أبرز محتواك', 'Your best content') : t('أعمالك ومشاريعك', 'Your work & projects')}
+              {creator && <span className="font-normal" style={{ color: 'var(--c-muted)' }}> {t('(اختياري)', '(optional)')}</span>}
+            </span>
             {status === 'approved'
               ? <Link to="/projects/new" className="text-[13px] font-semibold" style={{ color: '#E85D04' }}>{t('+ مشروع كامل مع الطاقم', '+ Full project with crew')}</Link>
-              : <span className="mono text-xs" style={{ color: 'var(--c-muted)' }}>{t(`${Math.min(works.length, 3)} من 3 على الأقل`, `${Math.min(works.length, 3)} of at least 3`)}</span>}
+              : !creator && <span className="mono text-xs" style={{ color: 'var(--c-muted)' }}>{t(`${Math.min(works.length, 3)} من 3 على الأقل`, `${Math.min(works.length, 3)} of at least 3`)}</span>}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
             {works.map((w, i) => (
               <div key={w.id} className="flex md:flex-col gap-3 items-center md:items-stretch">
                 <WorkThumb work={w} index={i} className="w-28 h-[72px] md:w-auto md:h-[150px] rounded-xl md:rounded-2xl">
-                  <button type="button" aria-label={t('حذف العمل', 'Delete work')} onClick={async () => { await supabase.from('works').delete().eq('id', w.id); loadLists() }} className="absolute top-2 end-2 z-10 w-7 h-7 rounded-full text-sm cursor-pointer" style={{ background: 'rgba(13,10,8,0.8)', color: '#fff', border: 'none' }}>×</button>
+                  <button type="button" aria-label={t('حذف العمل', 'Delete work')} onClick={() => setDeleting(w)} className="absolute top-2 end-2 z-10 w-7 h-7 rounded-full text-sm cursor-pointer" style={{ background: 'rgba(13,10,8,0.8)', color: '#fff', border: 'none' }}>×</button>
                 </WorkThumb>
                 <span className="flex flex-col gap-0.5 px-1">
                   <span className="text-sm font-semibold">{w.title}</span>
@@ -204,7 +211,11 @@ export default function EditorPage() {
               <button type="button" onClick={() => setModal('work')} className="h-[72px] md:h-[150px] rounded-2xl text-[13px] cursor-pointer" style={{ border: '1.5px dashed var(--c-border)', background: 'transparent', color: 'var(--c-muted)' }}>{t('+ أضف عملاً', '+ Add work')}</button>
             )}
           </div>
-          <span className="text-xs" style={{ color: 'var(--c-muted)' }}>{t('أضف روابط لأعمال تظهر فيها مساهمتك، واكتب دورك تحت كل عمل. تظهر أعمالك في صفحة المشاريع بعد نشر ملفك.', 'Add links to work that shows your contribution, and write your role under each one. Your work appears on the projects page once your profile is live.')}</span>
+          <span className="text-xs" style={{ color: 'var(--c-muted)' }}>
+            {creator
+              ? t('أضف روابط لأفضل فيديوهاتك أو حملاتك، حتى يرى أصحاب المشاريع أسلوبك.', 'Add links to your best videos or campaigns so brands can see your style.')
+              : t('أضف روابط لأعمال تظهر فيها مساهمتك، واكتب دورك تحت كل عمل. تظهر أعمالك في صفحة المشاريع بعد نشر ملفك.', 'Add links to work that shows your contribution, and write your role under each one. Your work appears on the projects page once your profile is live.')}
+          </span>
         </Card>
 
         <Card className="px-5 py-5 md:px-10 md:py-7 flex flex-col gap-1">
@@ -223,7 +234,7 @@ export default function EditorPage() {
           ))}
         </Card>
 
-        <SocialsCard profile={profile} onSave={(socials, followers) => update({ socials, followers })} />
+        <SocialsCard profile={profile} required={creator} onSave={(socials, followers) => update({ socials, followers })} />
         {status !== 'approved' && <div className="h-44 md:h-40" />}
       </PageShell>
 
@@ -258,6 +269,15 @@ export default function EditorPage() {
       {modal === 'photo' && <PhotoModal profile={profile} onClose={() => setModal(null)} onSaved={async () => { await refreshProfile(); setModal(null) }} />}
       {modal === 'work' && <WorkModal ownerId={profile.id} count={works.length} onClose={() => { setModal(null); history.replaceState(null, '', '/me') }} onSaved={() => { loadLists(); setModal(null) }} />}
       {modal === 'award' && <AwardModal ownerId={profile.id} onClose={() => setModal(null)} onSaved={() => { loadLists(); setModal(null) }} />}
+      {deleting && (
+        <Modal
+          title={t('حذف العمل؟', 'Delete this work?')}
+          onClose={() => setDeleting(null)}
+          footer={<><Btn variant="danger" onClick={async () => { await supabase.from('works').delete().eq('id', deleting.id); setDeleting(null); loadLists() }}>{t('احذف', 'Delete')}</Btn><Btn variant="outline" onClick={() => setDeleting(null)}>{t('إلغاء', 'Cancel')}</Btn></>}
+        >
+          <p className="m-0 text-sm" style={{ color: 'var(--c-muted)' }}>{t(`سيُحذف «${deleting.title}» من صفحتك ومن صفحة المشاريع. لا يمكن التراجع.`, `"${deleting.title}" will be removed from your page and the projects page. This cannot be undone.`)}</p>
+        </Modal>
+      )}
     </>
   )
 }
@@ -271,25 +291,36 @@ function SpecModal({ profile, onClose, onSave }: { profile: Profile; onClose: ()
   const [city, setCity] = useState(profile.city || '')
   const [year, setYear] = useState(profile.start_year ? String(profile.start_year) : '')
   const [suggest, setSuggest] = useState('')
-  const isVideo = ids.some((id) => specialties.find((s) => s.id === id)?.is_video)
+  const [kinds, setKinds] = useState<string[]>(profile.content_types || [])
+  const creator = isCreator(profile)
+  const isVideo = creator || ids.some((id) => specialties.find((s) => s.id === id)?.is_video)
   const toggle = (id: number) => setIds(ids.includes(id) ? ids.filter((x) => x !== id) : ids.length < 2 ? [...ids, id] : ids)
+  const toggleKind = (k: string) => setKinds(kinds.includes(k) ? kinds.filter((x) => x !== k) : kinds.length < MAX_CONTENT_TYPES ? [...kinds, k] : kinds)
 
   const save = async () => {
-    if (suggest.trim()) await supabase.from('specialty_suggestions').insert({ profile_id: profile.id, name: suggest.trim() })
+    if (!creator && suggest.trim()) await supabase.from('specialty_suggestions').insert({ profile_id: profile.id, name: suggest.trim() })
     const y = parseInt(year, 10)
     onSave({
-      specialty_ids: ids,
-      other_specialty: other.trim() || null,
+      ...(creator ? { content_types: kinds } : { specialty_ids: ids, other_specialty: other.trim() || null }),
       video_length: isVideo && vlen ? (vlen as Profile['video_length']) : null,
       country: country || null,
       city: city.trim() || null,
       start_year: y >= 1950 && y <= new Date().getFullYear() ? y : null,
-      account_type: 'maker',
     })
   }
 
   return (
-    <Modal title={t('التخصص والدولة', 'Role & country')} onClose={onClose} footer={<><Btn onClick={save}>{t('حفظ', 'Save')}</Btn><Btn variant="soft" onClick={onClose}>{t('إلغاء', 'Cancel')}</Btn></>}>
+    <Modal title={creator ? t('المحتوى والدولة', 'Content & country') : t('التخصص والدولة', 'Role & country')} onClose={onClose} footer={<><Btn onClick={save}>{t('حفظ', 'Save')}</Btn><Btn variant="soft" onClick={onClose}>{t('إلغاء', 'Cancel')}</Btn></>}>
+      {creator ? (
+        <div className="flex flex-col gap-2.5">
+          <span className="flex justify-between text-[13px] font-semibold">{t('نوع المحتوى', 'Content type')} <span className="font-normal" style={{ color: 'var(--c-muted)' }}>{t(`${kinds.length} من ${MAX_CONTENT_TYPES}`, `${kinds.length} of ${MAX_CONTENT_TYPES}`)}</span></span>
+          <div className="flex flex-wrap gap-1.5">
+            {CONTENT_TYPES.map((c) => (
+              <Chip key={c.key} on={kinds.includes(c.key)} onClick={() => toggleKind(c.key)} style={{ opacity: !kinds.includes(c.key) && kinds.length >= MAX_CONTENT_TYPES ? 0.45 : 1 }}>{t(c.ar, c.en)}</Chip>
+            ))}
+          </div>
+        </div>
+      ) : (
       <div className="flex flex-col gap-2.5">
         <span className="flex justify-between text-[13px] font-semibold">{t('التخصص', 'Role')} <span className="font-normal" style={{ color: 'var(--c-muted)' }}>{t(`${ids.length} من 2`, `${ids.length} of 2`)}</span></span>
         <div className="flex flex-wrap gap-1.5">
@@ -302,6 +333,7 @@ function SpecModal({ profile, onClose, onSave }: { profile: Profile; onClose: ()
           <TextInput value={suggest} onChange={(e) => setSuggest(e.target.value)} placeholder={t('اقترح تخصصاً لإضافته للقائمة', 'Suggest a role to add to the list')} />
         </div>
       </div>
+      )}
       {isVideo && (
         <div className="flex flex-col gap-2.5">
           <span className="text-[13px] font-semibold">{t('نوع الفيديو', 'Video type')}</span>
@@ -318,7 +350,7 @@ function SpecModal({ profile, onClose, onSave }: { profile: Profile; onClose: ()
           </SelectInput>
         </Field>
         <Field label={t('المدينة', 'City')}><TextInput value={city} onChange={(e) => setCity(e.target.value)} placeholder={t('مثال: عمّان', 'e.g. Amman')} /></Field>
-        <Field label={t('سنة البدء في المجال', 'Year you started')}><TextInput inputMode="numeric" value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="2017" /></Field>
+        <Field label={creator ? t('سنة بدء صناعة المحتوى', 'Year you started creating') : t('سنة البدء في المجال', 'Year you started')}><TextInput inputMode="numeric" value={year} onChange={(e) => setYear(e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="2017" /></Field>
       </div>
     </Modal>
   )
@@ -328,7 +360,9 @@ function PhotoModal({ profile, onClose, onSaved }: { profile: Profile; onClose: 
   const [file, setFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const preview = file ? URL.createObjectURL(file) : profile.avatar_url
+  const local = useMemo(() => (file ? URL.createObjectURL(file) : null), [file])
+  useEffect(() => () => { if (local) URL.revokeObjectURL(local) }, [local])
+  const preview = local || profile.avatar_url
 
   const save = async () => {
     if (!file) return onClose()
@@ -360,7 +394,7 @@ function PhotoModal({ profile, onClose, onSaved }: { profile: Profile; onClose: 
           {preview ? <img src={preview} alt="" className="bw w-full h-full object-cover" /> : <span className="text-6xl font-semibold" style={{ color: 'var(--c-muted)' }}>{(profile.full_name || 'م').charAt(0)}</span>}
           <Corners size={18} inset={12} color={preview ? 'rgba(255,255,255,0.8)' : 'var(--c-border-mid)'} />
         </div>
-        <span className="text-[13px] text-center" style={{ color: 'var(--c-muted)' }}>{t('صورة واضحة لوجهك. تظهر الصور في الدليل بالأبيض والأسود.', 'A clear photo of your face. Photos appear in black and white in the directory.')}</span>
+        <span className="text-[13px] text-center" style={{ color: 'var(--c-muted)' }}>{t('صورة واضحة لوجهك، بإضاءة جيدة وخلفية بسيطة.', 'A clear photo of your face, with good light and a simple background.')}</span>
         <label className="text-[13px] font-semibold px-5 py-2.5 rounded-full cursor-pointer" style={{ background: 'var(--c-surface-alt)' }}>
           {t('اختر صورة من جهازك', 'Choose a photo')}
           <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => setFile(e.target.files?.[0] || null)} />
@@ -369,31 +403,6 @@ function PhotoModal({ profile, onClose, onSaved }: { profile: Profile; onClose: 
       </div>
     </Modal>
   )
-}
-
-// Resize any browser-readable image to a JPEG so uploads stay small and in an allowed format.
-async function toJpeg(file: File, max: number): Promise<Blob> {
-  const url = URL.createObjectURL(file)
-  try {
-    const img = await new Promise<HTMLImageElement>((res, rej) => {
-      const i = new Image()
-      i.onload = () => res(i)
-      i.onerror = rej
-      i.src = url
-    })
-    const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight))
-    const canvas = document.createElement('canvas')
-    canvas.width = Math.round(img.naturalWidth * scale)
-    canvas.height = Math.round(img.naturalHeight * scale)
-    const ctx = canvas.getContext('2d')
-    if (!ctx) throw new Error('no canvas')
-    ctx.fillStyle = '#fff'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-    return await new Promise<Blob>((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error('encode'))), 'image/jpeg', 0.88))
-  } finally {
-    URL.revokeObjectURL(url)
-  }
 }
 
 function UsernameModal({ profile, onClose, onSaved }: { profile: Profile; onClose: () => void; onSaved: () => void }) {
@@ -510,7 +519,7 @@ function AwardModal({ ownerId, onClose, onSaved }: { ownerId: string; onClose: (
   )
 }
 
-function SocialsCard({ profile, onSave }: { profile: Profile; onSave: (s: Record<string, string>, f: Record<string, number>) => void }) {
+function SocialsCard({ profile, required, onSave }: { profile: Profile; required?: boolean; onSave: (s: Record<string, string>, f: Record<string, number>) => void }) {
   const [socials, setSocials] = useState<Record<string, string>>(profile.socials || {})
   const [followers, setFollowers] = useState<Record<string, string>>(Object.fromEntries(Object.entries(profile.followers || {}).map(([k, v]) => [k, String(v)])))
   const [saved, setSaved] = useState(false)
@@ -522,8 +531,15 @@ function SocialsCard({ profile, onSave }: { profile: Profile; onSave: (s: Record
     setTimeout(() => setSaved(false), 2000)
   }
   return (
-    <Card className="px-5 py-6 md:px-10 md:py-8 flex flex-col gap-3">
-      <span className="text-[13px] font-semibold">{t('حساباتك', 'Your accounts')} <span className="font-normal" style={{ color: 'var(--c-muted)' }}>{t('(اختياري، أدخل عدد المتابعين يدوياً)', '(optional, enter follower counts manually)')}</span></span>
+    <Card className="px-5 py-6 md:px-10 md:py-8 flex flex-col gap-3" style={{ scrollMarginTop: 80 }}>
+      <span id="accounts" className="text-[13px] font-semibold">
+        {t('حساباتك', 'Your accounts')}{' '}
+        <span className="font-normal" style={{ color: 'var(--c-muted)' }}>
+          {required
+            ? t('(أضف حساباً واحداً على الأقل مع عدد المتابعين)', '(add at least one account with its follower count)')
+            : t('(اختياري، أدخل عدد المتابعين يدوياً)', '(optional, enter follower counts manually)')}
+        </span>
+      </span>
       {SOCIALS.map((s) => (
         <div key={s.key} className="flex gap-2 items-center">
           <span className="text-xs w-20 shrink-0" style={{ color: 'var(--c-muted)' }}>{s.label}</span>

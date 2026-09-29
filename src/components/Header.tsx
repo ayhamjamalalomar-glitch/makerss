@@ -4,7 +4,8 @@ import { useAuth } from '../lib/auth'
 import { t, useLang } from '../lib/i18n'
 import { supabase } from '../lib/supabase'
 import { CARD_COLUMNS, displayName, posterOf, type MemberCard, type Project } from '../lib/data'
-import { useSpecialties, roleLine } from '../lib/specialties'
+import { useSpecialties, memberLine } from '../lib/specialties'
+import { CONTENT_TYPES } from '../lib/constants'
 import Logo from './Logo'
 import { Avatar } from './mk'
 
@@ -22,13 +23,15 @@ function useSearch(query: string) {
       const specIds = specialties.filter((s) => `${s.name_en} ${s.name_ar || ''}`.toLowerCase().includes(q.toLowerCase())).map((s) => s.id)
       const or = [`full_name.ilike.%${safe}%`, `name_ar.ilike.%${safe}%`, `username.ilike.%${safe}%`]
       if (specIds.length) or.push(`specialty_ids.ov.{${specIds.join(',')}}`)
+      const kinds = CONTENT_TYPES.filter((c) => `${c.ar} ${c.en}`.toLowerCase().includes(q.toLowerCase())).map((c) => c.key)
+      if (kinds.length) or.push(`content_types.ov.{${kinds.join(',')}}`)
       const [m, w] = await Promise.all([
         supabase.from('profiles').select(CARD_COLUMNS).eq('status', 'approved').or(or.join(',')).limit(4),
         supabase.from('works').select('id, title, year, thumb_url, thumbnail_url, url').ilike('title', `%${safe}%`).limit(3),
       ])
       if (!alive) return
       const makers = ((m.data as unknown as MemberCard[]) || []).map((x) => ({
-        kind: 'maker' as const, id: x.id, to: `/${x.username}`, name: displayName(x), sub: roleLine(specialties, x.specialty_ids, x.other_specialty), photo: x.avatar_url,
+        kind: 'maker' as const, id: x.id, to: `/${x.username}`, name: displayName(x), sub: memberLine(specialties, x), photo: x.avatar_url,
       }))
       const titles = ((w.data as unknown as Project[]) || []).map((x) => ({
         kind: 'title' as const, id: x.id, to: `/projects/${x.id}`, name: x.title, sub: x.year ? String(x.year) : '', photo: posterOf(x),

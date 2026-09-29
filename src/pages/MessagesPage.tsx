@@ -4,7 +4,7 @@ import { supabase, PUBLIC_PROFILE_COLUMNS, type Profile } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { t, getLang, isRtl, label } from '../lib/i18n'
 import { BUDGETS, COUNTRIES, PROJECT_TYPES, REMOTE, cityLabel, formatDateAr, relativeAr } from '../lib/constants'
-import { roleLine, useSpecialties } from '../lib/specialties'
+import { memberLine, useSpecialties } from '../lib/specialties'
 import { splitLinks, type Conversation, type Message } from '../lib/messages'
 import { Avatar, Btn, Card, Notice, PageShell, Spinner, VerifiedBadge } from '../components/mk'
 import { RequestsInbox } from './InboxPage'
@@ -221,7 +221,7 @@ function Thread({ conv, me, other, onBack, onChanged }: { conv: Conversation; me
     if (!error) setBlocked(!blocked)
   }
 
-  const role = other ? roleLine(specialties, other.specialty_ids, other.other_specialty) : ''
+  const role = memberLine(specialties, other)
   const lastMineRead = useMemo(() => [...(msgs || [])].reverse().find((m) => m.sender_id === me), [msgs, me])
 
   return (

@@ -8,14 +8,21 @@ export interface Progress {
   ratio: number
 }
 
+/** A creator has at least one account link with a follower count. */
+export const hasAudience = (p: Pick<Profile, 'socials' | 'followers'> | null) =>
+  !!p && Object.entries(p.socials || {}).some(([k, v]) => !!v && Number(p.followers?.[k] || 0) > 0)
+
 export function computeProgress(p: Profile | null, worksCount: number): Progress {
-  const hasSpec = !!p && ((p.specialty_ids?.length ?? 0) > 0 || !!p.other_specialty) && !!p.country
+  const creator = p?.account_type === 'creator'
+  const hasSpec = !!p && !!p.country && (creator ? (p.content_types?.length ?? 0) > 0 : (p.specialty_ids?.length ?? 0) > 0 || !!p.other_specialty)
   const steps = [
     { key: 'account', label: t('الحساب', 'Account'), done: !!p },
     { key: 'photo', label: t('الصورة', 'Photo'), done: !!p?.avatar_url },
-    { key: 'spec', label: t('التخصص والدولة', 'Role & country'), done: hasSpec },
+    { key: 'spec', label: creator ? t('المحتوى والدولة', 'Content & country') : t('التخصص والدولة', 'Role & country'), done: hasSpec },
     { key: 'bio', label: t('النبذة', 'Bio'), done: !!p?.bio && p.bio.trim().length >= 20 },
-    { key: 'works', label: t('3 أعمال', '3 works'), done: worksCount >= 3 },
+    creator
+      ? { key: 'accounts', label: t('حساباتك', 'Your accounts'), done: hasAudience(p) }
+      : { key: 'works', label: t('3 أعمال', '3 works'), done: worksCount >= 3 },
   ]
   const count = steps.filter((s) => s.done).length
   return { steps, count, ratio: count / steps.length }

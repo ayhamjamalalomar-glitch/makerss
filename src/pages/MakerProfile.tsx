@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { supabase, PUBLIC_PROFILE_COLUMNS, type Award, type Profile } from '../lib/supabase'
-import { COUNTRIES, SITE_URL, cityLabel, videoLengthLabel } from '../lib/constants'
+import { COUNTRIES, SITE_URL, cityLabel, contentLabel, listSep, videoLengthLabel } from '../lib/constants'
 import { label, t, useLang } from '../lib/i18n'
-import { useSpecialties, specName } from '../lib/specialties'
+import { useSpecialties, specName, isCreator } from '../lib/specialties'
 import { useAuth } from '../lib/auth'
-import { displayName, formatFollowers, kindLabel, posterOf, projectsForMember, roleOn, type MemberCard, type Project } from '../lib/data'
+import { displayName, formatFollowers, kindLabel, posterOf, projectsForMember, roleOn, totalFollowers, type MemberCard, type Project } from '../lib/data'
 import ContactForm from '../components/ContactForm'
 import { Btn, Modal, Notice, PageShell, PosterFallback, SectionHeader, Spinner, TextArea, VerifiedBadge } from '../components/mk'
 
@@ -80,7 +80,10 @@ export default function MakerProfile({ username }: { username: string }) {
 
   const isOwner = session?.user.id === p.id
   const canMessage = !isOwner && viewer?.status === 'approved' && p.status === 'approved'
-  const specs = (p.specialty_ids || []).map((id) => ({ id, name: specName(specialties, id) })).filter((s) => s.name)
+  const creator = isCreator(p)
+  const specs = creator ? [] : (p.specialty_ids || []).map((id) => ({ id, name: specName(specialties, id) })).filter((s) => s.name)
+  const kinds = creator ? (p.content_types || []).map((k) => ({ key: k, name: contentLabel(k) })).filter((k) => k.name) : []
+  const audience = totalFollowers(p)
   const place = [cityLabel(p.city), label(COUNTRIES, p.country)].filter(Boolean).join(t('، ', ', '))
   const vlen = videoLengthLabel(p.video_length)
   const followers = Object.entries(p.followers || {}).filter(([, n]) => Number(n) > 0)
@@ -94,6 +97,7 @@ export default function MakerProfile({ username }: { username: string }) {
   const badges = [
     p.is_founding && { key: 'f', icon: '★', title: t('عضو مؤسس', 'Founding member'), sub: t('من أوائل صنّاع Makers', 'Among the first on Makers'), accent: true },
     p.status === 'approved' && { key: 'v', icon: '✓', title: t('ملف موثّق', 'Reviewed profile'), sub: t('راجعه فريق Makers', 'Reviewed by the Makers team') },
+    creator && audience > 0 && { key: 'aud', icon: '📣', title: t(`${formatFollowers(audience)} متابع`, `${formatFollowers(audience)} followers`), sub: t('على كل المنصات', 'across platforms') },
     projects.length > 0 && { key: 'w', icon: '🎬', title: t(`${projects.length} عمل`, `${projects.length} credit${projects.length === 1 ? '' : 's'}`), sub: t('على Makers', 'on Makers') },
     awards.length > 0 && { key: 'a', icon: '🏆', title: t(`${awards.length} جائزة`, `${awards.length} award${awards.length === 1 ? '' : 's'}`), sub: awards[0]?.org || '' },
     p.available && { key: 'av', icon: '●', title: t('متاح للعمل', 'Available for work'), sub: '' },
@@ -121,7 +125,7 @@ export default function MakerProfile({ username }: { username: string }) {
     <div className="min-h-screen">
       {/* ── HERO ── */}
       <div style={{ background: 'var(--c-surface)', borderBottom: '1px solid var(--c-border)' }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-8 pt-6">
+        <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-6">
           {p.status !== 'approved' && isOwner && (
             <div className="mb-5"><Notice>{t('هذه معاينة لصفحتك. لن تظهر للزوار قبل موافقة فريق Makers.', 'This is a preview of your page. Visitors will see it once the Makers team approves it.')} <Link to="/me" className="font-semibold underline">{t('عد إلى التعديل', 'Back to editing')}</Link></Notice></div>
           )}
@@ -148,7 +152,9 @@ export default function MakerProfile({ username }: { username: string }) {
               </h1>
               {altName && <p className="m-0 mb-2" style={{ fontSize: 15, color: 'var(--c-muted)' }}><bdi>{altName}</bdi></p>}
               <p className="m-0 mb-4" style={{ fontSize: 15, color: 'var(--c-text-2)' }}>
-                {specs.map((s) => s.name).concat(p.other_specialty ? [p.other_specialty] : []).join(' · ')}
+                {creator
+                  ? [t('صانع محتوى', 'Content creator'), ...kinds.map((k) => k.name)].join(' · ')
+                  : specs.map((s) => s.name).concat(p.other_specialty ? [p.other_specialty] : []).join(' · ')}
               </p>
 
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-5">
@@ -157,13 +163,13 @@ export default function MakerProfile({ username }: { username: string }) {
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="#E85D04"><path d="M7 1l1.4 2.8 3.1.45-2.25 2.2.53 3.05L7 8l-2.78 1.5.53-3.05L2.5 4.25l3.1-.45L7 1z" /></svg>
                   </div>
                   <div>
-                    <p className="m-0" style={eyebrow}>{t('أعمال', 'Credits')}</p>
-                    <p className="m-0 font-black" style={{ fontSize: 18, lineHeight: 1 }}>{projects.length}</p>
+                    <p className="m-0" style={eyebrow}>{creator ? t('المتابعون', 'Followers') : t('أعمال', 'Credits')}</p>
+                    <p className="m-0 font-black" dir="ltr" style={{ fontSize: 18, lineHeight: 1 }}>{creator ? formatFollowers(audience) : projects.length}</p>
                   </div>
                 </div>
                 {p.start_year && (
                   <div>
-                    <p className="m-0" style={eyebrow}>{t('في المجال منذ', 'Working since')}</p>
+                    <p className="m-0" style={eyebrow}>{creator ? t('يصنع المحتوى منذ', 'Creating since') : t('في المجال منذ', 'Working since')}</p>
                     <p className="m-0 font-black" style={{ fontSize: 18, lineHeight: 1 }}>{p.start_year}</p>
                   </div>
                 )}
@@ -176,6 +182,14 @@ export default function MakerProfile({ username }: { username: string }) {
                     <p className="m-0" style={{ fontSize: 11, color: 'var(--c-muted)' }}>{t('اكتشف المزيد', 'Discover more')}</p>
                     <div className="flex gap-2 mt-1">
                       {specs.slice(0, 2).map((s) => <Link key={s.id} to={`/makers?s=${s.id}`} className="text-xs hover:underline" style={{ color: '#E85D04' }}>{s.name}</Link>)}
+                    </div>
+                  </div>
+                )}
+                {creator && (
+                  <div>
+                    <p className="m-0" style={{ fontSize: 11, color: 'var(--c-muted)' }}>{t('اكتشف المزيد', 'Discover more')}</p>
+                    <div className="flex gap-2 mt-1">
+                      <Link to="/makers?type=creator" className="text-xs hover:underline" style={{ color: '#E85D04' }}>{t('صنّاع المحتوى', 'Content creators')}</Link>
                     </div>
                   </div>
                 )}
@@ -210,7 +224,7 @@ export default function MakerProfile({ username }: { username: string }) {
       </div>
 
       {/* ── BODY ── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8">
+      <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-10 items-start">
           <div className="flex-1 min-w-0 w-full flex flex-col gap-10">
             {tab === 'overview' && (
@@ -320,9 +334,11 @@ export default function MakerProfile({ username }: { username: string }) {
                   )}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-5" style={{ borderTop: '1px solid var(--c-border)' }}>
                     {[
-                      [t('التخصص', 'Specialty'), specs.map((x) => x.name).join('، ') || p.other_specialty || ''],
+                      creator
+                        ? [t('نوع المحتوى', 'Content'), kinds.map((k) => k.name).join(listSep())]
+                        : [t('التخصص', 'Specialty'), specs.map((x) => x.name).join(listSep()) || p.other_specialty || ''],
                       [t('المكان', 'Based in'), place],
-                      [t('في المجال منذ', 'Working since'), p.start_year ? String(p.start_year) : ''],
+                      [creator ? t('يصنع المحتوى منذ', 'Creating since') : t('في المجال منذ', 'Working since'), p.start_year ? String(p.start_year) : ''],
                       [t('نوع المحتوى', 'Format'), vlen || ''],
                     ].filter(([, v]) => v).map(([k, v]) => (
                       <div key={k} className="flex flex-col gap-1">
