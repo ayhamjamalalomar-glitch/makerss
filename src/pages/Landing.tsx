@@ -78,7 +78,13 @@ export default function Landing() {
   const [audience, setAudience] = useState<MemberCard[]>([])
 
   useEffect(() => {
-    listProjects({ limit: 6 }).then(setProjects).catch(() => setProjects([]))
+    // One project per maker: newest work from each of the 6 most recently active makers.
+    listProjects({ limit: 80 })
+      .then((list) => {
+        const seen = new Set<string>()
+        setProjects(list.filter((p) => (seen.has(p.owner_id) ? false : (seen.add(p.owner_id), true))).slice(0, 6))
+      })
+      .catch(() => setProjects([]))
     topMakers(10).then(setTop)
     listOpenCalls(8).then(setCalls)
     listMembers().then((all) => setAudience(all.filter((m) => totalFollowers(m) > 0).sort((a, b) => totalFollowers(b) - totalFollowers(a)).slice(0, 8)))
