@@ -180,3 +180,4 @@ Native app in `mobile/`: Expo SDK 57 (React Native 0.86, expo-router, NativeTabs
 - Add packages with `npx expo install` (offline sandbox: `EXPO_OFFLINE=1 npx expo install ...`). Check with `npx tsc --noEmit` in mobile/.
 - Bundle id `net.makerss.app`. Builds and store submission go through EAS once Ayham's Apple Developer account exists; he signs in himself.
 - `.vercelignore` excludes mobile/ from the website deploy.
+- Web preview of the app lives at makerss.net/app (static files in `public/app`, `experiments.baseUrl: '/app'`, vercel.json rewrite, robots noindex, username `app` reserved). Rebuild it with `npm run export:preview` in mobile/. `(tabs)/_layout.web.tsx` gives the web preview a bottom tab bar; the real app uses NativeTabs.

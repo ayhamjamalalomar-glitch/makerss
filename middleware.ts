@@ -16,7 +16,7 @@ const SUPABASE_KEY = 'sb_publishable_OlQKED89zR7MzfM90jE6PQ_rSwjAvs4'
 const DEFAULT_IMAGE = `${SITE}/og.png`
 
 // First path segments that are app pages, not usernames (keep in sync with RESERVED_PATHS).
-const RESERVED = new Set(['admin', 'join', 'login', 'me', 'inbox', 'terms', 'privacy', 'api', 'about', 'makers', 'settings', 'status', 'reset', 'en', 'ar', 'messages', 'projects', 'opportunities', 'search'])
+const RESERVED = new Set(['admin', 'join', 'login', 'me', 'inbox', 'terms', 'privacy', 'api', 'about', 'makers', 'settings', 'status', 'reset', 'en', 'ar', 'messages', 'projects', 'opportunities', 'search', 'app'])
 
 interface Meta {
   title: string

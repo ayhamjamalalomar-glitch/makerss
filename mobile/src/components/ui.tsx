@@ -23,7 +23,7 @@ export function Txt({ v = 'body', size = 15, color = C.text, style, ...rest }: T
 export function Wordmark({ size = 11 }: { size?: number }) {
   const s: TextStyle = { fontFamily: F.wordmark, fontSize: size, lineHeight: size * 1.05, color: C.text, letterSpacing: 0.4, writingDirection: 'ltr', textAlign: 'left' }
   return (
-    <View style={{ direction: 'ltr' }} accessibilityLabel="Makers">
+    <View style={{ direction: 'ltr', alignSelf: 'flex-start' }} accessibilityLabel="Makers">
       <Text style={s}>MAKERS</Text>
       <Text style={s}>FILMMAKERS</Text>
       <Text style={s}>CREATORS</Text>

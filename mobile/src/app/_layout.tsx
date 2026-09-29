@@ -7,7 +7,7 @@ import { DarkTheme, Stack, ThemeProvider } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
-import { I18nManager, View } from 'react-native'
+import { I18nManager, Platform, View } from 'react-native'
 import { C, F } from '../lib/theme'
 
 SplashScreen.preventAutoHideAsync()
@@ -15,6 +15,11 @@ SplashScreen.preventAutoHideAsync()
 // Arabic first: the whole app lays out right to left.
 I18nManager.allowRTL(true)
 if (!I18nManager.isRTL) I18nManager.forceRTL(true)
+// Web preview: the browser lays out flex rows from the document direction.
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  document.documentElement.dir = 'rtl'
+  document.documentElement.lang = 'ar'
+}
 
 const theme = { ...DarkTheme, colors: { ...DarkTheme.colors, background: C.bg, card: C.bg, text: C.text, primary: C.accent, border: C.border } }
 
