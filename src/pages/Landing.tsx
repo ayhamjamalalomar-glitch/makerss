@@ -263,16 +263,18 @@ export default function Landing() {
         {!approved && (
           <section className="relative rounded-3xl overflow-hidden" style={{ background: 'var(--c-screen)', color: '#F3EFE7' }}>
             <div className="mk-sprockets h-4 mt-3 opacity-70" style={{ backgroundImage: 'radial-gradient(circle, #1a1a1f 3px, transparent 3.5px)' }} />
-            <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 70% at 50% 50%, rgba(var(--c-accent-rgb),0.22), transparent 70%)' }} />
-            <div className="relative px-7 py-14 md:py-20 flex flex-col items-center text-center gap-5">
-              <span className="font-mono text-[11px] tracking-[0.2em]" dir="ltr" style={{ color: 'var(--c-accent)' }}>CASTING CALL · FOUNDING MEMBERS</span>
-              <h2 className="font-display font-black m-0 max-w-[720px]" style={{ fontSize: 'clamp(28px, 4.4vw, 54px)', lineHeight: 1.15 }}>
+            <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 55% 80% at 85% 50%, rgba(var(--c-accent-rgb),0.2), transparent 70%)' }} />
+            <div className="relative px-7 md:px-12 py-14 md:py-16 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+              <div className="flex flex-col gap-5 max-w-[640px]">
+              <span className="font-mono text-[11px] tracking-[0.2em]" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>CASTING CALL · FOUNDING MEMBERS</span>
+              <h2 className="font-display font-black m-0" style={{ fontSize: 'clamp(28px, 4.2vw, 50px)', lineHeight: 1.15 }}>
                 {t('نحن في البداية. كن من الأسماء الأولى.', "We're just getting started. Be one of the first names.")}
               </h2>
               <p className="m-0 max-w-md text-[15px]" style={{ lineHeight: 1.8, color: 'rgba(243,239,231,0.7)' }}>
                 {t('سجّل، ابنِ ملفك وأضف أعمالك. يراجع فريقنا كل ملف قبل النشر، ويحصل أوائل المنضمّين على شارة «عضو مؤسس» بشكل دائم.', 'Sign up, build your profile and add your work. Our team reviews every profile before it goes live, and the first makers keep a permanent Founding Member badge.')}
               </p>
-              <Link to={session ? '/me' : '/join'} className="inline-flex items-center gap-3 font-semibold px-9 rounded-full transition hover:brightness-110 mt-2" style={{ height: 54, background: 'var(--c-accent)', color: 'var(--c-on-accent)', fontSize: 15 }}>
+              </div>
+              <Link to={session ? '/me' : '/join'} className="self-start md:self-auto shrink-0 inline-flex items-center gap-3 font-semibold px-9 rounded-full transition hover:brightness-110" style={{ height: 54, background: 'var(--c-accent)', color: 'var(--c-on-accent)', fontSize: 15 }}>
                 {session ? t('أكمل ملفك', 'Finish your profile') : t('انضم إلى Makers', 'Join Makers')}
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="rtl:-scale-x-100" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </Link>

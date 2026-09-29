@@ -222,36 +222,35 @@ export default function TitlePage({ id }: { id: string }) {
 
       {credits.length > 0 && (
         <div id="full-crew" style={{ borderTop: '1px solid var(--c-border)', scrollMarginTop: 70, background: 'var(--c-screen)', color: '#F3EFE7' }}>
-          <div className="max-w-[760px] mx-auto w-full px-4 sm:px-8 py-16 flex flex-col items-center gap-10">
-            <div className="flex flex-col items-center gap-2 text-center">
-              <span className="font-mono text-[11px] tracking-[0.3em]" dir="ltr" style={{ color: 'var(--c-accent)' }}>FULL CREW</span>
-              <h2 className="font-display font-bold m-0" style={{ fontSize: 'clamp(24px, 3vw, 34px)' }}>{t('الطاقم الكامل', 'Full crew')}</h2>
+          <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-16 grid grid-cols-1 md:grid-cols-[260px_1fr] gap-10 md:gap-16 items-start">
+            <div className="flex flex-col gap-2 md:sticky md:top-24">
+              <span className="font-mono text-[11px] tracking-[0.3em]" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>FULL CREW</span>
+              <h2 className="font-display font-bold m-0" style={{ fontSize: 'clamp(26px, 3vw, 36px)', lineHeight: 1.15 }}>{t('الطاقم الكامل', 'Full crew')}</h2>
               <span className="text-[13px]" style={{ color: 'rgba(243,239,231,0.5)' }}>{t(`${credits.length} في الطاقم`, `${credits.length} credited`)}</span>
             </div>
-            {/* end credits: role on one side, name on the other */}
-            <div className="w-full flex flex-col gap-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {credits.map((c, i) => {
                 const name = c.profile ? displayName(c.profile) : c.display_name
-                const row = (
+                const card = (
                   <>
-                    <span className="text-end text-[13px] truncate" style={{ color: 'rgba(243,239,231,0.5)' }}>{c.role || t('الطاقم', 'Crew')}</span>
-                    <span className="w-1 h-1 rounded-full" style={{ background: 'rgba(243,239,231,0.25)' }} />
-                    <span className="flex items-center gap-2.5 min-w-0">
-                      <span className="relative shrink-0 w-8 h-8 rounded-full overflow-hidden" style={{ background: 'rgba(243,239,231,0.08)' }}>
-                        {c.profile?.avatar_url ? <img src={c.profile.avatar_url} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition" /> : <span className="w-full h-full flex items-center justify-center text-[12px] font-bold" style={{ color: 'rgba(243,239,231,0.5)' }}>{(name || '').charAt(0)}</span>}
+                    <span className="relative shrink-0 w-14 h-14 rounded-full overflow-hidden" style={{ background: 'rgba(243,239,231,0.08)', border: '1px solid rgba(243,239,231,0.12)' }}>
+                      {c.profile?.avatar_url ? <img src={c.profile.avatar_url} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500" /> : <span className="w-full h-full flex items-center justify-center text-[18px] font-bold" style={{ color: 'rgba(243,239,231,0.5)' }}>{(name || '').charAt(0)}</span>}
+                    </span>
+                    <span className="min-w-0 flex-1 flex flex-col gap-0.5">
+                      <span className="flex items-center gap-2 min-w-0">
+                        <span className="font-display font-semibold text-[16px] truncate transition-colors group-hover:text-[color:var(--c-accent)]"><bdi>{name}</bdi></span>
+                        {c.profile?.is_founding && <VerifiedBadge size={15} />}
                       </span>
-                      <span className="min-w-0 flex flex-col">
-                        <span className="font-display font-semibold text-[15px] truncate transition-colors group-hover:text-[color:var(--c-accent)]"><bdi>{name}</bdi></span>
-                        {!c.profile && <span className="text-[11px]" style={{ color: 'rgba(243,239,231,0.4)' }}>{t('ليس على Makers بعد', 'Not on Makers yet')}</span>}
-                      </span>
-                      {c.profile?.is_founding && <VerifiedBadge size={14} />}
+                      <span className="text-[13px] truncate" style={{ color: 'rgba(243,239,231,0.55)' }}>{c.role || t('الطاقم', 'Crew')}</span>
+                      {!c.profile && <span className="text-[11px]" style={{ color: 'rgba(243,239,231,0.4)' }}>{t('ليس على Makers بعد', 'Not on Makers yet')}</span>}
                     </span>
                   </>
                 )
-                const cls = 'group grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2.5'
+                const cls = 'group flex items-center gap-4 p-4 rounded-2xl transition-colors'
+                const style = { background: 'rgba(243,239,231,0.04)', border: '1px solid rgba(243,239,231,0.08)' }
                 return (
-                  <motion.div key={c.id} initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.5, delay: Math.min(i, 10) * 0.04 }}>
-                    {c.profile ? <Link to={`/${c.profile.username}`} className={cls}>{row}</Link> : <div className={cls}>{row}</div>}
+                  <motion.div key={c.id} initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.5, delay: Math.min(i, 10) * 0.05 }}>
+                    {c.profile ? <Link to={`/${c.profile.username}`} className={`${cls} hover:border-[color:var(--c-accent)]`} style={style}>{card}</Link> : <div className={cls} style={style}>{card}</div>}
                   </motion.div>
                 )
               })}
