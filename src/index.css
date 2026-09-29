@@ -114,6 +114,7 @@ body {
 .font-archivo { font-family: 'Archivo Black', sans-serif; }
 .font-inter, .font-arabic { font-family: 'Readex Pro', 'Alexandria', sans-serif; }
 .font-display { font-family: 'Alexandria', 'Readex Pro', sans-serif; }
+h1, h2, h3 { font-family: 'Alexandria', 'Readex Pro', sans-serif; letter-spacing: -0.01em; }
 .font-mono, .mono { font-family: 'JetBrains Mono', 'Readex Pro', ui-monospace, monospace; }
 /* Arabic letters must stay joined: never space them out. */
 [dir='rtl'] .font-mono:not([dir='ltr']) { letter-spacing: 0 !important; }

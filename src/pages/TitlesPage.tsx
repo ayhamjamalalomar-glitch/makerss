@@ -5,7 +5,8 @@ import { t, useLang } from '../lib/i18n'
 import { displayName, kindLabel, listProjects, posterOf, PROJECT_KINDS, type Project } from '../lib/data'
 import { arNorm } from '../lib/constants'
 import { useDarkHero } from '../lib/hero'
-import { PosterFallback, Skeleton } from '../components/mk'
+import { PosterCard } from '../components/cine'
+import { Skeleton } from '../components/mk'
 
 export default function TitlesPage() {
   useLang()
@@ -101,22 +102,7 @@ export default function TitlesPage() {
           </div>
         ) : (
           <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
-            {filtered.map((p) => {
-              const img = posterOf(p)
-              return (
-                <Link key={p.id} to={`/projects/${p.id}`} className="text-start group">
-                  <div className="relative rounded-xl overflow-hidden mb-3" style={{ aspectRatio: '2/3', background: 'var(--c-surface)' }}>
-                    {img ? <img src={img} alt={p.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <PosterFallback title={p.title} />}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center" style={{ background: 'rgba(13,10,8,0.5)' }}>
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'var(--c-accent)' }}><svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="rtl:-scale-x-100"><path d="M4 3l10 5-10 5V3z" fill="white" /></svg></div>
-                    </div>
-                    {p.kind && <span className="absolute top-2 start-2 font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(13,10,8,0.75)', color: 'var(--c-accent)', fontSize: 9, letterSpacing: '0.05em' }}>{kindLabel(p.kind)}</span>}
-                  </div>
-                  <p className="font-bold leading-tight mb-0.5 mt-0 group-hover:text-orange transition-colors" style={{ fontSize: 13 }}>{p.title}</p>
-                  <p className="m-0 truncate" style={{ fontSize: 11, color: 'var(--c-muted)' }}>{[p.year, p.brand || displayName(p.owner)].filter(Boolean).join(' · ')}</p>
-                </Link>
-              )
-            })}
+            {filtered.map((p) => <PosterCard key={p.id} p={p} />)}
           </div>
         )}
       </div>

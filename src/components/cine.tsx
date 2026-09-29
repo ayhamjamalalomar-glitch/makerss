@@ -271,3 +271,17 @@ export function FilmStrip({ images, speed = 70, reverse = false, height = 150 }:
     </div>
   )
 }
+
+/** Top of an inner page: a small mono label in Latin caps, a display title, an optional line and action. */
+export function PageHeader({ label, title, sub, action }: { label: string; title: string; sub?: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pt-2">
+      <div className="flex flex-col gap-2 min-w-0">
+        <span className="font-mono text-[11px] tracking-[0.2em]" dir="ltr" style={{ color: 'var(--c-accent)', textAlign: 'start' }}>{label}</span>
+        <h1 className="font-display font-black m-0" style={{ fontSize: 'clamp(30px, 4.2vw, 46px)', lineHeight: 1.12, letterSpacing: '-0.02em' }}>{title}</h1>
+        {sub && <div className="text-[14px]" style={{ color: 'var(--c-muted)', lineHeight: 1.7 }}>{sub}</div>}
+      </div>
+      {action && <div className="shrink-0">{action}</div>}
+    </div>
+  )
+}

@@ -7,6 +7,7 @@ import { label, t } from '../lib/i18n'
 import { Avatar, Btn, Card, PageShell, Pill, Spinner } from '../components/mk'
 import { CARD_COLUMNS, displayName, type MemberCard, type OpenCall } from '../lib/data'
 import { useSpecialties, memberLine } from '../lib/specialties'
+import { PageHeader } from '../components/cine'
 
 type Filter = 'all' | 'new' | 'accepted' | 'declined'
 const META: Record<ContactRequest['status'], { ar: string; en: string; tone: 'blue' | 'green' | 'neutral' | 'amber' }> = {
@@ -26,6 +27,7 @@ export default function InboxPage() {
   const pick = (k: Section) => { setSection(k); window.history.replaceState(null, '', k === 'calls' ? '/inbox?tab=calls' : '/inbox') }
   return (
     <PageShell>
+      <PageHeader label="DAILIES" title={t('الوارد', 'Inbox')} sub={t('طلبات التعاون التي وصلتك، والمتقدّمون على فرصك.', 'Collaboration requests for you, and applicants on your calls.')} />
       <div className="flex gap-1.5 p-1 rounded-full self-start" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>
         {([['requests', t('طلبات التعاون', 'Collaboration requests')], ['calls', t('الفرص والمتقدّمون', 'Open calls & applicants')]] as [Section, string][]).map(([k, l]) => (
           <button key={k} type="button" onClick={() => pick(k)} className="text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: section === k ? 'var(--c-accent)' : 'transparent', fontWeight: section === k ? 600 : 400, color: section === k ? 'var(--c-on-accent)' : 'var(--c-muted)' }}>{l}</button>
@@ -93,7 +95,7 @@ export function RequestsInbox() {
     <>
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 md:px-2">
         <div className="flex flex-col gap-1.5">
-          <h1 className="m-0 text-[28px] md:text-[32px] font-bold">{t('طلبات التعاون', 'Collaboration requests')}</h1>
+          <h2 className="m-0 text-[22px] md:text-[26px] font-bold">{t('طلبات التعاون', 'Collaboration requests')}</h2>
           <span className="text-sm" style={{ color: 'var(--c-muted)' }}>{newN === 0 ? t('لا توجد طلبات جديدة', 'No new requests') : newN === 1 ? t('لديك طلب جديد واحد', 'You have 1 new request') : newN === 2 ? t('لديك طلبان جديدان', 'You have 2 new requests') : t(`لديك ${newN} طلبات جديدة`, `You have ${newN} new requests`)}</span>
         </div>
         <div className="flex gap-1.5 p-1 rounded-full self-start" style={{ background: 'var(--c-surface-alt)' }}>
@@ -257,7 +259,7 @@ function CallsInbox() {
     <>
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 md:px-2">
         <div className="flex flex-col gap-1.5">
-          <h1 className="m-0 text-[28px] md:text-[32px] font-bold">{t('الفرص والمتقدّمون', 'Open calls & applicants')}</h1>
+          <h2 className="m-0 text-[22px] md:text-[26px] font-bold">{t('الفرص والمتقدّمون', 'Open calls & applicants')}</h2>
           <span className="text-sm" style={{ color: 'var(--c-muted)' }}>{t('الفرص التي نشرتها ومن تقدّم عليها.', 'Calls you posted and who applied.')}</span>
         </div>
         <Link to="/opportunities/new" className="self-start text-sm font-semibold px-5 py-2.5 rounded-full" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>+ {t('انشر فرصة', 'Post an opportunity')}</Link>

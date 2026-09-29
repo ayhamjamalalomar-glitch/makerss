@@ -6,6 +6,7 @@ import { t, useLang } from '../lib/i18n'
 import { COUNTRIES, BUDGETS } from '../lib/constants'
 import { useSpecialties } from '../lib/specialties'
 import { PROJECT_KINDS } from '../lib/data'
+import { PageHeader } from '../components/cine'
 import { Btn, Chip, Field, Notice, PageShell, SelectInput, Spinner, TextArea, TextInput } from '../components/mk'
 
 const card = { background: 'var(--c-surface)', border: '1px solid var(--c-border)' } as const
@@ -69,11 +70,7 @@ export default function OpenCallEditor() {
 
   return (
     <PageShell narrow>
-      <div className="flex items-center gap-2">
-        <span className="inline-block w-1 rounded-full" style={{ background: 'var(--c-accent)', height: 24 }} />
-        <h1 className="font-black m-0" style={{ fontSize: 26 }}>{t('انشر فرصة', 'Post an opportunity')}</h1>
-      </div>
-      <p className="m-0 -mt-3 text-sm" style={{ color: 'var(--c-muted)' }}>{t('مشروع يحتاج طاقم؟ اكتب التفاصيل، ويراجعها فريقنا قبل النشر.', 'A project that needs a crew? Add the details and our team reviews it before it goes live.')}</p>
+      <PageHeader label="CALL SHEET · DRAFT" title={t('انشر فرصة', 'Post an opportunity')} sub={t('مشروع يحتاج طاقم؟ اكتب التفاصيل، ويراجعها فريقنا قبل النشر.', 'A project that needs a crew? Add the details and our team reviews it before it goes live.')} />
 
       <form onSubmit={submit} className="flex flex-col gap-5">
         <div className="p-5 rounded-2xl flex flex-col gap-4" style={card}>

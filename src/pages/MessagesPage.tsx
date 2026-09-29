@@ -8,6 +8,7 @@ import { memberLine, useSpecialties } from '../lib/specialties'
 import { splitLinks, type Conversation, type Message } from '../lib/messages'
 import { Avatar, Btn, Card, Notice, PageShell, Spinner, VerifiedBadge } from '../components/mk'
 import { RequestsInbox } from './InboxPage'
+import { PageHeader } from '../components/cine'
 
 const MUTED = 'var(--c-muted)'
 const readParam = () => new URLSearchParams(window.location.search).get('c')
@@ -97,9 +98,8 @@ export default function MessagesPage() {
 
   return (
     <PageShell>
-      <div className={`flex flex-col gap-1.5 md:px-2 ${current ? 'hidden md:flex' : ''}`}>
-        <h1 className="m-0 text-[28px] md:text-[32px] font-bold">{t('الرسائل', 'Messages')}</h1>
-        <span className="text-sm" style={{ color: MUTED }}>{t('تحدّث مع باقي أعضاء Makers مباشرة.', 'Talk to other Makers members directly.')}</span>
+      <div className={current ? 'hidden md:block' : ''}>
+        <PageHeader label="WALKIE TALKIE" title={t('الرسائل', 'Messages')} sub={t('تحدّث مع باقي أعضاء Makers مباشرة.', 'Talk to other Makers members directly.')} />
       </div>
 
       <div className={`flex gap-1.5 p-1 rounded-full self-start ${current ? 'hidden md:flex' : ''}`} style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }}>

@@ -8,6 +8,7 @@ import { useSpecialties, specName } from '../lib/specialties'
 import { CALL_COLORS, CALL_SELECT, displayName, kindLabel, listOpenCalls, type OpenCall } from '../lib/data'
 import { Avatar, Btn, Notice, Pill, Spinner, TextArea, useDialog } from '../components/mk'
 import ReportButton from '../components/ReportButton'
+import { motion } from 'framer-motion'
 import { shareLink } from '../lib/share'
 import { useToast } from '../lib/toast'
 
@@ -223,16 +224,22 @@ export default function OpenProjects({ openId }: { openId?: string }) {
             const applied = appliedIds.includes(c.id)
             const color = CALL_COLORS[c.kind || 'other'] || 'var(--c-accent)'
             return (
-              <div key={c.id} className="rounded-2xl overflow-hidden" style={box}>
+              <motion.div key={c.id} initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.45 }} className="rounded-2xl overflow-hidden transition-colors hover:border-[color:var(--c-border-mid)]" style={box}>
+                <div className="flex items-center justify-between px-5 sm:px-6 py-2.5 font-mono text-[10.5px] tracking-wider" style={{ background: 'var(--c-surface-alt)', borderBottom: '1px dashed var(--c-border-mid)', color: 'var(--c-muted)' }}>
+                  <span dir="ltr">CALL SHEET · {c.id.slice(0, 4).toUpperCase()}</span>
+                  <span className="flex items-center gap-2" style={{ color: 'var(--c-accent)' }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
+                    {kindLabel(c.kind) || t('مشروع', 'Project')}
+                  </span>
+                </div>
                 <div className="p-5 sm:p-6">
                   <div className="flex items-start gap-4">
                     <Avatar url={c.owner?.avatar_url} name={c.owner?.full_name} size={52} rounded={12} />
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        {c.kind && <span className="font-bold text-white px-2 py-0.5 rounded-md" style={{ background: color, fontSize: 10 }}>{kindLabel(c.kind)}</span>}
                         {c.remote && <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: 'rgba(5,150,105,0.15)', color: '#34D399', border: '1px solid rgba(5,150,105,0.3)', fontSize: 10 }}>{t('عن بُعد', 'Remote')}</span>}
                       </div>
-                      <h2 className="font-bold mb-0.5 mt-0 cursor-pointer hover:text-orange transition-colors" style={{ fontSize: 16 }} onClick={() => go(`/opportunities/${c.id}`)}>{c.title}</h2>
+                      <h2 className="font-display font-bold mb-0.5 mt-0 cursor-pointer hover:text-orange transition-colors" style={{ fontSize: 19 }} onClick={() => go(`/opportunities/${c.id}`)}>{c.title}</h2>
                       <p className="text-sm m-0" style={{ color: 'var(--c-muted)' }}>{[c.org || displayName(c.owner), placeOf(c)].filter(Boolean).join(' · ')}</p>
                     </div>
                     <button onClick={() => go(`/opportunities/${c.id}`)} className="hidden sm:block shrink-0 font-bold px-5 py-2.5 rounded-xl cursor-pointer" style={{ background: applied ? 'transparent' : 'var(--c-accent)', border: applied ? '1.5px solid var(--c-accent)' : 'none', color: applied ? 'var(--c-accent)' : 'var(--c-on-accent)', fontSize: 13 }}>
@@ -245,7 +252,7 @@ export default function OpenProjects({ openId }: { openId?: string }) {
                       {c.role_ids.map((r) => <span key={r} className="text-xs px-2.5 py-1 rounded-lg" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)', fontSize: 11 }}>{specName(specialties, r)}</span>)}
                     </div>
                     <div className="flex items-center gap-4 ms-auto flex-wrap">
-                      {c.deadline && <span className="flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--c-muted)' }}>⏰ {formatDateAr(c.deadline)}</span>}
+                      {c.deadline && <span className="flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--c-muted)' }}>{t('آخر موعد', 'Deadline')} {formatDateAr(c.deadline)}</span>}
                       <span className="font-semibold" style={{ color: 'var(--c-accent)', fontSize: 12 }}>{budgetLabel(c.budget)}</span>
                       <span style={{ fontSize: 12, color: 'var(--c-muted)' }}>{t(`${c.applicants_count} متقدّم`, `${c.applicants_count} applicant${c.applicants_count === 1 ? '' : 's'}`)}</span>
                       <span style={{ fontSize: 11, color: 'var(--c-muted-2)' }}>{relativeAr(c.created_at)}</span>
@@ -255,7 +262,7 @@ export default function OpenProjects({ openId }: { openId?: string }) {
                     {applied ? `✓ ${t('قدّمت', 'Applied')}` : t('قدّم الآن', 'Apply now')}
                   </button>
                 </div>
-              </div>
+              </motion.div>
             )
           })}
         </div>

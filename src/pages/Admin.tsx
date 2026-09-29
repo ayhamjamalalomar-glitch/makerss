@@ -5,6 +5,7 @@ import { supabase, type Award, type MemberRole, type MemberStatus, type Profile,
 import { budgetLabel, relativeAr } from '../lib/constants'
 import { isCreator, memberLine } from '../lib/specialties'
 import { hasAudience } from '../lib/progress'
+import { PageHeader } from '../components/cine'
 import { Avatar, Btn, Card, Chip, Field, Modal, Notice, Pill, SelectInput, Skeleton, Spinner, TextArea, TextInput } from '../components/mk'
 import { CALL_SELECT, displayName, kindLabel, listProjects, posterOf, type OpenCall, type Project } from '../lib/data'
 import { formatDateAr } from '../lib/constants'
@@ -107,10 +108,7 @@ export default function Admin() {
   return (
     <Wrap>
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="m-0 text-[28px] md:text-[34px] font-bold">لوحة الإدارة</h1>
-          <span className="text-sm" style={{ color: MUTED }}>{profile.full_name} · {ROLE[profile.role]}</span>
-        </div>
+        <PageHeader label="CONTROL ROOM" title="لوحة الإدارة" sub={`${profile.full_name} · ${ROLE[profile.role]}`} />
         <div className="flex gap-1 p-1 rounded-full overflow-x-auto self-start max-w-full" style={{ background: 'var(--c-surface-alt)' }}>
           {tabs.map(([k, l, n]) => (
             <button key={k} type="button" onClick={() => setTab(k)} className="flex items-center gap-1.5 whitespace-nowrap text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ border: 'none', background: tab === k ? 'var(--c-accent)' : 'transparent', fontWeight: tab === k ? 600 : 400, color: tab === k ? 'var(--c-on-accent)' : MUTED }}>

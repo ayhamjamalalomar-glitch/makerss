@@ -4,6 +4,8 @@ import { supabase, type Award, type Profile, type Work } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import WorkThumb from '../components/WorkThumb'
 import StatsCard from '../components/StatsCard'
+import { PageHeader } from '../components/cine'
+import { motion } from 'framer-motion'
 import EmailPrefs from '../components/EmailPrefs'
 import ImageCropper, { DropZone } from '../components/ImageCropper'
 import { COUNTRIES, CONTENT_TYPES, MAX_CONTENT_TYPES, SITE_URL, cityLabel, VIDEO_LENGTHS, detectPlatform, listSep, platformLabel, videoLengthLabel } from '../lib/constants'
@@ -119,9 +121,9 @@ export default function EditorPage() {
   return (
     <>
       <PageShell>
+        <PageHeader label="EDIT SUITE" title={t('صفحتي', 'My page')} sub={t('هنا تبني صفحتك في الدليل: الصورة، التخصص، النبذة، والأعمال.', 'Build your directory page here: photo, role, bio and work.')} />
         <div className="flex flex-wrap justify-between items-center gap-3 md:px-2">
           <span className="flex flex-wrap items-center gap-2.5">
-            <span className="text-sm font-semibold">{t('صفحتي', 'My page')}</span>
             <button type="button" onClick={() => setModal('username')} className="mono text-xs bg-transparent border-0 p-0 cursor-pointer flex items-center gap-1.5" style={{ color: 'var(--c-muted)' }} dir="ltr">
               {SITE_URL.replace('https://', '')}/{profile.username || '…'}
               <span className="text-[11px]" style={{ color: 'var(--c-accent)', fontFamily: 'inherit' }}>{t('تعديل', 'Edit')}</span>
@@ -130,7 +132,7 @@ export default function EditorPage() {
           </span>
           <span className="flex gap-2">
             <button type="button" onClick={() => update({ available: !profile.available }, profile.available ? t('صرت غير متاح حالياً', 'Marked as not available') : t('صرت متاحاً للعمل', 'Marked as available'))} className="flex items-center gap-2 text-[13px] px-4 py-2 rounded-full cursor-pointer" style={{ background: 'var(--c-surface-alt)', border: 'none' }}>
-              <span className="w-2 h-2 rounded-full" style={{ background: profile.available ? '#4ADE80' : 'var(--c-muted)' }} />
+              <span className="w-2 h-2 rounded-full" style={{ background: profile.available ? 'var(--c-live)' : 'var(--c-muted)', boxShadow: profile.available ? '0 0 8px var(--c-live)' : 'none' }} />
               {profile.available ? t('متاح للعمل', 'Available for work') : t('غير متاح حالياً', 'Not available right now')}
             </button>
             <Link to={profile.username ? `/${profile.username}` : '/me'} className="text-[13px] px-4 py-2 rounded-full" style={{ background: 'var(--c-surface-alt)' }}>{t('معاينة', 'Preview')}</Link>
@@ -250,10 +252,10 @@ export default function EditorPage() {
       </PageShell>
 
       {/* progress bar */}
-      {status !== 'approved' && <div className="fixed z-30 bottom-[92px] start-3 end-3 md:start-12 md:end-12 p-4 md:px-7 md:py-5 flex flex-col gap-3.5 rounded-2xl md:rounded-2xl" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-mid)', color: 'var(--c-text)', boxShadow: '0 12px 40px rgba(0,0,0,0.5)' }}>
+      {status !== 'approved' && <div className="fixed z-30 bottom-[92px] md:bottom-6 start-3 end-3 md:start-12 md:end-12 p-4 md:px-7 md:py-5 flex flex-col gap-3.5 rounded-2xl md:rounded-2xl" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border-mid)', color: 'var(--c-text)', boxShadow: '0 12px 40px rgba(0,0,0,0.5)' }}>
         <div className="flex justify-between items-center gap-3">
           <span className="flex items-baseline gap-3">
-            <span className="text-[15px] font-bold">{t('أكمل صفحتك', 'Complete your page')}</span>
+            <span className="text-[15px] font-bold font-display">{t('أكمل صفحتك', 'Complete your page')}</span>
             <span className="mono text-xs" style={{ color: 'var(--c-muted)' }}>{t(`${progress.count} من 5`, `${progress.count} of 5`)}</span>
           </span>
           {status === 'pending' ? (
@@ -264,14 +266,22 @@ export default function EditorPage() {
             <span className="hidden md:inline text-[13px]" style={{ color: 'var(--c-muted)' }}>{t('أكمل الخطوات الخمس لإرسال صفحتك للمراجعة', 'Complete the five steps to send your page for review')}</span>
           )}
         </div>
-        <div className="relative grid grid-cols-5 gap-1.5 pt-2.5">
-          {progress.steps.map((s, i) => (
-            <button key={s.key} type="button" onClick={() => openFor(s.key)} className="h-12 md:h-[54px] rounded-2xl text-[11px] md:text-xs cursor-pointer flex flex-col items-start justify-center gap-0.5 px-2 md:px-3.5 text-start" style={s.done ? { background: 'rgba(var(--c-accent-rgb),0.15)', color: '#FDBA74', border: '1px solid rgba(var(--c-accent-rgb),0.35)', fontWeight: 600 } : { background: 'transparent', color: 'var(--c-muted)', border: '1.5px dashed var(--c-border-mid)' }}>
-              <span className="hidden md:inline text-[10px]" style={{ color: 'var(--c-muted)' }}>{t('الخطوة', 'Step')} {i + 1}</span>
-              {s.label}
-            </button>
-          ))}
-          <span className="absolute top-0 -bottom-1.5 w-0.5" style={{ insetInlineStart: `${progress.ratio * 100}%`, background: '#F87171' }} />
+        {/* the five steps as clips on an edit timeline, with a playhead at the current point */}
+        <div className="relative pt-3" dir="ltr">
+          <div className="flex justify-between font-mono text-[9px] mb-1.5" style={{ color: 'var(--c-muted-2)' }}>
+            {['00:00', '00:12', '00:24', '00:36', '00:48', '01:00'].map((x) => <span key={x}>{x}</span>)}
+          </div>
+          <div className="relative grid grid-cols-5 gap-1" dir={isRtl() ? 'rtl' : 'ltr'}>
+            {progress.steps.map((s, i) => (
+              <button key={s.key} type="button" onClick={() => openFor(s.key)} className="h-12 md:h-[54px] rounded-md text-[11px] md:text-xs cursor-pointer flex flex-col items-start justify-center gap-0.5 px-2 md:px-3 text-start transition-colors" style={s.done ? { background: 'rgba(var(--c-accent-rgb),0.22)', color: 'var(--c-text)', border: '1px solid rgba(var(--c-accent-rgb),0.55)', borderTopWidth: 3, fontWeight: 600 } : { background: 'var(--c-surface-alt)', color: 'var(--c-muted)', border: '1px dashed var(--c-border-mid)' }}>
+                <span className="hidden md:inline font-mono text-[10px]" style={{ color: 'var(--c-muted)' }} dir="ltr">CLIP {String(i + 1).padStart(2, '0')}</span>
+                {s.label}
+              </button>
+            ))}
+            <motion.span layout className="absolute -top-2 -bottom-1.5 w-[2px] pointer-events-none" style={{ insetInlineStart: `calc(${progress.ratio * 100}% - 1px)`, background: 'var(--c-rec)', boxShadow: '0 0 10px var(--c-rec)' }}>
+              <span className="absolute -top-1 -translate-x-1/2 left-1/2 w-2.5 h-2.5 rotate-45" style={{ background: 'var(--c-rec)' }} />
+            </motion.span>
+          </div>
         </div>
       </div>}
 

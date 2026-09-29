@@ -9,6 +9,7 @@ import { CARD_COLUMNS, displayName, getProject, PLATFORMS, PROJECT_KINDS, type M
 import { useSpecialties, specName } from '../lib/specialties'
 import { Avatar, Btn, Chip, Field, Modal, Notice, PageShell, Spinner, TextArea, TextInput } from '../components/mk'
 import ImageCropper, { DropZone } from '../components/ImageCropper'
+import { PageHeader } from '../components/cine'
 
 type Crew = { key: string; profile?: MemberCard | null; name?: string; role: string }
 
@@ -153,11 +154,7 @@ export default function TitleEditor({ id }: { id?: string }) {
 
   return (
     <PageShell narrow>
-      <div className="flex items-center gap-2">
-        <span className="inline-block w-1 rounded-full" style={{ background: 'var(--c-accent)', height: 24 }} />
-        <h1 className="font-black m-0" style={{ fontSize: 26 }}>{id ? t('تعديل المشروع', 'Edit project') : t('أضف مشروعاً', 'Add a project')}</h1>
-      </div>
-      <p className="m-0 -mt-3 text-sm" style={{ color: 'var(--c-muted)' }}>{t('أضف عملاً شاركت فيه، وسمِّ باقي الطاقم ليظهر المشروع في صفحاتهم أيضاً.', 'Add work you were part of, and tag the rest of the crew so it shows on their pages too.')}</p>
+      <PageHeader label={id ? 'RE-EDIT' : 'NEW PRODUCTION'} title={id ? t('تعديل المشروع', 'Edit project') : t('أضف مشروعاً', 'Add a project')} sub={t('أضف عملاً شاركت فيه، وسمِّ باقي الطاقم ليظهر المشروع في صفحاتهم أيضاً.', 'Add work you were part of, and tag the rest of the crew so it shows on their pages too.')} />
 
       <form onSubmit={save} className="flex flex-col gap-5">
         <div className="p-5 rounded-2xl flex flex-col sm:flex-row gap-5" style={card}>

@@ -22,7 +22,7 @@ Makers is a talent directory for production people across the Arab world: direct
 5. Never mention Intime clients or Intime numbers inside Makers materials.
 6. Never ask Ayham for secret keys: no Supabase service_role key, no DB password, no API keys. The publishable key in the code is fine.
 7. Never type passwords or sign in for him. He does all sign-ins himself.
-8. The approved design (dark theme, orange #E85D04 accent) is final. Do not redesign; fix and extend inside it.
+8. The approved design is the **cinematic edition** (live since 2026-09-29, approved by Ayham): darkroom black, bone white type, projector amber accent. Do not redesign; fix and extend inside it. The previous orange design is kept on branch `design-v1-classic` and tag `classic-design-2026-09-29` in case Ayham wants it back.
 9. The official logo is the text wordmark MAKERS / FILMMAKERS / CREATORS in Archivo Black (see `src/components/Logo.tsx`). The old "MK" mark is retired. Do not bring it back.
 10. Do NOT deploy from Figma Make. A Figma Make deploy once force-pushed over `main` and wiped the backend wiring. All code changes go through git here.
 
@@ -94,6 +94,8 @@ supabase/functions/send-emails/  Edge Function that drains public.email_outbox t
 Layout width: every page content sits in `max-w-[1120px] mx-auto w-full` with side padding. Keep that.
 
 ### UI conventions
+- Cinematic identity: colors only through CSS variables in `index.css` (`--c-accent`, `--c-accent-rgb`, `--c-on-accent` for text on the accent, `--c-rec`, `--c-live`, `--c-screen` for always-dark heroes). Never hardcode the accent hex. Fonts: Alexandria (display, all h1 to h3), Readex Pro (body), JetBrains Mono (Latin labels and timecode only: never put Arabic text in mono with letter-spacing, it breaks the letter joins). Wordmark stays Archivo Black.
+- Cinematic building blocks live in `src/components/cine.tsx`: Timecode, RecBadge, SceneHeader (SC.01 style), PageHeader (mono Latin label + display title), Rail (drag and arrow rails), PosterCard, CastCard (black and white portrait, color on hover), ScrollLitText, FilmStrip. Pages whose top is a dark full-bleed hero call `useDarkHero()` (`src/lib/hero.ts`) so the header starts transparent. `Cursor.tsx` draws the desktop cursor ring; the film grain is `body::after` in `index.css`.
 - Pages that only members or the team use are lazy loaded in `App.tsx`; keep public pages (Landing, Makers, profile, projects, open calls) eager.
 - Loading states use `Skeleton` / `PageSkeleton` from `mk.tsx`, not plain "Loading" text. Windows use `Modal` (Esc closes, page scroll locks); custom overlays call `useDialog(onClose)`.
 - Motion respects the visitor's reduce-motion setting through `MotionConfig` in `main.tsx`.
