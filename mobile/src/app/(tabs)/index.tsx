@@ -11,6 +11,7 @@ import { displayName, formatFollowers, listMembers, listOpenCalls, listProjects,
 import { Avatar, Btn, Icon, Logo, Section, Skeleton, Txt, Verified, tap } from '@/components/ui'
 import { CallCard, CastCard, PosterCard } from '@/components/cards'
 import { FilmStrip } from '@/components/FilmStrip'
+import { LangToggle, MessagesButton } from '@/components/TopButtons'
 
 function Rail({ children }: { children: React.ReactNode }) {
   return (
@@ -42,11 +43,14 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
 
       <View style={{ paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Logo size={12} color={onScreen.text} align={rtl ? 'right' : 'left'} />
-        {!session && (
-          <Pressable onPress={() => { tap(); router.push('/login') }} hitSlop={10} style={{ paddingHorizontal: 14, height: 34, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(243,239,231,0.3)', justifyContent: 'center' }}>
-            <Txt size={13} weight="semi" color={onScreen.text}>{t('دخول', 'Sign in')}</Txt>
-          </Pressable>
-        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <LangToggle onDark />
+          {session ? <MessagesButton onDark /> : (
+            <Pressable onPress={() => { tap(); router.push('/login') }} hitSlop={10} style={{ paddingHorizontal: 14, height: 34, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(243,239,231,0.3)', justifyContent: 'center' }}>
+              <Txt size={13} weight="semi" color={onScreen.text}>{t('دخول', 'Sign in')}</Txt>
+            </Pressable>
+          )}
+        </View>
       </View>
 
       <View style={{ paddingHorizontal: 20, paddingTop: 70, paddingBottom: 34, gap: 16 }}>
@@ -108,7 +112,7 @@ export default function Home() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.accent} />}>
       <Hero members={members} projects={allProjects} />
 
-      <Section title={t('جديد على Makers', 'New on Makers')} sub={t('آخر ما أضافه الصنّاع إلى أعمالهم.', 'The latest work makers added.')} action={t('الكل', 'All')} onAction={() => router.push('/projects')}>
+      <Section title={t('جديد على Makers', 'New on Makers')} sub={t('آخر ما أضافه الصنّاع إلى أعمالهم.', 'The latest work makers added.')} action={t('الكل', 'All')} onAction={() => router.navigate('/projects')}>
         <Rail>
           {projects === null
             ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} style={{ width: 150, aspectRatio: 2 / 3 }} />)

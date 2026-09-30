@@ -5,7 +5,7 @@ import { router } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
-import { t, useLang, type Lang } from '@/lib/i18n'
+import { reopenAfterLangChange, t, useLang, type Lang } from '@/lib/i18n'
 import { useTheme, type ThemeMode } from '@/lib/theme'
 import { SITE_URL } from '@/lib/constants'
 import { pushSupported, registerPush } from '@/lib/push'
@@ -35,6 +35,8 @@ export default function Settings() {
   }, [uid])
 
   const pickLang = (l: Lang) => {
+    if (l === lang) return
+    reopenAfterLangChange('/settings')
     setLang(l)
     // Pushes are written in the language the device registered with.
     if (uid) registerPush(false)

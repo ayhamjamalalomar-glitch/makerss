@@ -4,8 +4,14 @@ import { t, useLang } from '@/lib/i18n'
 import { useTheme } from '@/lib/theme'
 import { arNorm } from '@/lib/constants'
 import { PROJECT_KINDS, displayName, listProjects, type Project } from '@/lib/data'
-import { Chip, Empty, Header, Input, Skeleton } from '@/components/ui'
+import { Chip, Empty, Input, Skeleton, TabTitle } from '@/components/ui'
 import { PosterCard } from '@/components/cards'
+import { MessagesButton } from '@/components/TopButtons'
+
+const countLabel = (n: number) => t(
+  n === 1 ? 'مشروع واحد على Makers' : n === 2 ? 'مشروعان على Makers' : n <= 10 ? `${n} مشاريع على Makers` : `${n} مشروعاً على Makers`,
+  n === 1 ? '1 project on Makers' : `${n} projects on Makers`,
+)
 
 /** Every project on Makers, newest first. */
 export default function Projects() {
@@ -34,6 +40,7 @@ export default function Projects() {
 
   const top = (
     <View style={{ gap: 12, paddingBottom: 16 }}>
+      <TabTitle title={t('المشاريع', 'Projects')} sub={all ? countLabel(all.length) : undefined} right={<MessagesButton />} />
       <View style={{ paddingHorizontal: 20 }}>
         <Input value={q} onChangeText={setQ} placeholder={t('ابحث باسم المشروع أو الجهة أو الطاقم', 'Search by title, brand or crew')} returnKeyType="search" />
       </View>
@@ -48,9 +55,8 @@ export default function Projects() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <Header title={t('المشاريع', 'Projects')} />
       {all === null ? (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 20 }}>{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} style={{ width: col, aspectRatio: 2 / 3 }} />)}</View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, padding: 20, paddingTop: 120 }}>{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} style={{ width: col, aspectRatio: 2 / 3 }} />)}</View>
       ) : (
         <FlatList
           data={shown}
@@ -58,7 +64,8 @@ export default function Projects() {
           numColumns={2}
           ListHeaderComponent={top}
           columnWrapperStyle={{ gap: 12, paddingHorizontal: 20 }}
-          contentContainerStyle={{ gap: 18, paddingBottom: 60 }}
+          contentInsetAdjustmentBehavior="never"
+          contentContainerStyle={{ gap: 18, paddingBottom: 120 }}
           keyboardDismissMode="on-drag"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.accent} />}
           renderItem={({ item }) => <PosterCard p={item} width={col} />}

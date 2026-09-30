@@ -9,6 +9,7 @@ import { listMembers, totalFollowers, type MemberCard } from '@/lib/data'
 import { store } from '@/lib/storage'
 import { Chip, Empty, Icon, IconBtn, Segmented, Sheet, Skeleton, TabTitle, Txt, Btn, tap } from '@/components/ui'
 import { CastCard, MemberRow } from '@/components/cards'
+import { MessagesButton } from '@/components/TopButtons'
 
 type Type = 'all' | 'maker' | 'creator'
 type Sort = 'default' | 'newest' | 'audience'
@@ -73,7 +74,7 @@ export default function Makers() {
       <TabTitle
         title={t('الصنّاع', 'Makers')}
         sub={all ? t(`${filtered.length} في الدليل`, `${filtered.length} in the directory`) : undefined}
-        right={<IconBtn name={view === 'grid' ? 'list' : 'grid'} label={t('طريقة العرض', 'View')} onPress={() => setView(view === 'grid' ? 'list' : 'grid')} />}
+        right={<View style={{ flexDirection: 'row', gap: 8 }}><IconBtn name={view === 'grid' ? 'list' : 'grid'} label={t('طريقة العرض', 'View')} onPress={() => setView(view === 'grid' ? 'list' : 'grid')} /><MessagesButton /></View>}
       />
       <View style={{ paddingHorizontal: 20, gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, height: 50, borderRadius: 16, paddingHorizontal: 16, backgroundColor: c.surfaceAlt, borderWidth: 1, borderColor: c.border }}>

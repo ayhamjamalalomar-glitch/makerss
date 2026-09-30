@@ -14,7 +14,8 @@ import { splitLinks, type Conversation, type Message } from '@/lib/messages'
 import { Avatar, Btn, Icon, IconBtn, Notice, Spinner, Txt, Verified, isArabic, tap } from '@/components/ui'
 import { requestPlace } from '@/components/requests'
 
-const timeOf = (iso: string) => new Date(iso).toLocaleTimeString(getLang() === 'en' ? 'en-GB' : 'ar-JO', { hour: '2-digit', minute: '2-digit' })
+// Western digits in both languages, like every other number in the app.
+const timeOf = (iso: string) => new Date(iso).toLocaleTimeString(getLang() === 'en' ? 'en-GB' : 'ar-JO-u-nu-latn', { hour: '2-digit', minute: '2-digit' })
 const localDay = (iso: string) => {
   const d = new Date(iso)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`

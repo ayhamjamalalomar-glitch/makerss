@@ -17,6 +17,7 @@ import { useToast } from '@/lib/toast'
 import { Badge, Btn, Group, H, Logo, Pill, Row, Spinner, Txt, Verified } from '@/components/ui'
 import { ProgressTimeline } from '@/components/Progress'
 import { StatsCard } from '@/components/StatsCard'
+import { useUnread } from '@/lib/unread'
 
 export default function Account() {
   useLang()
@@ -30,6 +31,7 @@ export default function Account() {
   const [newRequests, setNewRequests] = useState(0)
   const [busy, setBusy] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const unread = useUnread()
 
   const loadCounts = useCallback(async () => {
     if (!session) return
@@ -142,6 +144,7 @@ export default function Account() {
       <Group>
         {approved ? <Row icon="person" title={t('صفحتي كما يراها الناس', 'My page as others see it')} onPress={() => router.push(`/maker/${profile.username}`)} /> : null}
         {!approved ? <Row icon="pencil" title={t('عدّل صفحتي', 'Edit my page')} onPress={() => router.push('/edit')} /> : null}
+        <Row icon="chat" title={t('الرسائل', 'Messages')} sub={t('المحادثات وطلبات التعاون', 'Conversations and collaboration requests')} onPress={() => router.push('/messages')} right={unread > 0 ? <Badge n={unread} /> : undefined} />
         <Row icon="tray" title={t('الوارد', 'Inbox')} sub={t('طلبات التعاون والمتقدّمون على فرصك', 'Collaboration requests and applicants')} onPress={() => router.push('/inbox')} right={newRequests > 0 ? <Badge n={newRequests} /> : undefined} />
         {status !== 'draft' ? <Row icon="info" title={t('حالة صفحتي', 'My page status')} onPress={() => router.push('/status')} /> : null}
       </Group>

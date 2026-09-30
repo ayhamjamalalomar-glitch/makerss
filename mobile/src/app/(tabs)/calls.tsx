@@ -9,6 +9,7 @@ import { useSpecialties, specName } from '@/lib/specialties'
 import { CALL_SELECT, listOpenCalls, type OpenCall } from '@/lib/data'
 import { Btn, Chip, Empty, IconBtn, Pill, Skeleton, TabTitle, Txt, tap } from '@/components/ui'
 import { CallCard } from '@/components/cards'
+import { MessagesButton } from '@/components/TopButtons'
 import { LinearGradient } from 'expo-linear-gradient'
 
 export default function Calls() {
@@ -44,7 +45,7 @@ export default function Calls() {
     <ScrollView style={{ flex: 1, backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: 120 }} contentInsetAdjustmentBehavior="never"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.accent} />}>
       <TabTitle title={t('فرص مفتوحة', 'Open calls')} sub={t('إنتاجات تبحث عن صنّاع الآن. قدّم وانضم إلى الطاقم.', 'Productions looking for Makers right now. Apply to join the crew.')}
-        right={<IconBtn name="plus" label={t('انشر فرصة', 'Post an opportunity')} onPress={post} bg={c.accent} color={c.onAccent} />} />
+        right={<View style={{ flexDirection: 'row', gap: 8 }}><IconBtn name="plus" label={t('انشر فرصة', 'Post an opportunity')} onPress={post} bg={c.accent} color={c.onAccent} /><MessagesButton /></View>} />
 
       <View style={{ paddingHorizontal: 20, gap: 16 }}>
         {mine.length > 0 && (

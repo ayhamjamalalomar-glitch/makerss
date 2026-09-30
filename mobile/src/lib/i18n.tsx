@@ -1,15 +1,13 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
-import { getLocales } from 'expo-localization'
 import { store } from './storage'
 
 export type Lang = 'ar' | 'en'
 const KEY = 'mk-lang'
 
+// Arabic first, whatever the phone's language: the member switches to English from the home screen or Settings.
 function initial(): Lang {
   const saved = store.get(KEY)
-  if (saved === 'ar' || saved === 'en') return saved
-  const code = getLocales()[0]?.languageCode || 'ar'
-  return code === 'en' ? 'en' : 'ar'
+  return saved === 'en' ? 'en' : 'ar'
 }
 
 // Module-level copy so plain helpers (t, formatDate…) can read it.
@@ -34,6 +32,11 @@ export function LangProvider({ children }: { children: ReactNode }) {
 }
 
 export const useLang = () => useContext(Ctx)
+
+// Switching language rebuilds the whole screen tree (see app/_layout). A screen can ask to be reopened afterwards.
+let reopen: string | null = null
+export const reopenAfterLangChange = (path: string) => { reopen = path }
+export const takeReopen = () => { const p = reopen; reopen = null; return p }
 
 /** A bilingual option list whose stored value is the Arabic label. */
 export type Pair = { ar: string; en: string }

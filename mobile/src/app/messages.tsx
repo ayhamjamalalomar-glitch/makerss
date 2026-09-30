@@ -8,9 +8,10 @@ import { useTheme } from '@/lib/theme'
 import { relativeAr } from '@/lib/constants'
 import { displayName } from '@/lib/data'
 import type { Conversation } from '@/lib/messages'
-import { Avatar, Badge, Btn, Empty, Segmented, Spinner, TabTitle, Txt, Verified, tap } from '@/components/ui'
+import { Avatar, Badge, Empty, Header, Segmented, Spinner, Txt, Verified, tap } from '@/components/ui'
 import { RequestsList } from '@/components/requests'
 
+/** Conversations and collaboration requests (opened from the messages button at the top of the tabs). */
 export default function Messages() {
   useLang()
   const { c } = useTheme()
@@ -66,8 +67,8 @@ export default function Messages() {
   if (!session || !profile) {
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TabTitle title={t('الرسائل', 'Messages')} />
-        <View style={{ paddingHorizontal: 20, gap: 12 }}>
+        <Header title={t('الرسائل', 'Messages')} />
+        <View style={{ paddingHorizontal: 20, gap: 12, paddingTop: 10 }}>
           <Empty title={t('سجّل الدخول لترى رسائلك', 'Sign in to see your messages')} body={t('تحدّث مع باقي أعضاء Makers مباشرة، واستقبل طلبات التعاون.', 'Talk to other Makers members directly and receive collaboration requests.')} action={t('دخول', 'Sign in')} onAction={() => router.push('/login')} />
         </View>
       </View>
@@ -77,8 +78,8 @@ export default function Messages() {
   if (profile.status !== 'approved') {
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TabTitle title={t('الرسائل', 'Messages')} />
-        <View style={{ paddingHorizontal: 20 }}>
+        <Header title={t('الرسائل', 'Messages')} />
+        <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
           <Empty title={t('الرسائل متاحة بعد نشر صفحتك', 'Messages open once your page is live')} body={t('عندما يوافق فريق Makers على صفحتك، تستطيع مراسلة باقي الأعضاء.', 'When the Makers team approves your page, you can message other members.')} action={t('أكمل صفحتك', 'Complete your page')} onAction={() => router.push('/edit')} />
         </View>
       </View>
@@ -95,23 +96,27 @@ export default function Messages() {
 
   if (section === 'collab') {
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: 120 }} contentInsetAdjustmentBehavior="never">
-        <TabTitle title={t('الرسائل', 'Messages')} />
-        {tabs}
-        <View style={{ paddingHorizontal: 20 }}><RequestsList onCount={setPending} /></View>
-      </ScrollView>
+      <View style={{ flex: 1, backgroundColor: c.bg }}>
+        <Header title={t('الرسائل', 'Messages')} />
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60, paddingTop: 6 }} contentInsetAdjustmentBehavior="never">
+          {tabs}
+          <View style={{ paddingHorizontal: 20 }}><RequestsList onCount={setPending} /></View>
+        </ScrollView>
+      </View>
     )
   }
 
   return (
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+    <Header title={t('الرسائل', 'Messages')} />
     <FlatList
-      style={{ flex: 1, backgroundColor: c.bg }}
+      style={{ flex: 1 }}
       data={convs || []}
       keyExtractor={(x) => x.id}
       contentInsetAdjustmentBehavior="never"
-      contentContainerStyle={{ paddingBottom: 120 }}
+      contentContainerStyle={{ paddingBottom: 60, paddingTop: 6 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.accent} />}
-      ListHeaderComponent={<><TabTitle title={t('الرسائل', 'Messages')} sub={t('تحدّث مع باقي أعضاء Makers مباشرة.', 'Talk to other Makers members directly.')} />{tabs}</>}
+      ListHeaderComponent={tabs}
       ListEmptyComponent={convs === null ? <Spinner /> : (
         <View style={{ paddingHorizontal: 20 }}>
           <Empty title={t('لا توجد محادثات بعد', 'No conversations yet')} body={t('افتح صفحة أي عضو في الدليل واضغط «راسِل» لتبدأ محادثة.', 'Open any member page in the directory and tap "Message" to start a conversation.')} action={t('تصفّح الدليل', 'Browse the directory')} onAction={() => router.navigate('/makers')} />
@@ -143,5 +148,6 @@ export default function Messages() {
         )
       }}
     />
+    </View>
   )
 }

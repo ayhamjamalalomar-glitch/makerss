@@ -8,8 +8,8 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth'
 import { t, useLang } from '@/lib/i18n'
 import { onScreen, useTheme } from '@/lib/theme'
-import { SITE_URL, listSep } from '@/lib/constants'
-import { displayName, getProject, kindLabel, posterOf, type CreditRow, type Project } from '@/lib/data'
+import { listSep } from '@/lib/constants'
+import { displayName, getProject, kindLabel, posterOf, projectLink, type CreditRow, type Project } from '@/lib/data'
 import { track } from '@/lib/track'
 import { shareLink } from '@/lib/share'
 import { useToast } from '@/lib/toast'
@@ -58,7 +58,7 @@ export default function ProjectScreen() {
 
   const share = async () => {
     track('project', p.id, 'share')
-    const r = await shareLink(`${SITE_URL}/projects/${p.id}`, `${p.title} | Makers`)
+    const r = await shareLink(projectLink(p), `${p.title} | Makers`)
     if (r === 'copied') toast(t('تم نسخ الرابط', 'Link copied'))
   }
   const doDelete = () => Alert.alert(t('حذف المشروع؟', 'Delete this project?'), t('سيُحذف المشروع وكل أسماء الطاقم المرتبطة به. لا يمكن التراجع.', 'The project and all its crew credits will be deleted. This cannot be undone.'), [
