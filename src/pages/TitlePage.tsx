@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link, { useRouter } from '../lib/router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { t, useLang } from '../lib/i18n'
+import { getLang, t, useLang } from '../lib/i18n'
 import { SITE_URL, listSep } from '../lib/constants'
 import { youtubeId } from '../lib/thumbs'
 import { displayName, getProject, kindLabel, posterOf, type CreditRow, type Project } from '../lib/data'
@@ -37,6 +37,27 @@ export default function TitlePage({ id }: { id: string }) {
   useDarkHero(!!p)
   const [confirm, setConfirm] = useState<'delete' | 'leave' | null>(null)
   const [busy, setBusy] = useState(false)
+  // The Makers player (public/player.html) talks to this page: first play, and full screen on iPhone Safari.
+  const [fullScreen, setFullScreen] = useState(false)
+  const playerRef = useRef<HTMLIFrameElement>(null)
+
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin || e.source !== playerRef.current?.contentWindow) return
+      const d = e.data as { mk?: string; type?: string; on?: boolean }
+      if (d?.mk !== 'player') return
+      if (d.type === 'play') track('project', id, 'work')
+      if (d.type === 'fullscreen') setFullScreen(!!d.on)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setFullScreen(false)
+      playerRef.current?.contentWindow?.postMessage({ mk: 'player-cmd', cmd: 'fsOff' }, window.location.origin)
+    }
+    window.addEventListener('message', onMsg)
+    window.addEventListener('keydown', onKey)
+    return () => { window.removeEventListener('message', onMsg); window.removeEventListener('keydown', onKey) }
+  }, [id])
 
   useEffect(() => {
     setP(undefined)
@@ -73,7 +94,9 @@ export default function TitlePage({ id }: { id: string }) {
   const yt = p.url ? youtubeId(p.url) : null
   const vm = p.url ? vimeoId(p.url) : null
   const start = p.url ? Number(p.url.match(/[?&#]t=(\d+)/)?.[1] || 0) : 0
-  const embed = yt ? `https://www.youtube-nocookie.com/embed/${yt}?autoplay=1&rel=0${start ? `&start=${start}` : ''}` : vm ? `https://player.vimeo.com/video/${vm}?autoplay=1` : null
+  // YouTube plays in the Makers player (no YouTube title, channel or logo). Vimeo keeps its own player, stripped of title and byline.
+  const makersPlayer = yt ? `/player.html?v=${yt}${start ? `&t=${start}` : ''}&lang=${getLang()}` : null
+  const embed = vm ? `https://player.vimeo.com/video/${vm}?autoplay=1&title=0&byline=0&portrait=0&badge=0&dnt=1` : null
   // Wide frame: a real frame from the video when there is one; otherwise the poster, uncropped, over a blurred copy.
   const frame = yt ? `https://i.ytimg.com/vi/${yt}/maxresdefault.jpg` : p.thumbnail_url && p.thumbnail_url !== p.thumb_url ? p.thumbnail_url : null
 
@@ -143,8 +166,10 @@ export default function TitlePage({ id }: { id: string }) {
             <div className="hidden sm:block relative rounded-xl overflow-hidden" style={{ aspectRatio: '2/3' }}>
               {img ? <img src={img} alt={p.title} className="w-full h-full object-cover" /> : <PosterFallback title={p.title} />}
             </div>
-            <div className="relative rounded-xl overflow-hidden w-full" style={{ aspectRatio: '16/9', background: '#161210' }}>
-              {playing && embed ? (
+            <div className="relative rounded-xl overflow-hidden w-full" style={fullScreen ? { position: 'fixed', inset: 0, zIndex: 200, borderRadius: 0, background: '#000' } : { aspectRatio: '16/9', background: '#161210' }}>
+              {makersPlayer ? (
+                <iframe ref={playerRef} src={makersPlayer} title={p.title} className="absolute inset-0 w-full h-full" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ border: 0 }} />
+              ) : playing && embed ? (
                 <iframe src={embed} title={p.title} className="absolute inset-0 w-full h-full" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen style={{ border: 0 }} />
               ) : (
                 <button onClick={onPlay} disabled={!p.url} className="absolute inset-0 w-full h-full p-0 group" style={{ border: 'none', background: 'none', cursor: p.url ? 'pointer' : 'default' }}>
