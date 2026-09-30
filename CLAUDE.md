@@ -160,6 +160,15 @@ Apply schema changes as named migrations (Supabase MCP `apply_migration` or CLI)
 3. Check the page in Arabic and English, desktop and mobile width.
 4. Commit with a clear message, push to `main`, wait for the Vercel deploy, then check makerss.net.
 
+## 7b. iOS app (`mobile/`)
+
+- Expo SDK 57 + Expo Router app in `mobile/`, same Supabase backend as the website. Full notes in `mobile/README.md`. Started on branch `ios-app` (2026-09-30). Vercel ignores the folder (`.vercelignore`).
+- Decisions from Ayham: Expo React Native; no Apple Developer account yet (test in Expo Go); admin panel stays on the website only; push notifications from the start.
+- Tabs: Home, Makers, Calls, Messages, Account. Routes match the push links: `/chat/<id>`, `/inbox`, `/messages`, `/makers`, `/account`, `/status`, `/call/<id>`, `/calls`.
+- Backend added for the app (migration `20260930100000_push_and_account_deletion`): `push_tokens`, `register_push_token`, `unregister_push_token`, `notification_prefs.push_enabled`, `push_outbox`, `enqueue_push`, `claim_pushes`, `kick_push_worker`, pg_cron job `push-worker`, Edge Function `send-push` (verify_jwt off, checks the worker secret), and `delete_my_account()` (Apple requires in-app account deletion; staff accounts are refused).
+- Pushes only work in a real build: needs `eas init` (Expo account) and an Apple Developer account, both done by Ayham himself.
+- Before App Store submission: a public privacy policy URL is required (the website has no privacy page yet).
+
 ## 8. Open items
 - Footer has no social links yet; waiting for Ayham to give the real Makers accounts.
 - Favicon at 32px shows the full three-line wordmark, which is hard to read. Ayham may want a short version later; ask first.
