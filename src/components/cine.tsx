@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { motion, useMotionValue, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
 import Link from '../lib/router'
 import { isRtl, t } from '../lib/i18n'
-import { displayName, formatFollowers, kindLabel, posterOf, totalFollowers, type MemberCard, type Project } from '../lib/data'
+import { displayName, formatFollowers, kindLabel, posterOf, totalFollowers, type MemberCard, type Project, projectPath } from '../lib/data'
 import { firstRole, isCreator } from '../lib/specialties'
 import type { Specialty } from '../lib/supabase'
 import { PosterFallback, VerifiedBadge } from './mk'
@@ -162,7 +162,7 @@ export function PosterCard({ p, width, rank }: { p: Project; width?: number; ran
   const [loaded, setLoaded] = useState(false)
   const tilt = useTilt()
   return (
-    <Link to={`/projects/${p.id}`} className="group shrink-0 flex flex-col gap-2.5 text-start" style={{ width }}>
+    <Link to={projectPath(p)} className="group shrink-0 flex flex-col gap-2.5 text-start" style={{ width }}>
       <motion.div
         className="relative rounded-xl overflow-hidden w-full"
         style={{ aspectRatio: '2/3', background: 'var(--c-surface)', ...tilt.style }}

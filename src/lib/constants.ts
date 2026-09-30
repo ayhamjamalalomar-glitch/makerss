@@ -81,7 +81,7 @@ export const months = () => (getLang() === 'en' ? MONTHS_EN : MONTHS_AR)
 
 export const SITE_URL = 'https://makerss.net'
 
-export const RESERVED_PATHS = ['admin', 'join', 'login', 'me', 'inbox', 'terms', 'privacy', 'api', 'about', 'makers', 'settings', 'status', 'reset', 'en', 'ar', 'messages', 'projects', 'opportunities', 'search', 'app']
+export const RESERVED_PATHS = ['admin', 'join', 'login', 'me', 'inbox', 'terms', 'privacy', 'api', 'about', 'makers', 'settings', 'status', 'reset', 'en', 'ar', 'messages', 'projects', 'opportunities', 'search', 'app', 'creators', 'player', 'account', 'p']
 
 export function formatDateAr(iso: string | null | undefined) {
   if (!iso) return ''

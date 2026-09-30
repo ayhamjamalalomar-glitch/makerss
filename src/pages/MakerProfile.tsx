@@ -5,7 +5,7 @@ import { COUNTRIES, SITE_URL, cityLabel, contentLabel, listSep, videoLengthLabel
 import { label, t, useLang } from '../lib/i18n'
 import { useSpecialties, specName, isCreator } from '../lib/specialties'
 import { useAuth } from '../lib/auth'
-import { displayName, formatFollowers, kindLabel, posterOf, projectsForMember, roleOn, totalFollowers, type MemberCard, type Project } from '../lib/data'
+import { displayName, formatFollowers, kindLabel, posterOf, projectPath, projectsForMember, roleOn, totalFollowers, type MemberCard, type Project } from '../lib/data'
 import ContactForm from '../components/ContactForm'
 import ReportButton from '../components/ReportButton'
 import { track } from '../lib/track'
@@ -15,6 +15,7 @@ import { Btn, Corners, Modal, Notice, PageShell, PosterFallback, SectionHeader, 
 import { RecBadge } from '../components/cine'
 import { useDarkHero } from '../lib/hero'
 import { motion } from 'framer-motion'
+import TitlePage from './TitlePage'
 
 const SOCIAL_LABEL: Record<string, string> = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', x: 'X', snapchat: 'Snapchat', facebook: 'Facebook', linkedin: 'LinkedIn', vimeo: 'Vimeo', behance: 'Behance', website: 'Website' }
 
@@ -47,12 +48,19 @@ export default function MakerProfile({ username }: { username: string }) {
   const [aboutOpen, setAboutOpen] = useState(false)
   const [aboutDraft, setAboutDraft] = useState('')
   const [saving, setSaving] = useState(false)
+  // makerss.net/<name> is a member, or else a project's short link (makerss.net/al-nahham).
+  const [workId, setWorkId] = useState<string | null>(null)
   useDarkHero(p !== undefined && p !== null)
 
   useEffect(() => {
     setP(undefined)
+    setWorkId(null)
     supabase.from('profiles').select(PUBLIC_PROFILE_COLUMNS).ilike('username', username).maybeSingle().then(async ({ data }) => {
       const prof = (data as unknown as Profile) || null
+      if (!prof) {
+        const { data: w } = await supabase.from('works').select('id').eq('slug', username.toLowerCase()).maybeSingle()
+        if (w) return setWorkId((w as { id: string }).id)
+      }
       setP(prof)
       if (!prof) return
       document.title = `${prof.full_name} | Makers`
@@ -73,6 +81,8 @@ export default function MakerProfile({ username }: { username: string }) {
     }
     return [...map.values()].slice(0, 8)
   }, [projects, p])
+
+  if (workId) return <TitlePage id={workId} />
 
   if (p === undefined) {
     return (
@@ -278,7 +288,7 @@ export default function MakerProfile({ username }: { username: string }) {
                       {featured.map((pr) => {
                         const img = posterOf(pr)
                         return (
-                          <Link key={pr.id} to={`/projects/${pr.id}`} onClick={() => track('profile', p.id, 'work')} className="flex gap-3 p-3 rounded-xl group" style={box}>
+                          <Link key={pr.id} to={projectPath(pr)} onClick={() => track('profile', p.id, 'work')} className="flex gap-3 p-3 rounded-xl group" style={box}>
                             <div className="shrink-0 rounded-lg overflow-hidden" style={{ width: 72, height: 96 }}>
                               {img ? <img src={img} alt={pr.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <PosterFallback title="" />}
                             </div>
@@ -324,7 +334,7 @@ export default function MakerProfile({ username }: { username: string }) {
                     {projects.map((pr) => {
                       const img = posterOf(pr)
                       return (
-                        <Link key={pr.id} to={`/projects/${pr.id}`} onClick={() => track('profile', p.id, 'work')} className="group">
+                        <Link key={pr.id} to={projectPath(pr)} onClick={() => track('profile', p.id, 'work')} className="group">
                           <div className="relative rounded-xl overflow-hidden mb-2" style={{ aspectRatio: '2/3', background: 'var(--c-surface)' }}>
                             {img ? <img src={img} alt={pr.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <PosterFallback title={pr.title} />}
                             {p.featured_work_ids?.includes(pr.id) && <span className="absolute top-2 start-2 px-1.5 py-0.5 rounded font-bold" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', fontSize: 9 }}>{t('مختار', 'Featured')}</span>}

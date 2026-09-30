@@ -4,7 +4,7 @@ import { useRouter } from '../lib/router'
 import { useAuth } from '../lib/auth'
 import { t, useLang } from '../lib/i18n'
 import { arNorm } from '../lib/constants'
-import { displayName, posterOf, searchSite } from '../lib/data'
+import { displayName, posterOf, searchSite, projectPath } from '../lib/data'
 import { memberLine, useSpecialties } from '../lib/specialties'
 import { Avatar, useDialog } from './mk'
 
@@ -84,7 +84,7 @@ function Palette({ onClose }: { onClose: () => void }) {
       if (!alive) return
       setFound([
         ...r.makers.map((m) => ({ key: `m-${m.id}`, kind: 'maker' as const, label: displayName(m), sub: memberLine(specialties, m), photo: m.avatar_url, to: `/${m.username}` })),
-        ...r.projects.map((p) => ({ key: `w-${p.id}`, kind: 'project' as const, label: p.title, sub: p.year ? String(p.year) : '', photo: posterOf(p), to: `/projects/${p.id}` })),
+        ...r.projects.map((p) => ({ key: `w-${p.id}`, kind: 'project' as const, label: p.title, sub: p.year ? String(p.year) : '', photo: posterOf(p), to: projectPath(p) })),
       ])
       setLoading(false)
     }, 180)

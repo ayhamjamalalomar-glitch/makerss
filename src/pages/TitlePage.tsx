@@ -5,7 +5,7 @@ import { useAuth } from '../lib/auth'
 import { getLang, t, useLang } from '../lib/i18n'
 import { SITE_URL, listSep } from '../lib/constants'
 import { youtubeId } from '../lib/thumbs'
-import { displayName, getProject, kindLabel, posterOf, type CreditRow, type Project } from '../lib/data'
+import { displayName, getProject, kindLabel, posterOf, type CreditRow, type Project, projectPath } from '../lib/data'
 import { Btn, Modal, PageShell, PageSkeleton, PosterFallback, VerifiedBadge } from '../components/mk'
 import ReportButton from '../components/ReportButton'
 import { RecBadge } from '../components/cine'
@@ -65,6 +65,8 @@ export default function TitlePage({ id }: { id: string }) {
       setP(x)
       if (x) {
         document.title = `${x.title} | Makers`
+        // Show the short link in the address bar so a copied link is makerss.net/al-nahham.
+        if (x.slug && window.location.pathname !== `/${x.slug}` && /^\/projects\/[0-9a-f-]{36}$/i.test(window.location.pathname)) window.history.replaceState(window.history.state, '', `/${x.slug}${window.location.search}`)
         track('project', x.id, 'view')
       }
     })
@@ -102,7 +104,7 @@ export default function TitlePage({ id }: { id: string }) {
 
   const copy = async () => {
     track('project', p.id, 'share')
-    const r = await shareLink(`${SITE_URL}/projects/${p.id}`, `${p.title} | Makers`)
+    const r = await shareLink(`${SITE_URL}${projectPath(p)}`, `${p.title} | Makers`)
     if (r === 'copied') toast(t('تم نسخ الرابط', 'Link copied'))
     else if (r === 'failed') toast(t('تعذّر نسخ الرابط', 'Could not copy the link'), 'error')
   }

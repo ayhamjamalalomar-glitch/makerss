@@ -39,6 +39,7 @@ export interface CreditRow {
 
 export interface Project {
   id: string
+  slug: string
   owner_id: string
   title: string
   brand: string | null
@@ -55,7 +56,7 @@ export interface Project {
   credits?: CreditRow[]
 }
 
-const PROJECT_SELECT = `id, owner_id, title, brand, year, thumb_url, thumbnail_url, platforms, description, url, role, kind, created_at,
+const PROJECT_SELECT = `id, slug, owner_id, title, brand, year, thumb_url, thumbnail_url, platforms, description, url, role, kind, created_at,
   owner:profiles!works_owner_id_fkey(${CARD_COLUMNS}),
   credits(id, role, status, profile_id, display_name, created_at, profile:profiles!credits_profile_id_fkey(${CARD_COLUMNS}))`
 
@@ -65,6 +66,9 @@ function clean(p: Project): Project {
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
   return { ...p, credits }
 }
+
+/** Short public link path of a project: /al-nahham (old /projects/<id> links keep working). */
+export const projectPath = (p: Pick<Project, 'id'> & { slug?: string | null }) => (p.slug ? `/${p.slug}` : `/projects/${p.id}`)
 
 /** Image to show for a project: uploaded poster, else the video's thumbnail. */
 export const posterOf = (p: Pick<Project, 'thumb_url' | 'thumbnail_url' | 'url'>) => p.thumb_url || p.thumbnail_url || quickThumb(p.url) || null
@@ -124,7 +128,7 @@ export async function topMakers(limit = 10): Promise<{ list: MemberCard[]; ranke
   return { list: ids.map((id) => list.find((m) => m.id === id)).filter(Boolean) as MemberCard[], ranked: active.length > 0 }
 }
 
-export type ProjectHit = Pick<Project, 'id' | 'title' | 'year' | 'thumb_url' | 'thumbnail_url' | 'url'>
+export type ProjectHit = Pick<Project, 'id' | 'slug' | 'title' | 'year' | 'thumb_url' | 'thumbnail_url' | 'url'>
 
 /** Site search on the server: Arabic spelling variants and small typos still match (see `search_makers`). */
 export async function searchSite(query: string, limits = { makers: 4, projects: 3 }) {
@@ -140,7 +144,7 @@ export async function searchSite(query: string, limits = { makers: 4, projects: 
   const wIds = ((w.data as { id: string }[]) || []).map((r) => r.id)
   const [cards, works] = await Promise.all([
     mIds.length ? supabase.from('profiles').select(CARD_COLUMNS).in('id', mIds) : Promise.resolve({ data: [] }),
-    wIds.length ? supabase.from('works').select('id, title, year, thumb_url, thumbnail_url, url').in('id', wIds) : Promise.resolve({ data: [] }),
+    wIds.length ? supabase.from('works').select('id, slug, title, year, thumb_url, thumbnail_url, url').in('id', wIds) : Promise.resolve({ data: [] }),
   ])
   const byOrder = <T extends { id: string }>(ids: string[], rows: T[]) => ids.map((id) => rows.find((r) => r.id === id)).filter(Boolean) as T[]
   return {

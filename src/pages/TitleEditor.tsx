@@ -69,6 +69,10 @@ export default function TitleEditor({ id }: { id?: string }) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState<File | null>(null)
+  // Short link: makerss.net/<slug>. Empty means: make one from the title.
+  const [slug, setSlug] = useState('')
+  const [slugOk, setSlugOk] = useState<boolean | null>(null)
+  const [savedSlug, setSavedSlug] = useState('')
   const crop = useRef<(() => Promise<Blob>) | null>(null)
 
   // Suggest my role from my first specialty
@@ -85,12 +89,23 @@ export default function TitleEditor({ id }: { id?: string }) {
       setTitle(p.title); setKind(p.kind); setYear(p.year ? String(p.year) : ''); setBrand(p.brand || '')
       setPlatforms(p.platforms || []); setUrl(p.url || ''); setPoster(p.thumb_url); setVideoThumb(p.thumbnail_url)
       setDescription(p.description || '')
+      setSlug(p.slug || ''); setSavedSlug(p.slug || '')
       const mine = p.credits?.find((c) => c.profile_id === p.owner_id)
       setMyRole(mine?.role || p.role || '')
       setCrew((p.credits || []).filter((c) => c.profile_id !== p.owner_id).map((c) => ({ key: c.id, profile: c.profile, name: c.display_name || undefined, role: c.role || '' })))
       setReady(true)
     })
   }, [id, profile])
+
+  useEffect(() => {
+    const s = slug.trim()
+    if (!s || s === savedSlug) return setSlugOk(null)
+    const timer = setTimeout(async () => {
+      const { data } = await supabase.rpc('work_slug_available', { p_slug: s, p_work: id || null })
+      setSlugOk(!!data)
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [slug, savedSlug, id])
 
   // Video thumbnail (YouTube instantly, Vimeo/TikTok via oEmbed)
   useEffect(() => {
@@ -135,6 +150,7 @@ export default function TitleEditor({ id }: { id?: string }) {
     if (!myRole.trim()) return setError(t('اكتب دورك في المشروع.', 'Enter your role on the project.'))
     const y = year ? Number(year) : null
     if (y !== null && (y < 1950 || y > new Date().getFullYear() + 2)) return setError(t('تحقق من السنة.', 'Check the year.'))
+    if (slug.trim() && slug.trim() !== savedSlug && slugOk === false) return setError(t('رابط المشروع محجوز، جرّب رابطاً آخر.', 'That project link is taken. Try another.'))
     setBusy(true)
     const credits = [
       { profile_id: profile.id, role: myRole.trim() },
@@ -142,10 +158,11 @@ export default function TitleEditor({ id }: { id?: string }) {
     ]
     const { data, error } = await supabase.rpc('save_work', {
       p_id: id || null,
-      p: { title: title.trim(), kind, year: y, brand: brand.trim(), platforms, url: url.trim(), thumb_url: poster, thumbnail_url: videoThumb, description: description.trim(), role: myRole.trim() },
+      p: { title: title.trim(), kind, year: y, brand: brand.trim(), platforms, url: url.trim(), thumb_url: poster, thumbnail_url: videoThumb, description: description.trim(), role: myRole.trim(), slug: slug.trim() },
       p_credits: credits,
     })
     setBusy(false)
+    if (error?.message.includes('slug')) return setError(t('رابط المشروع محجوز، جرّب رابطاً آخر.', 'That project link is taken. Try another.'))
     if (error || !data) return setError(t('تعذّر الحفظ. تحقق من البيانات وحاول مرة أخرى.', 'Could not save. Check the details and try again.'))
     go(`/projects/${data}`)
   }
@@ -177,6 +194,12 @@ export default function TitleEditor({ id }: { id?: string }) {
               <Field label={t('العميل أو الجهة', 'Brand or studio')}><TextInput maxLength={120} value={brand} onChange={(e) => setBrand(e.target.value)} /></Field>
             </div>
             <Field label={t('رابط الفيديو', 'Video link')} hint="YouTube · Vimeo · TikTok · Instagram"><TextInput type="url" dir="ltr" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" /></Field>
+            <Field label={t('رابط المشروع على Makers', 'Project link on Makers')} hint={slug.trim() && slug.trim() !== savedSlug ? (slugOk === false ? t('محجوز', 'Taken') : slugOk ? t('متاح', 'Available') : '') : undefined}>
+              <div dir="ltr" className="flex items-center rounded-xl px-3" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)', height: 44 }}>
+                <span className="font-mono text-sm shrink-0" style={{ color: 'var(--c-muted)' }}>makerss.net/</span>
+                <input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 50))} placeholder={t('يتولّد من الاسم', 'made from the title')} className="flex-1 min-w-0 font-mono text-sm" style={{ background: 'transparent', border: 'none', padding: 0, height: 'auto' }} />
+              </div>
+            </Field>
           </div>
         </div>
 
