@@ -1,9 +1,9 @@
-// Data access for the app. Same queries as the website (src/lib/data.ts), so both read the same way.
-import { useEffect, useState } from 'react'
-import { contentLabel } from './constants'
+import { supabase, type Profile } from './supabase'
 import { t, type Pair } from './i18n'
-import { PUBLIC_PROFILE_COLUMNS, supabase, type Profile, type Specialty } from './supabase'
+import { quickThumb } from './thumbs'
+import { CONTENT_TYPES } from './constants'
 
+/** Lightweight public card fields for a member. */
 export const CARD_COLUMNS = 'id, full_name, name_ar, username, avatar_url, is_founding, specialty_ids, other_specialty, city, country, followers, created_at, available, is_featured, status, account_type, content_types'
 export type MemberCard = Pick<Profile, 'id' | 'full_name' | 'name_ar' | 'username' | 'avatar_url' | 'is_founding' | 'specialty_ids' | 'other_specialty' | 'city' | 'country' | 'followers' | 'created_at' | 'available' | 'is_featured' | 'status' | 'account_type' | 'content_types'>
 
@@ -25,6 +25,8 @@ export const kindLabel = (k: string | null | undefined) => {
   return hit ? t(hit.ar, hit.en) : ''
 }
 
+export const PLATFORMS = ['YouTube', 'Instagram', 'TikTok', 'Snapchat', 'Facebook', 'X', 'Netflix', 'Shahid', 'OSN+', 'TV', 'Cinema', 'Vimeo']
+
 export interface CreditRow {
   id: string
   role: string | null
@@ -37,6 +39,7 @@ export interface CreditRow {
 
 export interface Project {
   id: string
+  slug: string
   owner_id: string
   title: string
   brand: string | null
@@ -53,7 +56,7 @@ export interface Project {
   credits?: CreditRow[]
 }
 
-const PROJECT_SELECT = `id, owner_id, title, brand, year, thumb_url, thumbnail_url, platforms, description, url, role, kind, created_at,
+const PROJECT_SELECT = `id, slug, owner_id, title, brand, year, thumb_url, thumbnail_url, platforms, description, url, role, kind, created_at,
   owner:profiles!works_owner_id_fkey(${CARD_COLUMNS}),
   credits(id, role, status, profile_id, display_name, created_at, profile:profiles!credits_profile_id_fkey(${CARD_COLUMNS}))`
 
@@ -64,37 +67,19 @@ function clean(p: Project): Project {
   return { ...p, credits }
 }
 
-export function youtubeId(url: string | null | undefined) {
-  if (!url) return null
-  const m = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i)
-  return m ? m[1] : null
-}
-const quickThumb = (url: string | null | undefined) => {
-  const yt = youtubeId(url)
-  return yt ? `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` : null
-}
+/** Public short link of a project: makerss.net/al-nahham. */
+export const projectLink = (p: Pick<Project, 'id'> & { slug?: string | null }) => `https://makerss.net/${p.slug || `projects/${p.id}`}`
 
-/** Poster: uploaded image, else the video's thumbnail. */
+/** Image to show for a project: uploaded poster, else the video's thumbnail. */
 export const posterOf = (p: Pick<Project, 'thumb_url' | 'thumbnail_url' | 'url'>) => p.thumb_url || p.thumbnail_url || quickThumb(p.url) || null
-/** Wide frame for the project page: the video's own frame when there is one. */
-export const frameOf = (p: Pick<Project, 'thumb_url' | 'thumbnail_url' | 'url'>) => {
-  const yt = youtubeId(p.url)
-  return yt ? `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` : p.thumbnail_url || null
-}
 
-export async function listProjects(opts: { limit?: number; kind?: string } = {}) {
+export async function listProjects(opts: { limit?: number; kind?: string; search?: string } = {}) {
   let q = supabase.from('works').select(PROJECT_SELECT).order('created_at', { ascending: false }).limit(opts.limit ?? 60)
   if (opts.kind) q = q.eq('kind', opts.kind)
+  if (opts.search) q = q.ilike('title', `%${opts.search.replace(/[%_,()]/g, ' ')}%`)
   const { data, error } = await q
   if (error) throw error
   return ((data as unknown as Project[]) || []).map(clean)
-}
-
-/** Newest project from each maker, like "New on Makers" on the website. */
-export async function newOnMakers(count = 10) {
-  const list = await listProjects({ limit: 80 })
-  const seen = new Set<string>()
-  return list.filter((p) => (seen.has(p.owner_id) ? false : (seen.add(p.owner_id), true))).slice(0, count)
 }
 
 export async function getProject(id: string) {
@@ -103,6 +88,7 @@ export async function getProject(id: string) {
   return data ? clean(data as unknown as Project) : null
 }
 
+/** Projects a member owns or is credited on (newest first). */
 export async function projectsForMember(profileId: string) {
   const [own, credited] = await Promise.all([
     supabase.from('works').select(PROJECT_SELECT).eq('owner_id', profileId),
@@ -118,6 +104,7 @@ export async function projectsForMember(profileId: string) {
   return [...ownList, ...extra].sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || b.created_at.localeCompare(a.created_at))
 }
 
+/** The role a member played on a project. */
 export function roleOn(p: Project, profileId: string) {
   const c = p.credits?.find((x) => x.profile_id === profileId)
   return c?.role || (p.owner_id === profileId ? p.role : null) || ''
@@ -128,11 +115,8 @@ export async function listMembers(limit = 200) {
   return (data as unknown as MemberCard[]) || []
 }
 
-export async function getMember(username: string) {
-  const { data } = await supabase.from('profiles').select(PUBLIC_PROFILE_COLUMNS).ilike('username', username).maybeSingle()
-  return (data as unknown as Profile) || null
-}
-
+/** Makers ranked by activity this week. `ranked` is false when nobody had any activity,
+ *  so the page does not show a ranking that means nothing. */
 export async function topMakers(limit = 10): Promise<{ list: MemberCard[]; ranked: boolean }> {
   const { data } = await supabase.rpc('top_makers', { p_limit: limit })
   const rows = (data as { id: string; score: number }[]) || []
@@ -144,19 +128,32 @@ export async function topMakers(limit = 10): Promise<{ list: MemberCard[]; ranke
   return { list: ids.map((id) => list.find((m) => m.id === id)).filter(Boolean) as MemberCard[], ranked: active.length > 0 }
 }
 
-/** Server search with Arabic spelling variants (same RPCs as the website header). */
-export async function searchMakers(query: string, limit = 30) {
+export type ProjectHit = Pick<Project, 'id' | 'slug' | 'title' | 'year' | 'thumb_url' | 'thumbnail_url' | 'url'>
+
+/** Site search on the server: Arabic spelling variants and small typos still match (see `search_makers`). */
+export async function searchSite(query: string, limits = { makers: 4, projects: 3 }) {
   const q = query.trim()
-  if (q.length < 2) return []
-  const { data } = await supabase.rpc('search_makers', { p_q: q, p_limit: limit, p_kinds: [] })
-  const ids = ((data as { id: string }[]) || []).map((r) => r.id)
-  if (!ids.length) return []
-  const { data: cards } = await supabase.from('profiles').select(CARD_COLUMNS).in('id', ids)
-  const list = (cards as unknown as MemberCard[]) || []
-  return ids.map((id) => list.find((m) => m.id === id)).filter(Boolean) as MemberCard[]
+  if (q.length < 2) return { makers: [] as MemberCard[], projects: [] as ProjectHit[] }
+  const lower = q.toLowerCase()
+  const kinds = CONTENT_TYPES.filter((c) => `${c.ar} ${c.en}`.toLowerCase().includes(lower)).map((c) => c.key)
+  const [m, w] = await Promise.all([
+    supabase.rpc('search_makers', { p_q: q, p_limit: limits.makers, p_kinds: kinds }),
+    supabase.rpc('search_projects', { p_q: q, p_limit: limits.projects }),
+  ])
+  const mIds = ((m.data as { id: string }[]) || []).map((r) => r.id)
+  const wIds = ((w.data as { id: string }[]) || []).map((r) => r.id)
+  const [cards, works] = await Promise.all([
+    mIds.length ? supabase.from('profiles').select(CARD_COLUMNS).in('id', mIds) : Promise.resolve({ data: [] }),
+    wIds.length ? supabase.from('works').select('id, slug, title, year, thumb_url, thumbnail_url, url').in('id', wIds) : Promise.resolve({ data: [] }),
+  ])
+  const byOrder = <T extends { id: string }>(ids: string[], rows: T[]) => ids.map((id) => rows.find((r) => r.id === id)).filter(Boolean) as T[]
+  return {
+    makers: byOrder(mIds, (cards.data as unknown as MemberCard[]) || []),
+    projects: byOrder(wIds, (works.data as unknown as ProjectHit[]) || []),
+  }
 }
 
-export const totalFollowers = (m: Pick<Profile, 'followers'>) => Object.values(m.followers || {}).reduce((s, n) => s + (Number(n) || 0), 0)
+export const totalFollowers =(m: Pick<Profile, 'followers'>) => Object.values(m.followers || {}).reduce((s, n) => s + (Number(n) || 0), 0)
 
 export function formatFollowers(n: number) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1).replace(/\.0$/, '')}M`
@@ -166,41 +163,6 @@ export function formatFollowers(n: number) {
 
 export const displayName = (m: Pick<Profile, 'full_name' | 'name_ar'> | null | undefined) =>
   (m ? t(m.name_ar || m.full_name || '', m.full_name || m.name_ar || '') : '') || t('عضو', 'Member')
-
-// ── Specialties ──────────────────────────────────────────────
-let specCache: Specialty[] | null = null
-export function useSpecialties() {
-  const [list, setList] = useState<Specialty[]>(specCache || [])
-  useEffect(() => {
-    if (specCache) return
-    supabase.from('specialties').select('*').eq('is_active', true).order('sort').then(({ data }) => {
-      specCache = (data as Specialty[]) || []
-      setList(specCache)
-    })
-  }, [])
-  return list
-}
-export const specName = (list: Specialty[], id: number) => {
-  const s = list.find((x) => x.id === id)
-  return s ? t(s.name_ar || s.name_en, s.name_en || s.name_ar || '') : ''
-}
-export const isCreator = (m: Partial<Pick<Profile, 'account_type'>> | null | undefined) => m?.account_type === 'creator'
-
-/** Short label for cards: first specialty, or first content category for creators. */
-export function firstRole(list: Specialty[], m: Pick<Profile, 'specialty_ids' | 'other_specialty'> & Partial<Pick<Profile, 'account_type' | 'content_types'>>) {
-  if (isCreator(m)) return m.content_types?.[0] ? contentLabel(m.content_types[0]) : t('صانع محتوى', 'Content creator')
-  return m.specialty_ids?.[0] ? specName(list, m.specialty_ids[0]) : m.other_specialty || ''
-}
-/** Full line of what a member does. */
-export function memberLine(list: Specialty[], m: Pick<Profile, 'specialty_ids' | 'other_specialty'> & Partial<Pick<Profile, 'account_type' | 'content_types'>>) {
-  if (isCreator(m)) {
-    const kinds = (m.content_types || []).map(contentLabel).filter(Boolean)
-    return kinds.length ? `${t('صانع محتوى', 'Creator')} · ${kinds.join(t('، ', ', '))}` : t('صانع محتوى', 'Content creator')
-  }
-  const names = (m.specialty_ids || []).map((id) => specName(list, id)).filter(Boolean)
-  if (m.other_specialty) names.push(m.other_specialty)
-  return names.join(t(' و', ' & '))
-}
 
 // ── Open calls ───────────────────────────────────────────────
 export interface OpenCall {
@@ -217,36 +179,20 @@ export interface OpenCall {
   budget: string | null
   deadline: string | null
   status: 'pending' | 'open' | 'closed' | 'rejected'
+  review_note: string | null
   applicants_count: number
   created_at: string
   owner?: MemberCard | null
 }
 
-const CALL_SELECT = `*, owner:profiles!open_calls_owner_id_fkey(${CARD_COLUMNS})`
+export const CALL_SELECT = `*, owner:profiles!open_calls_owner_id_fkey(${CARD_COLUMNS})`
 
 export async function listOpenCalls(limit = 50) {
   const { data } = await supabase.from('open_calls').select(CALL_SELECT).eq('status', 'open').order('created_at', { ascending: false }).limit(limit)
   return (data as unknown as OpenCall[]) || []
 }
 
-export async function getOpenCall(id: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return null
-  const { data } = await supabase.from('open_calls').select(CALL_SELECT).eq('id', id).maybeSingle()
-  return (data as unknown as OpenCall) || null
-}
-
-/** Small hook: run an async loader and keep { data, loading, error, reload }. */
-export function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = []) {
-  const [state, setState] = useState<{ data: T | null; loading: boolean; error: boolean }>({ data: null, loading: true, error: false })
-  const [tick, setTick] = useState(0)
-  useEffect(() => {
-    let alive = true
-    setState((s) => ({ ...s, loading: true, error: false }))
-    fn()
-      .then((data) => alive && setState({ data, loading: false, error: false }))
-      .catch(() => alive && setState({ data: null, loading: false, error: true }))
-    return () => { alive = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, tick])
-  return { ...state, reload: () => setTick((n) => n + 1) }
+export const CALL_COLORS: Record<string, string> = {
+  commercial: '', film: '#2563EB', short: '#0891B2', series: '#9333EA', documentary: '#2563EB',
+  'music-video': '#DC2626', social: '#059669', program: '#D97706', 'ai-film': '#7C3AED', 'ai-video': '#A855F7', other: '#7A6E66',
 }

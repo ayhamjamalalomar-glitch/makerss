@@ -164,20 +164,21 @@ Apply schema changes as named migrations (Supabase MCP `apply_migration` or CLI)
 - Footer has no social links yet; waiting for Ayham to give the real Makers accounts.
 - Favicon at 32px shows the full three-line wordmark, which is hard to read. Ayham may want a short version later; ask first.
 
-## 9. iOS app (mobile/)
+## 9. iOS app (`mobile/`)
 
-Native app in `mobile/`: Expo SDK 57 (React Native 0.86, expo-router, NativeTabs). Same Supabase project, same accounts, same RLS; no separate backend.
+Native app in `mobile/`: Expo SDK 57, React Native 0.86, Expo Router with native iOS tabs. Same Supabase project, same accounts, same RLS; no separate backend. Full notes and commands in `mobile/README.md`.
 
-- Plan agreed with Ayham (2026-09-30): website launches officially in October; the app follows on the App Store by the end of October.
-  - Week 1: browse screens (Home, Makers, Projects, Open calls tabs; maker profile, project, open call screens). Done.
-  - Week 2: sign in / sign up, edit profile, Messages with collab requests.
-  - Week 3: push notifications (new message, collab request, application), in-app account deletion (Apple requires it), polish, TestFlight.
-  - Week 4: App Store submission and review fixes.
-  - Stays on the website at first: posting an open call, adding a project, admin.
-- Arabic first and RTL: `I18nManager.forceRTL(true)` plus `direction: 'rtl'` on the root view (`src/app/_layout.tsx`), `extra.supportsRTL/forcesRTL` in app.json. Use start/end, never left/right. English toggle comes with the account screen (needs an app reload for LTR).
-- Code map: `src/lib/` (supabase with AsyncStorage session, data.ts ported from the website's data layer, theme.ts tokens, i18n.ts, constants.ts), `src/components/ui.tsx` (Txt, Screen, PageTitle, SectionHeader, Rail, PosterCard, CastCard, MakerRow, CallCard, Btn, Chip, Tag, Avatar, FoundingBadge), routes in `src/app/`.
-- Fonts: custom fonts pick weight by family (`F` in theme.ts): Alexandria (display), Readex Pro (body), JetBrains Mono (Latin labels only), Archivo Black (wordmark).
-- Add packages with `npx expo install` (offline sandbox: `EXPO_OFFLINE=1 npx expo install ...`). Check with `npx tsc --noEmit` in mobile/.
-- Bundle id `net.makerss.app`. Builds and store submission go through EAS once Ayham's Apple Developer account exists; he signs in himself.
-- `.vercelignore` excludes mobile/ from the website deploy.
-- Web preview of the app lives at makerss.net/app (static files in `public/app`, `experiments.baseUrl: '/app'`, vercel.json rewrite, robots noindex, username `app` reserved). Rebuild it with `npm run export:preview` in mobile/. `(tabs)/_layout.web.tsx` gives the web preview a bottom tab bar; the real app uses NativeTabs.
+- 2026-10-01: Ayham chose this version of the app (built on branch `ios-app`, merged into `main`). It replaced an earlier "week 1" app from another session and its web preview at makerss.net/app (removed; the path stays reserved). Next step: App Store submission.
+- Decisions from Ayham: Expo React Native; admin panel stays on the website only; push notifications from the start; tabs Home, Makers, Projects, Calls, Account, with Messages as a button with the unread count at the top of the tab screens.
+- Screens: home, makers directory, projects, open calls (apply, post), maker profile, project (video in the Makers player), chat (realtime, typing, collab cards), inbox, review status, page editor (own 3:4 photo cropper), project editor (poster 2:3, crew, short link), settings (language, theme, push and email switches, password link, delete account), sign in, join, search.
+- Arabic is the default whatever the phone language; EN / ع switch on the home screen. The whole app lays out right to left through `direction` on the root view (not the system RTL switch), and the root is keyed by language so a switch rebuilds every screen (React Compiler keeps rendered text otherwise). In Arabic the tab order is reversed so Home sits on the right.
+- Videos: YouTube plays in the Makers player, `public/player.html` on the website, loaded in a WebView (full screen opens it again, turned to landscape). Vimeo keeps its own player without title and byline.
+- Push: routes match the push links (`/chat/<id>`, `/inbox`, `/messages`, `/makers`, `/account`, `/status`, `/call/<id>`, `/calls`). Backend (migration `20260930100000_push_and_account_deletion`): `push_tokens`, `register_push_token`, `unregister_push_token`, `notification_prefs.push_enabled`, `push_outbox`, `enqueue_push`, `claim_pushes`, `kick_push_worker`, pg_cron job `push-worker`, Edge Function `send-push` (verify_jwt off, checks the worker secret). Pushes only work in a real build (not Expo Go) after `eas init`.
+- `delete_my_account()`: in-app account deletion (Apple requires it); staff accounts are refused.
+- Bundle id `net.makerss.app`, scheme `makers://`. Builds and store submission go through EAS; Ayham signs in to Expo and Apple himself. Before submission: privacy policy, terms of use (accepted at sign up, Apple rule for user content), support page.
+- Add packages with `npx expo install`; check with `npx tsc --noEmit` and `npx expo-doctor` in mobile/. `.vercelignore` keeps mobile/ out of the website deploy.
+
+## 10. Short project links (2026-10-01)
+
+- `works.slug` (migration `project_short_links`): made from the title (Arabic letters written in Latin by `slugify`), unique, never equal to a username or a site path (`reserved_path`). Trigger `works_slug_guard` fills and checks it on every insert or change; `username_available`, `make_username` and trigger `profiles_username_guard` keep usernames clear of project links. `save_work` takes an optional `p.slug`; RPC `work_slug_available(p_slug, p_work)` for the editors.
+- makerss.net/<slug> opens the project: `MakerProfile` falls back to the project when no member has that name. `/projects/<id>` still works and switches the address bar to the short link. `projectPath()` in `data.ts` builds links; shares, share previews (middleware) and the sitemap use the short link.
