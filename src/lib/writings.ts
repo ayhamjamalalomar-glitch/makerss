@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { supabase, type Profile } from './supabase'
+import { useAuth } from './auth'
 import { t } from './i18n'
 import { CARD_COLUMNS, type MemberCard } from './data'
 
@@ -51,6 +53,23 @@ export const writingPath = (w: Pick<Writing, 'id'>) => `/writing/${w.id}`
 /** Client hint only (the server decides): an approved member with a writing specialty. */
 export const isWriterProfile = (p: Pick<Profile, 'status' | 'specialty_ids'> | null | undefined) =>
   !!p && p.status === 'approved' && (p.specialty_ids || []).some((id) => WRITER_SPECIALTY_IDS.includes(id))
+
+// The server decides who writes (specialty, or an exception granted by the team in writer_grants).
+const writerCache = new Map<string, Promise<WriterStatus>>()
+/** True when the signed-in member may publish writing. */
+export function useIsWriter() {
+  const { profile } = useAuth()
+  const id = profile?.status === 'approved' ? profile.id : null
+  const [on, setOn] = useState(() => isWriterProfile(profile))
+  useEffect(() => {
+    if (!id) { setOn(false); return }
+    let live = true
+    if (!writerCache.has(id)) writerCache.set(id, myWriterStatus())
+    writerCache.get(id)!.then((s) => { if (live) setOn(s.writer) })
+    return () => { live = false }
+  }, [id])
+  return on
+}
 
 export async function listWritings(opts: { kind?: WritingKind; owner?: string; limit?: number; all?: boolean; status?: WritingStatus } = {}) {
   let q = supabase.from('writings').select(LIST_SELECT).order('published_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false }).limit(opts.limit ?? 60)

@@ -17,7 +17,7 @@ import { useDarkHero } from '../lib/hero'
 import { motion } from 'framer-motion'
 import TitlePage from './TitlePage'
 import { WritingCard } from '../components/writing'
-import { isWriterProfile, listWritings, type Writing } from '../lib/writings'
+import { useIsWriter, listWritings, type Writing } from '../lib/writings'
 
 const SOCIAL_LABEL: Record<string, string> = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', x: 'X', snapchat: 'Snapchat', facebook: 'Facebook', linkedin: 'LinkedIn', vimeo: 'Vimeo', behance: 'Behance', website: 'Website' }
 
@@ -46,6 +46,7 @@ export default function MakerProfile({ username }: { username: string }) {
   const toast = useToast()
   const [tab, setTab] = useState<Tab>(() => (new URLSearchParams(window.location.search).get('tab') === 'writing' ? 'writing' : 'overview'))
   const [writings, setWritings] = useState<Writing[]>([])
+  const viewerWriter = useIsWriter()
   const [pickOpen, setPickOpen] = useState(false)
   const [pick, setPick] = useState<string[]>([])
   const [aboutOpen, setAboutOpen] = useState(false)
@@ -249,7 +250,7 @@ export default function MakerProfile({ username }: { username: string }) {
 
         <div className="relative max-w-[1120px] mx-auto w-full px-4 sm:px-8">
           <div className="flex gap-1 overflow-x-auto no-scrollbar" role="tablist" style={{ borderBottom: '1px solid var(--c-border)' }}>
-            {([['overview', t('نظرة عامة', 'Overview')], ['credits', t(`الأعمال (${projects.length})`, `Credits (${projects.length})`)], ...(writings.length || (isOwner && isWriterProfile(p)) ? [['writing', t(`كتابات (${writings.length})`, `Writing (${writings.length})`)]] : []), ['about', t('نبذة', 'About')]] as [Tab, string][]).map(([id, text]) => (
+            {([['overview', t('نظرة عامة', 'Overview')], ['credits', t(`الأعمال (${projects.length})`, `Credits (${projects.length})`)], ...(writings.length || (isOwner && viewerWriter) ? [['writing', t(`كتابات (${writings.length})`, `Writing (${writings.length})`)]] : []), ['about', t('نبذة', 'About')]] as [Tab, string][]).map(([id, text]) => (
               <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className="font-medium px-5 py-3.5 relative cursor-pointer shrink-0 transition-colors" style={{ background: 'none', border: 'none', color: tab === id ? 'var(--c-text)' : 'var(--c-muted)', fontSize: 14 }}>
                 {text}
                 {tab === id && <motion.div layoutId="profile-tab" className="absolute bottom-0 inset-x-3 h-[2px] rounded-full" style={{ background: 'var(--c-accent)' }} />}
@@ -361,7 +362,7 @@ export default function MakerProfile({ username }: { username: string }) {
 
             {tab === 'writing' && (
               <section>
-                <SectionHeader title={t('كتابات', 'Writing')} count={writings.length} action={isOwner && isWriterProfile(p) ? <Link to="/writing/new" className="text-xs font-semibold" style={{ color: 'var(--c-accent)' }}>{t('+ اكتب', '+ Write')}</Link> : undefined} />
+                <SectionHeader title={t('كتابات', 'Writing')} count={writings.length} action={isOwner && viewerWriter ? <Link to="/writing/new" className="text-xs font-semibold" style={{ color: 'var(--c-accent)' }}>{t('+ اكتب', '+ Write')}</Link> : undefined} />
                 {writings.length === 0 ? (
                   <div className="rounded-xl p-6 text-sm" style={{ ...box, borderStyle: 'dashed', color: 'var(--c-muted)' }}>{t('لم تنشر كتابات بعد. مقال، سيناريو منجز، أو ستوري بورد.', 'No writing yet. An article, a finished script, or a storyboard.')}</div>
                 ) : (

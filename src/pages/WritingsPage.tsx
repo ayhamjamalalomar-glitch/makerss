@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react'
 import Link from '../lib/router'
 import { t, useLang } from '../lib/i18n'
-import { useAuth } from '../lib/auth'
 import { PageHeader } from '../components/cine'
 import { Chip, Skeleton } from '../components/mk'
 import { WritingCard } from '../components/writing'
-import { isWriterProfile, listWritings, WRITING_KINDS, type Writing, type WritingKind } from '../lib/writings'
+import { useIsWriter, listWritings, WRITING_KINDS, type Writing, type WritingKind } from '../lib/writings'
 
 export default function WritingsPage() {
   useLang()
-  const { profile } = useAuth()
   const [kind, setKind] = useState<WritingKind | null>(() => {
     const k = new URLSearchParams(window.location.search).get('kind')
     return WRITING_KINDS.some((x) => x.key === k) ? (k as WritingKind) : null
@@ -30,7 +28,7 @@ export default function WritingsPage() {
     listWritings({ kind: kind || undefined, limit: 120 }).then(setList).catch(() => setList([]))
   }, [kind])
 
-  const writer = isWriterProfile(profile)
+  const writer = useIsWriter()
 
   return (
     <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8 sm:py-10 flex flex-col gap-7">

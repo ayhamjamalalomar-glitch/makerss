@@ -7,13 +7,14 @@ import { motion } from 'framer-motion'
 import Logo from './Logo'
 import { useHasDarkHero } from '../lib/hero'
 import { Avatar } from './mk'
-import { isWriterProfile } from '../lib/writings'
+import { useIsWriter } from '../lib/writings'
 
 function AccountMenu() {
   const { profile, signOut } = useAuth()
   const { go } = useRouter()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const writer = useIsWriter()
   useEffect(() => {
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
     document.addEventListener('mousedown', h)
@@ -41,7 +42,7 @@ function AccountMenu() {
           {!approved && item('/me/status', t('حالة الطلب', 'Application status'))}
           {approved && item('/projects/new', t('أضف مشروعاً', 'Add a project'))}
           {approved && item('/opportunities/new', t('انشر فرصة', 'Post an opportunity'))}
-          {isWriterProfile(profile) && item('/writing/new', t('اكتب', 'Write'))}
+          {writer && item('/writing/new', t('اكتب', 'Write'))}
           {item('/inbox', t('الوارد', 'Inbox'))}
           {approved && item('/messages', t('الرسائل', 'Messages'))}
           {staff && item('/admin', t('لوحة الإدارة', 'Admin'))}

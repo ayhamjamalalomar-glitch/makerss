@@ -203,4 +203,6 @@ Backend (migration `20261008100000_writings.sql`, applied in parts):
 
 Frontend: `src/lib/writings.ts` (data), `src/components/writing.tsx` (cover, card, safe article renderer: `## `, `### `, `> `, `- `, `**bold**`, rendered as React, never HTML), pages `WritingsPage`, `WritingPage`, `WritingEditor` (unsent new article kept in localStorage 'mk-writing-draft'). Also: profile tab "كتابات", landing rail "من دفتر الكتّاب", header nav and account menu "اكتب", admin tab "الكتابات", share previews and sitemap in `middleware.ts`.
 
+- Exceptions (2026-10-08): table `writer_grants` lets the team give writing permission to a member without a writing specialty; `is_writer` checks it, admins switch it with `admin_set_writer(p_user, p_on, p_note)`. First exception: Mohammad Labbad (approved by Ayham). The site asks the server through `useIsWriter()` (my_writer_status), so menus follow the exception too.
+
 Not in the iOS app yet.
