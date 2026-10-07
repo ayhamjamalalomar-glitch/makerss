@@ -30,6 +30,12 @@ function render(kind: string, p: Payload, ar: boolean): Push | null {
       return { title: t('فرصتك منشورة', 'Your open call is live'), body: s(p.title), url: `/call/${s(p.call_id)}` }
     case 'call_rejected':
       return { title: t('فرصتك لم تُنشر', 'Your open call was not published'), body: s(p.title), url: '/calls' }
+    case 'writing_approved':
+      return { title: t('كتابتك منشورة', 'Your writing is live'), body: s(p.title), url: '/account' }
+    case 'writing_rejected':
+      return { title: t('كتابتك تحتاج تعديلاً', 'Your writing needs changes'), body: s(p.title), url: '/account' }
+    case 'writer_trusted':
+      return { title: t('مبارك، كتاباتك تُنشر مباشرة', 'Congratulations, you now publish directly'), body: t('راجع الفريق أول خمس كتابات لك. من اليوم تُنشر كتاباتك بدون مراجعة.', 'The team reviewed your first five writings. From now on you publish without review.'), url: '/account' }
   }
   return null
 }

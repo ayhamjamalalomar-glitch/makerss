@@ -22,7 +22,7 @@ export default function BottomNav() {
   const items: { key: keyof typeof Icon; to: string; label: string; active: boolean; badge?: number }[] = [
     { key: 'home', to: '/', label: t('الرئيسية', 'Home'), active: first === '' },
     { key: 'projects', to: '/projects', label: t('مشاريع', 'Projects'), active: first === 'projects' },
-    { key: 'makers', to: '/makers', label: t('صنّاع', 'Makers'), active: first === 'makers' || (!!first && !['projects', 'opportunities', 'messages', 'inbox', 'me', 'admin'].includes(first)) },
+    { key: 'makers', to: '/makers', label: t('صنّاع', 'Makers'), active: first === 'makers' || (!!first && !['projects', 'opportunities', 'messages', 'inbox', 'me', 'admin', 'writing', 'writings'].includes(first)) },
     { key: 'calls', to: '/opportunities', label: t('فرص', 'Open Calls'), active: first === 'opportunities' },
   ]
   if (approved) items.push({ key: 'messages', to: '/messages', label: t('الرسائل', 'Messages'), active: first === 'messages', badge: unread })

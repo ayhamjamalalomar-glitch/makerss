@@ -61,6 +61,7 @@ function Palette({ onClose }: { onClose: () => void }) {
     { key: 'p-creators', kind: 'page', label: t('صنّاع المحتوى', 'Content creators'), to: '/makers?type=creator' },
     { key: 'p-projects', kind: 'page', label: t('المشاريع', 'Projects'), to: '/projects' },
     { key: 'p-calls', kind: 'page', label: t('الفرص المفتوحة', 'Open calls'), to: '/opportunities' },
+    { key: 'p-writing', kind: 'page', label: t('كتابات', 'Writing'), to: '/writing' },
     ...(profile ? [
       { key: 'p-me', kind: 'page' as const, label: t('صفحتي', 'My page'), to: '/me' },
       { key: 'p-inbox', kind: 'page' as const, label: t('الوارد', 'Inbox'), to: '/inbox' },

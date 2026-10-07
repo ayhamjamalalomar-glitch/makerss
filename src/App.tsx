@@ -16,6 +16,8 @@ import MakerProfile from './pages/MakerProfile'
 import TitlesPage from './pages/TitlesPage'
 import TitlePage from './pages/TitlePage'
 import OpenProjects from './pages/OpenProjects'
+import WritingsPage from './pages/WritingsPage'
+import WritingPage from './pages/WritingPage'
 
 // Pages that only signed-in members or the team open load on demand, so first visits stay light.
 const TitleEditor = lazy(() => import('./pages/TitleEditor'))
@@ -27,6 +29,7 @@ const StatusPage = lazy(() => import('./pages/StatusPage'))
 const InboxPage = lazy(() => import('./pages/InboxPage'))
 const MessagesPage = lazy(() => import('./pages/MessagesPage'))
 const Admin = lazy(() => import('./pages/Admin'))
+const WritingEditor = lazy(() => import('./pages/WritingEditor'))
 
 export default function App() {
   const { path, search, go } = useRouter()
@@ -56,6 +59,10 @@ export default function App() {
   else if (first === 'projects') page = <TitlesPage />
   else if (first === 'opportunities' && second === 'new') page = <OpenCallEditor />
   else if (first === 'opportunities') page = <OpenProjects openId={second || undefined} />
+  else if (first === 'writing' && second === 'new') page = <WritingEditor />
+  else if (first === 'writing' && second && third === 'edit') page = <WritingEditor id={second} />
+  else if (first === 'writing' && second) page = <WritingPage id={second} />
+  else if (first === 'writing' || first === 'writings') page = <WritingsPage />
   else if (first === 'me' && second === 'status') page = <StatusPage />
   else if (first === 'me') page = <EditorPage />
   else if (first === 'inbox') page = <InboxPage />

@@ -16,6 +16,8 @@ import { RecBadge } from '../components/cine'
 import { useDarkHero } from '../lib/hero'
 import { motion } from 'framer-motion'
 import TitlePage from './TitlePage'
+import { WritingCard } from '../components/writing'
+import { isWriterProfile, listWritings, type Writing } from '../lib/writings'
 
 const SOCIAL_LABEL: Record<string, string> = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', x: 'X', snapchat: 'Snapchat', facebook: 'Facebook', linkedin: 'LinkedIn', vimeo: 'Vimeo', behance: 'Behance', website: 'Website' }
 
@@ -26,7 +28,7 @@ function socialHref(key: string, v: string) {
   return base[key] ? base[key] + h : null
 }
 
-type Tab = 'overview' | 'credits' | 'about'
+type Tab = 'overview' | 'credits' | 'writing' | 'about'
 
 const box = { background: 'var(--c-surface)', border: '1px solid var(--c-border)' } as const
 const eyebrow = { letterSpacing: '0.12em', fontWeight: 600, fontSize: 11, color: 'var(--c-muted)', textTransform: 'uppercase' } as const
@@ -42,7 +44,8 @@ export default function MakerProfile({ username }: { username: string }) {
   const [contactOpen, setContactOpen] = useState(false)
   const [msgBusy, setMsgBusy] = useState(false)
   const toast = useToast()
-  const [tab, setTab] = useState<Tab>('overview')
+  const [tab, setTab] = useState<Tab>(() => (new URLSearchParams(window.location.search).get('tab') === 'writing' ? 'writing' : 'overview'))
+  const [writings, setWritings] = useState<Writing[]>([])
   const [pickOpen, setPickOpen] = useState(false)
   const [pick, setPick] = useState<string[]>([])
   const [aboutOpen, setAboutOpen] = useState(false)
@@ -65,8 +68,14 @@ export default function MakerProfile({ username }: { username: string }) {
       if (!prof) return
       document.title = `${prof.full_name} | Makers`
       if (prof.status === 'approved') track('profile', prof.id, 'view')
-      const [list, a] = await Promise.all([projectsForMember(prof.id), supabase.from('awards').select('*').eq('owner_id', prof.id).order('year', { ascending: false })])
+      const [list, a, ws] = await Promise.all([
+        projectsForMember(prof.id),
+        supabase.from('awards').select('*').eq('owner_id', prof.id).order('year', { ascending: false }),
+        // The owner also sees their own writings in review; everyone else sees published ones.
+        (async () => { const { data: { session: s } } = await supabase.auth.getSession(); return listWritings({ owner: prof.id, all: s?.user.id === prof.id, limit: 100 }).catch(() => [] as Writing[]) })(),
+      ])
       setProjects(list)
+      setWritings(ws)
       setAwards((a.data as Award[]) || [])
     })
     return () => { document.title = 'Makers · دليل صنّاع الإنتاج العرب' }
@@ -240,7 +249,7 @@ export default function MakerProfile({ username }: { username: string }) {
 
         <div className="relative max-w-[1120px] mx-auto w-full px-4 sm:px-8">
           <div className="flex gap-1 overflow-x-auto no-scrollbar" role="tablist" style={{ borderBottom: '1px solid var(--c-border)' }}>
-            {([['overview', t('نظرة عامة', 'Overview')], ['credits', t(`الأعمال (${projects.length})`, `Credits (${projects.length})`)], ['about', t('نبذة', 'About')]] as [Tab, string][]).map(([id, text]) => (
+            {([['overview', t('نظرة عامة', 'Overview')], ['credits', t(`الأعمال (${projects.length})`, `Credits (${projects.length})`)], ...(writings.length || (isOwner && isWriterProfile(p)) ? [['writing', t(`كتابات (${writings.length})`, `Writing (${writings.length})`)]] : []), ['about', t('نبذة', 'About')]] as [Tab, string][]).map(([id, text]) => (
               <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className="font-medium px-5 py-3.5 relative cursor-pointer shrink-0 transition-colors" style={{ background: 'none', border: 'none', color: tab === id ? 'var(--c-text)' : 'var(--c-muted)', fontSize: 14 }}>
                 {text}
                 {tab === id && <motion.div layoutId="profile-tab" className="absolute bottom-0 inset-x-3 h-[2px] rounded-full" style={{ background: 'var(--c-accent)' }} />}
@@ -345,6 +354,19 @@ export default function MakerProfile({ username }: { username: string }) {
                         </Link>
                       )
                     })}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {tab === 'writing' && (
+              <section>
+                <SectionHeader title={t('كتابات', 'Writing')} count={writings.length} action={isOwner && isWriterProfile(p) ? <Link to="/writing/new" className="text-xs font-semibold" style={{ color: 'var(--c-accent)' }}>{t('+ اكتب', '+ Write')}</Link> : undefined} />
+                {writings.length === 0 ? (
+                  <div className="rounded-xl p-6 text-sm" style={{ ...box, borderStyle: 'dashed', color: 'var(--c-muted)' }}>{t('لم تنشر كتابات بعد. مقال، سيناريو منجز، أو ستوري بورد.', 'No writing yet. An article, a finished script, or a storyboard.')}</div>
+                ) : (
+                  <div className="grid gap-x-4 gap-y-7" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))' }}>
+                    {writings.map((w) => <WritingCard key={w.id} w={w} showStatus={isOwner} />)}
                   </div>
                 )}
               </section>

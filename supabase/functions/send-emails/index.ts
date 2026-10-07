@@ -103,6 +103,48 @@ function render(kind: string, p: Payload): Mail | null {
         ar: { title: 'فرصة جديدة بانتظار المراجعة', lines: [`نشر ${s(p.owner)} فرصة «${s(p.title)}» وهي بانتظار المراجعة.`], cta: 'افتح لوحة الإدارة', link: '/admin' },
         en: { title: 'An open call is waiting for review', lines: [`${s(p.owner)} posted "${s(p.title)}".`], cta: 'Open admin', link: '/admin' },
       }
+    case 'writing_approved':
+      return {
+        subject: `كتابتك منشورة: ${s(p.title)} | Your writing is live`,
+        ar: { title: 'كتابتك منشورة', lines: [hi(name), `راجع فريق Makers «${s(p.title)}» وهي الآن منشورة في صفحتك وفي قسم الكتابات.`], cta: 'افتح الكتابة', link: `/writing/${s(p.id)}` },
+        en: { title: 'Your writing is live', lines: [hiEn(name), `The Makers team reviewed "${s(p.title)}" and it is now live on your page and in Writing.`], cta: 'Open it', link: `/writing/${s(p.id)}` },
+      }
+    case 'writing_rejected':
+      return {
+        subject: `كتابتك تحتاج تعديلاً: ${s(p.title)} | Your writing needs changes`,
+        ar: { title: 'كتابتك تحتاج تعديلاً', lines: [hi(name), `راجع فريق Makers «${s(p.title)}»، وهي تحتاج بعض التعديلات قبل النشر.`], quote: s(p.note), cta: 'عدّل الكتابة', link: `/writing/${s(p.id)}/edit` },
+        en: { title: 'Your writing needs changes', lines: [hiEn(name), `The Makers team reviewed "${s(p.title)}" and it needs a few changes before it goes live.`], cta: 'Edit it', link: `/writing/${s(p.id)}/edit` },
+      }
+    case 'writer_trusted':
+      return {
+        subject: 'مبارك، كتاباتك تُنشر الآن مباشرة | You now publish directly',
+        ar: {
+          title: 'مبارك، كتاباتك تُنشر مباشرة',
+          lines: [
+            hi(name),
+            'راجع فريق Makers أول خمس كتابات نشرتها، ومن اليوم تُنشر كتاباتك فور إرسالها بدون مراجعة مسبقة.',
+            'هذه ثقة نعتز بها، ونحثّك على الالتزام بسياسات Makers وأخلاقيات المهنة: انشر أعمالك أنت فقط، واذكر مصادرك، واحترم حقوق الآخرين وخصوصيتهم، وابتعد عن الإساءة والمحتوى المضلّل.',
+            'وتبقى أي كتابة قابلة للمراجعة إذا وصلنا بلاغ عنها.',
+          ],
+          cta: 'اكتب جديدك', link: '/writing/new',
+        },
+        en: {
+          title: 'Congratulations, you now publish directly',
+          lines: [
+            hiEn(name),
+            'The Makers team reviewed your first five writings. From today what you publish goes live right away, with no review first.',
+            "We value this trust, and we ask you to keep to the Makers policies and the ethics of the craft: publish only your own work, credit your sources, respect other people's rights and privacy, and stay away from abuse and misleading content.",
+            'Any writing can still be reviewed if it is reported.',
+          ],
+          cta: 'Write something new', link: '/writing/new',
+        },
+      }
+    case 'admin_writing_needed':
+      return {
+        subject: `كتابة بانتظار المراجعة: ${s(p.title)}`,
+        ar: { title: 'كتابة جديدة بانتظار المراجعة', lines: [`أرسل ${s(p.owner)} «${s(p.title)}» للمراجعة.`], cta: 'افتح لوحة الإدارة', link: '/admin?tab=writings' },
+        en: { title: 'A writing is waiting for review', lines: [`${s(p.owner)} sent "${s(p.title)}".`], cta: 'Open admin', link: '/admin?tab=writings' },
+      }
     case 'admin_report':
       return {
         subject: 'بلاغ جديد على Makers',

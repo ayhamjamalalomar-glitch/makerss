@@ -37,7 +37,7 @@ export default function Footer() {
   }
 
   const credits: [string, { label: string; to: string }[]][] = [
-    [t('المنصة', 'Platform'), [{ label: t('الرئيسية', 'Home'), to: '/' }, { label: t('الصنّاع', 'Makers'), to: '/makers' }, { label: t('صنّاع المحتوى', 'Creators'), to: '/makers?type=creator' }, { label: t('المشاريع', 'Projects'), to: '/projects' }]],
+    [t('المنصة', 'Platform'), [{ label: t('الرئيسية', 'Home'), to: '/' }, { label: t('الصنّاع', 'Makers'), to: '/makers' }, { label: t('صنّاع المحتوى', 'Creators'), to: '/makers?type=creator' }, { label: t('المشاريع', 'Projects'), to: '/projects' }, { label: t('كتابات', 'Writing'), to: '/writing' }]],
     [t('العمل', 'Work'), [{ label: t('الفرص المفتوحة', 'Open calls'), to: '/opportunities' }, session ? { label: t('حسابي', 'My account'), to: '/me' } : { label: t('انضم إلى Makers', 'Join Makers'), to: '/join' }]],
   ]
 

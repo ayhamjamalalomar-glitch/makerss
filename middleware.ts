@@ -16,7 +16,7 @@ const SUPABASE_KEY = 'sb_publishable_OlQKED89zR7MzfM90jE6PQ_rSwjAvs4'
 const DEFAULT_IMAGE = `${SITE}/og.png`
 
 // First path segments that are app pages, not usernames (keep in sync with RESERVED_PATHS).
-const RESERVED = new Set(['admin', 'join', 'login', 'me', 'inbox', 'terms', 'privacy', 'api', 'about', 'makers', 'settings', 'status', 'reset', 'en', 'ar', 'messages', 'projects', 'opportunities', 'search', 'app', 'creators', 'player', 'account', 'p'])
+const RESERVED = new Set(['admin', 'join', 'login', 'me', 'inbox', 'terms', 'privacy', 'api', 'about', 'makers', 'settings', 'status', 'reset', 'en', 'ar', 'messages', 'projects', 'opportunities', 'search', 'app', 'creators', 'player', 'account', 'p', 'writing', 'writings', 'write', 'articles'])
 
 interface Meta {
   title: string
@@ -47,6 +47,7 @@ const https = (u: string | null | undefined) => (u && /^https:\/\//.test(u) ? u 
 
 interface ProfileRow { full_name: string | null; name_ar: string | null; username: string; bio: string | null; avatar_url: string | null; city: string | null; country: string | null; account_type: string | null }
 interface WorkRow { id: string; slug: string | null; title: string; description: string | null; year: number | null; brand: string | null; thumb_url: string | null; thumbnail_url: string | null; url: string | null }
+interface WritingRow { id: string; title: string; summary: string | null; body: string | null; kind: string; owner: { full_name: string | null; name_ar: string | null } | null }
 interface CallRow { id: string; title: string; description: string; org: string | null }
 
 function youtubeThumb(url: string | null) {
@@ -83,6 +84,21 @@ async function metaFor(path: string): Promise<Meta | null> {
       description: clip(c.description, 180),
       image: DEFAULT_IMAGE,
       url: `${SITE}/opportunities/${c.id}`,
+      type: 'article',
+    }
+  }
+
+  if (first === 'writing' && /^[0-9a-f-]{36}$/i.test(second) && seg.length === 2) {
+    const rows = await rest<WritingRow[]>(`writings?select=id,title,summary,body,kind,owner:profiles!writings_owner_id_fkey(full_name,name_ar)&id=eq.${second}&status=eq.published&limit=1`)
+    const w = rows?.[0]
+    if (!w) return null
+    const by = w.owner ? w.owner.name_ar || w.owner.full_name : ''
+    const kind = w.kind === 'article' ? 'مقال' : w.kind === 'script' ? 'سيناريو' : 'ستوري بورد'
+    return {
+      title: `${w.title} | Makers`,
+      description: clip(w.summary || (w.body || '').replace(/^#{2,3}\s+|^>\s?|\*\*/gm, ''), 180) || [kind, by].filter(Boolean).join(' · '),
+      image: DEFAULT_IMAGE,
+      url: `${SITE}/writing/${w.id}`,
       type: 'article',
     }
   }
@@ -130,9 +146,10 @@ function withMeta(html: string, m: Meta) {
 }
 
 async function sitemap() {
-  const [profiles, works] = await Promise.all([
+  const [profiles, works, writings] = await Promise.all([
     rest<{ username: string; updated_at: string }[]>('profiles?select=username,updated_at&status=eq.approved&order=updated_at.desc&limit=5000'),
     rest<{ id: string; slug: string | null; updated_at: string | null; created_at: string }[]>('works?select=id,slug,updated_at,created_at&order=created_at.desc&limit=5000'),
+    rest<{ id: string; updated_at: string }[]>('writings?select=id,updated_at&status=eq.published&order=published_at.desc&limit=5000'),
   ])
   const day = (iso: string | null | undefined) => (iso || new Date().toISOString()).slice(0, 10)
   const urls = [
@@ -140,8 +157,10 @@ async function sitemap() {
     `<url><loc>${SITE}/makers</loc><changefreq>daily</changefreq><priority>0.9</priority></url>`,
     `<url><loc>${SITE}/projects</loc><changefreq>daily</changefreq><priority>0.8</priority></url>`,
     `<url><loc>${SITE}/opportunities</loc><changefreq>daily</changefreq><priority>0.7</priority></url>`,
+    `<url><loc>${SITE}/writing</loc><changefreq>daily</changefreq><priority>0.7</priority></url>`,
     ...(profiles || []).map((p) => `<url><loc>${SITE}/${esc(p.username)}</loc><lastmod>${day(p.updated_at)}</lastmod><priority>0.8</priority></url>`),
     ...(works || []).map((w) => `<url><loc>${SITE}/${w.slug ? esc(w.slug) : `projects/${w.id}`}</loc><lastmod>${day(w.updated_at || w.created_at)}</lastmod><priority>0.6</priority></url>`),
+    ...(writings || []).map((w) => `<url><loc>${SITE}/writing/${w.id}</loc><lastmod>${day(w.updated_at)}</lastmod><priority>0.6</priority></url>`),
   ]
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`, {
     headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=0, s-maxage=3600' },

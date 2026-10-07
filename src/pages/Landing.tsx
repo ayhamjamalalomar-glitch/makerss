@@ -8,6 +8,8 @@ import { budgetLabel, formatDateAr } from '../lib/constants'
 import { displayName, formatFollowers, kindLabel, listMembers, listOpenCalls, listProjects, posterOf, topMakers, totalFollowers, type MemberCard, type OpenCall, type Project } from '../lib/data'
 import { Corners, Skeleton, VerifiedBadge } from '../components/mk'
 import { useDarkHero } from '../lib/hero'
+import { WritingCard } from '../components/writing'
+import { listWritings, type Writing } from '../lib/writings'
 import { CastCard, FilmStrip, PosterCard, Rail, RecBadge, SceneHeader, ScrollLitText } from '../components/cine'
 
 const openPalette = () => window.dispatchEvent(new Event('mk-open-palette'))
@@ -116,6 +118,7 @@ export default function Landing() {
   const [top, setTop] = useState<{ list: MemberCard[]; ranked: boolean } | null>(null)
   const [calls, setCalls] = useState<OpenCall[] | null>(null)
   const [members, setMembers] = useState<MemberCard[] | null>(null)
+  const [writings, setWritings] = useState<Writing[]>([])
 
   useEffect(() => {
     // One project per maker: newest work from each of the most recently active makers.
@@ -129,6 +132,7 @@ export default function Landing() {
     topMakers(10).then(setTop).catch(() => setTop({ list: [], ranked: false }))
     listOpenCalls(8).then(setCalls)
     listMembers().then(setMembers)
+    listWritings({ limit: 12 }).then(setWritings).catch(() => setWritings([]))
   }, [])
 
   const audience = (members || []).filter((m) => totalFollowers(m) > 0).sort((a, b) => totalFollowers(b) - totalFollowers(a)).slice(0, 8)
@@ -190,6 +194,15 @@ export default function Landing() {
             </div>
           ) : null}
         </section>
+
+        {writings.length > 0 && (
+          <section>
+            <SceneHeader title={t('من دفتر الكتّاب', 'From the writers\' notebook')} sub={t('مقالات وسيناريوهات منجزة يكتبها صنّاع Makers.', 'Articles and finished scripts by Makers writers.')} to="/writing" />
+            <Rail label={t('كتابات', 'Writing')} itemWidth={230}>
+              {writings.map((w) => <WritingCard key={w.id} w={w} width={230} />)}
+            </Rail>
+          </section>
+        )}
 
         {audience.length > 0 && (
           <section>

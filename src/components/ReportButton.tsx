@@ -14,7 +14,7 @@ const REASONS = [
 ] as const
 
 /** Small "report" link that opens a form. Reports go to the Makers team, never to the reported member. */
-export default function ReportButton({ type, id }: { type: 'profile' | 'project' | 'call'; id: string }) {
+export default function ReportButton({ type, id }: { type: 'profile' | 'project' | 'call' | 'writing'; id: string }) {
   const { session } = useAuth()
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState<string | null>(null)

@@ -88,7 +88,10 @@ supabase/functions/send-emails/  Edge Function that drains public.email_outbox t
 | `/me/status` | StatusPage (review status) |
 | `/inbox` | InboxPage: collab requests (`RequestsInbox`) + open call applications |
 | `/messages` | MessagesPage: tabs "المحادثات" and "طلبات التعاون" (`?tab=collab`), collab cards inside threads with Accept / Decline |
-| `/admin` | Admin (members review, new calls, projects, stats) |
+| `/writing` | WritingsPage: published writings, filter by kind (`?kind=article|script|storyboard`) |
+| `/writing/new`, `/writing/:id/edit` | WritingEditor (writers only) |
+| `/writing/:id` | WritingPage: article reader, or script/storyboard with its PDF |
+| `/admin` | Admin (members review, new calls, writings, projects, stats); `/admin?tab=writings` opens the writings review |
 | `/:username` | MakerProfile: tabs Overview (badges + up to 5 featured works), Works (all), About (long text up to 5000 chars); short bio clamped to 2 lines |
 
 Layout width: every page content sits in `max-w-[1120px] mx-auto w-full` with side padding. Keep that.
@@ -182,3 +185,22 @@ Native app in `mobile/`: Expo SDK 57, React Native 0.86, Expo Router with native
 
 - `works.slug` (migration `project_short_links`): made from the title (Arabic letters written in Latin by `slugify`), unique, never equal to a username or a site path (`reserved_path`). Trigger `works_slug_guard` fills and checks it on every insert or change; `username_available`, `make_username` and trigger `profiles_username_guard` keep usernames clear of project links. `save_work` takes an optional `p.slug`; RPC `work_slug_available(p_slug, p_work)` for the editors.
 - makerss.net/<slug> opens the project: `MakerProfile` falls back to the project when no member has that name. `/projects/<id>` still works and switches the address bar to the short link. `projectPath()` in `data.ts` builds links; shares, share previews (middleware) and the sitemap use the short link.
+
+## 11. Writing (كتابات) (2026-10-08)
+
+Decisions from Ayham:
+- Only members with a writing specialty publish: 7 كاتب محتوى, 8 كاتب سيناريو, 14 رسام ستوري بورد (`WRITER_SPECIALTY_IDS` in `src/lib/writings.ts`, `public.is_writer` in the DB; keep both in sync).
+- Three kinds: an article written on the site, or a finished script or storyboard uploaded as PDF (20 MB max).
+- Scripts and storyboards: finished work only. The editor shows a red notice and needs a "this work is finished and mine" checkbox; `save_writing` refuses without it ('only finished work'). The reader shows a rights line under the file.
+- The writer types only the title. Every writing gets the same generated cover (`WritingCover` in `src/components/writing.tsx`): title big in Alexandria on `--c-screen`, kind tag in amber mono, author at the foot. No uploaded covers.
+- The first 5 writings of each writer are reviewed by the team. When the 5th is approved the writer gets the `writer_trusted` email and push (congratulations, no more review, keep to the Makers policies and the ethics of the craft). After that, writings go live at once. Before that, any edit sends the writing back to review. Staff can hide any writing (after a report).
+
+Backend (migration `20261008100000_writings.sql`, applied in parts):
+- Table `writings` (kind, title 3..140, summary 400, body 80000, file_path, file_name, visibility public|members, completed, status pending|published|rejected|hidden, review fields). Read: published writings of approved members, own, or staff. No direct writes.
+- RPCs: `my_writer_status()` -> {writer, reviewed, trusted}, `save_writing(p_id, p)` (5 new per day), `delete_writing(p_id)` (returns the file path to remove), `admin_review_writing(p_id, p_approve, p_note)`, `admin_hide_writing(p_id, p_hidden)`, `pending_writings_count()`. `report_content` accepts 'writing'. `reserved_path` covers writing, writings, write, articles.
+- Storage bucket `writings`: private, PDF only, 20 MB. Files at `<uid>/<uuid>.pdf`; read with a signed link (`writingFileUrl`), allowed for the owner, staff, or a published writing (members only when visibility is 'members').
+- Emails: writing_approved, writing_rejected, writer_trusted, admin_writing_needed (send-emails v2). Pushes: writing_approved, writing_rejected, writer_trusted (send-push v3).
+
+Frontend: `src/lib/writings.ts` (data), `src/components/writing.tsx` (cover, card, safe article renderer: `## `, `### `, `> `, `- `, `**bold**`, rendered as React, never HTML), pages `WritingsPage`, `WritingPage`, `WritingEditor` (unsent new article kept in localStorage 'mk-writing-draft'). Also: profile tab "كتابات", landing rail "من دفتر الكتّاب", header nav and account menu "اكتب", admin tab "الكتابات", share previews and sitemap in `middleware.ts`.
+
+Not in the iOS app yet.

@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import Logo from './Logo'
 import { useHasDarkHero } from '../lib/hero'
 import { Avatar } from './mk'
+import { isWriterProfile } from '../lib/writings'
 
 function AccountMenu() {
   const { profile, signOut } = useAuth()
@@ -40,6 +41,7 @@ function AccountMenu() {
           {!approved && item('/me/status', t('حالة الطلب', 'Application status'))}
           {approved && item('/projects/new', t('أضف مشروعاً', 'Add a project'))}
           {approved && item('/opportunities/new', t('انشر فرصة', 'Post an opportunity'))}
+          {isWriterProfile(profile) && item('/writing/new', t('اكتب', 'Write'))}
           {item('/inbox', t('الوارد', 'Inbox'))}
           {approved && item('/messages', t('الرسائل', 'Messages'))}
           {staff && item('/admin', t('لوحة الإدارة', 'Admin'))}
@@ -57,6 +59,7 @@ const NAV = [
   { to: '/makers?type=creator', match: (p: string, q: string) => p === '/makers' && q.includes('type=creator'), ar: 'صنّاع المحتوى', en: 'Creators' },
   { to: '/projects', match: (p: string) => p.startsWith('/projects'), ar: 'المشاريع', en: 'Projects' },
   { to: '/opportunities', match: (p: string) => p.startsWith('/opportunities'), ar: 'الفرص', en: 'Open calls' },
+  { to: '/writing', match: (p: string) => p.startsWith('/writing'), ar: 'كتابات', en: 'Writing' },
 ]
 
 const openPalette = () => window.dispatchEvent(new Event('mk-open-palette'))

@@ -9,8 +9,10 @@ import { PageHeader } from '../components/cine'
 import { Avatar, Btn, Card, Chip, Field, Modal, Notice, Pill, SelectInput, Skeleton, Spinner, TextArea, TextInput } from '../components/mk'
 import { CALL_SELECT, displayName, kindLabel, listProjects, posterOf, type OpenCall, type Project } from '../lib/data'
 import { formatDateAr } from '../lib/constants'
+import { listWritings, writingFileUrl, writingKindLabel, type Writing } from '../lib/writings'
+import { ArticleBody, writingStatusLabel } from '../components/writing'
 
-type Tab = 'overview' | 'review' | 'calls' | 'projects' | 'members' | 'reports' | 'specialties' | 'audit'
+type Tab = 'overview' | 'review' | 'calls' | 'writings' | 'projects' | 'members' | 'reports' | 'specialties' | 'audit'
 
 interface Stats {
   total: number
@@ -55,7 +57,7 @@ function useAllSpecialties() {
 export default function Admin() {
   const { session, profile, loading } = useAuth()
   const { go } = useRouter()
-  const [tab, setTab] = useState<Tab>('overview')
+  const [tab, setTab] = useState<Tab>(() => (new URLSearchParams(window.location.search).get('tab') === 'writings' ? 'writings' : 'overview'))
   const [stats, setStats] = useState<Stats | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
   const specs = useAllSpecialties()
@@ -80,6 +82,13 @@ export default function Admin() {
   }, [])
   useEffect(() => { if (isStaff) loadReports() }, [isStaff, loadReports])
 
+  const [pendingWritings, setPendingWritings] = useState(0)
+  const loadWritings = useCallback(async () => {
+    const { data } = await supabase.rpc('pending_writings_count')
+    setPendingWritings(Number(data) || 0)
+  }, [])
+  useEffect(() => { if (isStaff) loadWritings() }, [isStaff, loadWritings])
+
   if (loading || !profile) return <Wrap><Spinner /></Wrap>
   if (!isStaff) {
     return (
@@ -97,6 +106,7 @@ export default function Admin() {
     ['overview', 'نظرة عامة'],
     ['review', 'المراجعة', stats?.pending],
     ['calls', 'الفرص', stats?.pending_calls],
+    ['writings', 'الكتابات', pendingWritings],
     ['projects', 'المشاريع'],
     ['members', 'الأعضاء'],
     ['reports', 'البلاغات', openReports],
@@ -122,6 +132,7 @@ export default function Admin() {
       {tab === 'overview' && <Overview stats={stats} onOpen={setOpenId} goReview={() => setTab('review')} />}
       {tab === 'review' && <Review specs={specs.list} onChanged={changed} />}
       {tab === 'calls' && <CallsReview onChanged={changed} />}
+      {tab === 'writings' && <WritingsReview onChanged={loadWritings} />}
       {tab === 'projects' && <ProjectsAdmin />}
       {tab === 'members' && <Members specs={specs.list} onOpen={setOpenId} />}
       {tab === 'specialties' && <Specialties specs={specs.list} reload={async () => { await specs.reload(); changed() }} isAdmin={isAdmin} />}
@@ -265,9 +276,9 @@ function Reports({ onChanged }: { onChanged: () => void }) {
     onChanged()
   }
   const targetLink = (r: Ticket) =>
-    r.target_type === 'profile' ? `/${names[r.target_id || '']?.username || ''}` : r.target_type === 'project' ? `/projects/${r.target_id}` : `/opportunities/${r.target_id}`
+    r.target_type === 'profile' ? `/${names[r.target_id || '']?.username || ''}` : r.target_type === 'project' ? `/projects/${r.target_id}` : r.target_type === 'writing' ? `/writing/${r.target_id}` : `/opportunities/${r.target_id}`
   const targetLabel = (r: Ticket) =>
-    r.target_type === 'profile' ? `صفحة ${names[r.target_id || '']?.name || 'عضو'}` : r.target_type === 'project' ? 'مشروع' : 'فرصة'
+    r.target_type === 'profile' ? `صفحة ${names[r.target_id || '']?.name || 'عضو'}` : r.target_type === 'project' ? 'مشروع' : r.target_type === 'writing' ? 'كتابة' : 'فرصة'
 
   return (
     <div className="flex flex-col gap-4">
@@ -816,6 +827,78 @@ function CallsReview({ onChanged }: { onChanged: () => void }) {
             </div>
           )}
           {filter === 'open' && <div className="flex gap-2 items-center"><span className="text-xs" style={{ color: MUTED }}>{c.applicants_count} متقدّم</span><Btn variant="outline" className="!py-2 !px-4 text-[13px] ms-auto" disabled={busy === c.id} onClick={() => close(c.id)}>أغلق الفرصة</Btn></div>}
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+/* Writings: the first five of each writer are reviewed here; any writing can be hidden after a report. */
+
+function WritingsReview({ onChanged }: { onChanged: () => void }) {
+  const [filter, setFilter] = useState<Writing['status']>('pending')
+  const [list, setList] = useState<Writing[] | null>(null)
+  const [notes, setNotes] = useState<Record<string, string>>({})
+  const [busy, setBusy] = useState<string | null>(null)
+  const [openBody, setOpenBody] = useState<Record<string, string>>({})
+  const [error, setError] = useState<string | null>(null)
+  const load = useCallback(async () => {
+    const all = await listWritings({ status: filter, limit: 200 }).catch(() => [] as Writing[])
+    setList(all.sort((a, b) => (filter === 'pending' ? a.updated_at.localeCompare(b.updated_at) : b.updated_at.localeCompare(a.updated_at))))
+  }, [filter])
+  useEffect(() => { setList(null); load() }, [load])
+  const act = async (id: string, fn: string, args: Record<string, unknown>) => {
+    setBusy(id); setError(null)
+    const { error } = await supabase.rpc(fn, { p_id: id, ...args })
+    setBusy(null)
+    if (error) setError(error.message)
+    load(); onChanged()
+  }
+  const showBody = async (w: Writing) => {
+    if (openBody[w.id] !== undefined) return setOpenBody((o) => { const n = { ...o }; delete n[w.id]; return n })
+    const { data } = await supabase.from('writings').select('body').eq('id', w.id).maybeSingle()
+    setOpenBody((o) => ({ ...o, [w.id]: (data as { body: string | null } | null)?.body || '' }))
+  }
+  const openFile = async (w: Writing) => {
+    if (!w.file_path) return
+    const url = await writingFileUrl(w.file_path)
+    if (url) window.open(url, '_blank', 'noopener')
+  }
+  const labels: Record<Writing['status'], string> = { pending: 'بانتظار المراجعة', published: 'منشورة', rejected: 'تحتاج تعديلاً', hidden: 'مخفية' }
+  return (
+    <div className="flex flex-col gap-4">
+      <span className="text-sm" style={{ color: MUTED }}>يراجع الفريق أول خمس كتابات لكل كاتب. بعد الخامسة تُنشر كتاباته مباشرة ويصله إشعار بذلك.</span>
+      <div className="flex gap-2 flex-wrap">{(Object.keys(labels) as Writing['status'][]).map((k) => <Chip key={k} on={filter === k} onClick={() => setFilter(k)}>{labels[k]}</Chip>)}</div>
+      {error && <Notice tone="error">{error}</Notice>}
+      {!list ? <Spinner /> : list.length === 0 ? <Card className="p-8 text-center text-sm" style={{ color: MUTED }}>لا توجد كتابات في هذا القسم.</Card> : list.map((w) => (
+        <Card key={w.id} className="p-5 md:p-6 flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-1 min-w-0">
+              <Link to={`/writing/${w.id}`} dir="auto" className="text-lg font-bold">{w.title}</Link>
+              <span className="text-xs" style={{ color: MUTED }}>{[writingKindLabel(w.kind), w.kind !== 'article' ? (w.visibility === 'members' ? 'للأعضاء فقط' : 'للجميع') : '', writingStatusLabel(w.status)].filter(Boolean).join(' · ')}</span>
+            </div>
+            <span className="text-xs whitespace-nowrap" style={{ color: MUTED }}>{relativeAr(w.updated_at)}</span>
+          </div>
+          {w.summary && <p dir="auto" className="m-0 text-sm whitespace-pre-line" style={{ color: 'var(--c-text-2)', lineHeight: 1.8 }}>{w.summary}</p>}
+          <div className="flex gap-3 flex-wrap items-center">
+            {w.owner && <Link to={`/${w.owner.username}`} className="text-xs font-semibold" style={{ color: 'var(--c-accent)' }}>الكاتب: {displayName(w.owner)}</Link>}
+            {w.kind === 'article'
+              ? <button type="button" onClick={() => showBody(w)} className="text-xs font-semibold cursor-pointer" style={{ background: 'none', border: 'none', padding: 0, color: 'var(--c-text)' }}>{openBody[w.id] !== undefined ? 'إخفاء النص' : 'اقرأ المقال هنا'}</button>
+              : <button type="button" onClick={() => openFile(w)} className="text-xs font-semibold cursor-pointer" style={{ background: 'none', border: 'none', padding: 0, color: 'var(--c-text)' }}>افتح ملف PDF{w.completed ? ' · مؤكد أنه منجز' : ''}</button>}
+          </div>
+          {openBody[w.id] !== undefined && <div className="rounded-xl p-5 max-h-[520px] overflow-y-auto" style={{ background: 'var(--c-surface-alt)' }}><ArticleBody body={openBody[w.id]} /></div>}
+          {w.review_note && filter === 'rejected' && <span dir="auto" className="text-xs" style={{ color: MUTED }}>ملاحظة الفريق: {w.review_note}</span>}
+          {filter === 'pending' && (
+            <div className="flex flex-col md:flex-row gap-2 md:items-center">
+              <TextInput value={notes[w.id] || ''} onChange={(e) => setNotes({ ...notes, [w.id]: e.target.value })} placeholder="ملاحظة للكاتب عند الرفض (تصله في الإيميل)" style={{ height: 40 }} />
+              <div className="flex gap-2 shrink-0">
+                <Btn className="!py-2 !px-4 text-[13px]" disabled={busy === w.id} onClick={() => act(w.id, 'admin_review_writing', { p_approve: true, p_note: notes[w.id] || null })}>انشر</Btn>
+                <Btn variant="danger" className="!py-2 !px-4 text-[13px]" disabled={busy === w.id} onClick={() => act(w.id, 'admin_review_writing', { p_approve: false, p_note: notes[w.id] || null })}>اطلب تعديلاً</Btn>
+              </div>
+            </div>
+          )}
+          {filter === 'published' && <Btn variant="outline" className="!py-2 !px-4 text-[13px] self-start" disabled={busy === w.id} onClick={() => act(w.id, 'admin_hide_writing', { p_hidden: true })}>أخفِ الكتابة</Btn>}
+          {filter === 'hidden' && <Btn variant="outline" className="!py-2 !px-4 text-[13px] self-start" disabled={busy === w.id} onClick={() => act(w.id, 'admin_hide_writing', { p_hidden: false })}>أعد نشرها</Btn>}
         </Card>
       ))}
     </div>
