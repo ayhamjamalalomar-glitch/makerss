@@ -193,8 +193,8 @@ export default function WritingEditor({ id }: { id?: string }) {
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 flex gap-10 items-start">
         {/* elements panel */}
         {isArticle && !preview && (
-          <aside className="hidden lg:flex flex-col gap-5 w-[220px] shrink-0 sticky top-[84px] py-8 max-h-[calc(100vh-84px)] overflow-y-auto">
-            <Elements onPick={insert} onBold={() => { api.current?.bold(); setDirty(true) }} />
+          <aside className="hidden lg:flex flex-col gap-5 w-[220px] shrink-0 sticky top-[84px] py-8 max-h-[calc(100vh-84px)] overflow-y-auto no-scrollbar">
+            <Elements onPick={insert} onBold={() => { api.current?.bold(); setDirty(true) }} api={api} />
             <div className="flex flex-col gap-2 pt-4" style={{ borderTop: '1px solid var(--c-border)' }}>
               <span className="text-[11px]" style={{ color: 'var(--c-muted)' }}>{t('الغلاف يُصنع من العنوان', 'The cover is made from the title')}</span>
               <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--c-border)' }}>
@@ -277,10 +277,38 @@ function AuthorLine({ name, avatar, fullName }: { name: string; avatar: string |
   )
 }
 
-function Elements({ onPick, onBold, grid }: { onPick: (t: BlockType) => void; onBold: () => void; grid?: boolean }) {
+function Elements({ onPick, onBold, grid, api }: { onPick: (t: BlockType) => void; onBold: () => void; grid?: boolean; api?: { current: BlockEditorApi | null } }) {
+  // Drag an element from the panel into the article: a small card follows the pointer and a line shows where it lands.
+  const dragged = useRef(false)
+  const [ghost, setGhost] = useState<{ e: (typeof ELEMENTS)[number]; x: number; y: number; over: boolean } | null>(null)
+  const startPanelDrag = (ev: React.PointerEvent<HTMLButtonElement>, e: (typeof ELEMENTS)[number]) => {
+    if (ev.button !== 0 || !api) return
+    const x0 = ev.clientX, y0 = ev.clientY
+    dragged.current = false
+    const move = (m: PointerEvent) => {
+      if (!dragged.current && Math.hypot(m.clientX - x0, m.clientY - y0) > 5) { dragged.current = true; document.body.style.userSelect = 'none' }
+      if (!dragged.current) return
+      const over = api.current?.hover(m.clientX, m.clientY) ?? false
+      setGhost({ e, x: m.clientX, y: m.clientY, over })
+    }
+    const up = (m: PointerEvent) => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+      document.body.style.userSelect = ''
+      if (dragged.current) api.current?.dropNew(e.type, m.clientX, m.clientY)
+      setGhost(null)
+      // the click that follows a drag must not add the element a second time
+      setTimeout(() => { dragged.current = false }, 0)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
+  }
   const item = (e: (typeof ELEMENTS)[number]) => (
-    <button key={e.type} type="button" onMouseDown={(ev) => ev.preventDefault()} onClick={() => onPick(e.type)}
-      className={`flex items-center gap-3 rounded-lg cursor-pointer text-start transition-colors hover:bg-white/5 ${grid ? 'flex-col justify-center py-3 px-2 text-center' : 'px-2.5 py-2'}`}
+    <button key={e.type} type="button" onMouseDown={(ev) => ev.preventDefault()} onClick={() => { if (!dragged.current) onPick(e.type) }}
+      onPointerDown={grid || !api ? undefined : (ev) => startPanelDrag(ev, e)}
+      className={`flex items-center gap-3 rounded-lg text-start transition-colors hover:bg-white/5 ${grid ? 'cursor-pointer flex-col justify-center py-3 px-2 text-center' : 'cursor-grab active:cursor-grabbing px-2.5 py-2'}`}
       style={{ background: grid ? 'var(--c-surface-alt)' : 'none', border: 'none', color: 'var(--c-text)', fontSize: grid ? 12 : 13.5 }}>
       <span style={{ color: 'var(--c-muted)' }}><ElementIcon d={e.icon} /></span>
       {t(e.ar, e.en)}
@@ -290,6 +318,14 @@ function Elements({ onPick, onBold, grid }: { onPick: (t: BlockType) => void; on
   const wrap = grid ? 'grid grid-cols-3 gap-2' : 'flex flex-col'
   return (
     <div className="flex flex-col gap-4">
+      {ghost && (
+        <div className="fixed z-[80] pointer-events-none flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] transition-[transform,opacity] duration-100"
+          style={{ left: ghost.x, top: ghost.y, transform: `translate(-50%, -120%) scale(${ghost.over ? 1 : 0.94})`, opacity: ghost.over ? 1 : 0.75, background: 'var(--c-surface)', border: `1px solid ${ghost.over ? 'var(--c-accent)' : 'var(--c-border-mid)'}`, boxShadow: '0 14px 34px rgba(0,0,0,0.55)', color: 'var(--c-text)' }}>
+          <span style={{ color: 'var(--c-accent)' }}><ElementIcon size={15} d={ghost.e.icon} /></span>
+          {t(ghost.e.ar, ghost.e.en)}
+        </div>
+      )}
+      {!grid && <span className="text-[11.5px] leading-relaxed px-2.5" style={{ color: 'var(--c-muted-2)' }}>{t('اضغط لإضافة عنصر، أو اسحبه إلى المكان الذي تريده في المقال.', 'Click to add, or drag an element to where you want it.')}</span>}
       <div className="flex flex-col gap-1.5">
         {label(t('أساسي', 'Basic'))}
         <div className={wrap}>
