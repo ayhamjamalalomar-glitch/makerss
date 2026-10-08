@@ -38,7 +38,7 @@ export function WritingCover({ w, ratio = '4/5', wide = false, className = '', s
           <h3
             dir="auto"
             className="m-0 font-display w-full"
-            style={{ fontSize: titleSize(w.title, wide), fontWeight: 800, lineHeight: 1.18, letterSpacing: '-0.015em', color: BONE, display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden', overflowWrap: 'anywhere' }}
+            style={{ fontSize: titleSize(w.title, wide), fontWeight: 800, lineHeight: 1.5, letterSpacing: '-0.005em', paddingTop: '0.12em', color: BONE, display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden', overflowWrap: 'anywhere' }}
           >
             {w.title || t('العنوان', 'Title')}
           </h3>
@@ -267,7 +267,7 @@ export async function renderShareImage(w: { kind: Writing['kind']; title: string
   ctx.direction = rtl ? 'rtl' : 'ltr'
   ctx.textAlign = rtl ? 'right' : 'left'
   const x = rtl ? W - PAD : PAD
-  let size = 96
+  let size = 84
   let lines: string[] = []
   for (; size >= 44; size -= 4) {
     ctx.font = `800 ${size}px Alexandria, "Readex Pro", sans-serif`
@@ -275,8 +275,8 @@ export async function renderShareImage(w: { kind: Writing['kind']; title: string
     if (lines.length <= 3) break
   }
   if (lines.length > 4) { lines = lines.slice(0, 4); lines[3] = `${lines[3]}…` }
-  const lh = size * 1.22
-  const bottom = H - PAD - 64
+  const lh = size * 1.36
+  const bottom = H - PAD - 96
   ctx.fillStyle = '#F3EFE7'
   lines.forEach((l, i) => ctx.fillText(l, x, bottom - (lines.length - 1 - i) * lh))
 
