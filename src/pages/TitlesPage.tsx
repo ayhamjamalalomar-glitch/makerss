@@ -47,24 +47,24 @@ export default function TitlesPage() {
   return (
     <div className="min-h-screen">
       {hero ? (
-        <div className="mk-dark relative overflow-hidden -mt-16" style={{ height: 500, background: 'var(--c-screen)' }}>
-          <img src={posterOf(hero)!} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'brightness(0.4) saturate(0.85)', transform: 'scale(1.05)' }} />
-          <div className="absolute inset-0 rtl:scale-x-[-1]" style={{ background: 'linear-gradient(to right, rgba(5,5,7,0.96) 30%, rgba(5,5,7,0.15) 100%)' }} />
+        <div className="relative overflow-hidden -mt-16" style={{ height: 500, background: 'var(--h-bg)' }}>
+          <img src={posterOf(hero)!} alt="" className="mk-hero-photo absolute inset-0 w-full h-full object-cover" style={{ filter: 'brightness(0.4) saturate(0.85)', transform: 'scale(1.05)' }} />
+          <div className="absolute inset-0 rtl:scale-x-[-1]" style={{ background: 'linear-gradient(to right, rgba(var(--h-veil-rgb),0.96) 30%, rgba(var(--h-veil-rgb),0.15) 100%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, var(--c-bg) 0%, transparent 50%)' }} />
           <div className="relative z-10 flex flex-col justify-end h-full max-w-[1120px] mx-auto w-full px-4 sm:px-8 pb-10">
             <div className="flex items-center gap-2 mb-3">
               <span className="font-bold px-2.5 py-1 rounded-md" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', fontSize: 10, letterSpacing: '0.06em' }}>{t('أحدث مشروع', 'Latest')}</span>
-              <span style={{ color: 'rgba(245,240,235,0.6)', fontSize: 12 }}>{[kindLabel(hero.kind), hero.year].filter(Boolean).join(' · ')}</span>
+              <span style={{ color: 'rgba(var(--h-ink-rgb),0.6)', fontSize: 12 }}>{[kindLabel(hero.kind), hero.year].filter(Boolean).join(' · ')}</span>
             </div>
-            <h1 className="font-display font-black mb-3 mt-0" style={{ fontSize: 'clamp(34px,6vw,72px)', letterSpacing: '-0.02em', lineHeight: 1.05, color: '#F3EFE7' }}>{hero.title}</h1>
-            {hero.description && <p className="mb-6 mt-0 leading-relaxed max-w-lg" style={{ fontSize: 14, color: 'rgba(245,240,235,0.65)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{hero.description}</p>}
+            <h1 className="font-display font-black mb-3 mt-0" style={{ fontSize: 'clamp(34px,6vw,72px)', letterSpacing: '-0.02em', lineHeight: 1.05, color: 'var(--h-ink)' }}>{hero.title}</h1>
+            {hero.description && <p className="mb-6 mt-0 leading-relaxed max-w-lg" style={{ fontSize: 14, color: 'rgba(var(--h-ink-rgb),0.65)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{hero.description}</p>}
             <div className="flex gap-3">
               <Link to={`/projects/${hero.id}`} className="flex items-center gap-2 font-bold px-6 py-3 rounded-full hover:opacity-90" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', fontSize: 13 }}>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="rtl:-scale-x-100"><path d="M3 2l9 5-9 5V2z" fill="currentColor" /></svg>
                 {t('عرض المشروع', 'View project')}
               </Link>
               {canAdd && (
-                <Link to="/projects/new" className="flex items-center gap-2 font-semibold px-6 py-3 rounded-full hover:opacity-80" style={{ background: 'rgba(245,240,235,0.1)', border: '1px solid rgba(245,240,235,0.15)', color: '#F5F0EB', fontSize: 13 }}>
+                <Link to="/projects/new" className="flex items-center gap-2 font-semibold px-6 py-3 rounded-full hover:opacity-80" style={{ background: 'rgba(var(--h-ink-rgb),0.1)', border: '1px solid rgba(var(--h-ink-rgb),0.15)', color: 'var(--h-ink)', fontSize: 13 }}>
                   + {t('أضف مشروعك', 'Add your project')}
                 </Link>
               )}

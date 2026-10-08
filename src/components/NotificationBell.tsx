@@ -104,7 +104,7 @@ export default function NotificationBell({ userId, clear }: { userId: string; cl
         aria-label={t('الإشعارات', 'Notifications')}
         aria-expanded={open}
         className="relative flex items-center justify-center rounded-full cursor-pointer"
-        style={{ width: 38, height: 38, background: clear ? 'rgba(243,239,231,0.08)' : 'var(--c-surface-alt)', border: `1px solid ${clear ? 'rgba(243,239,231,0.18)' : 'var(--c-border-mid)'}`, color: clear ? '#F3EFE7' : 'var(--c-text)' }}
+        style={{ width: 38, height: 38, background: clear ? 'rgba(var(--h-ink-rgb),0.08)' : 'var(--c-surface-alt)', border: `1px solid ${clear ? 'rgba(var(--h-ink-rgb),0.18)' : 'var(--c-border-mid)'}`, color: clear ? 'var(--h-ink)' : 'var(--c-text)' }}
       >
         <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.8a5 5 0 00-5 5v3.1L3.6 14h12.8L15 10.9V7.8a5 5 0 00-5-5zM8 16.2a2 2 0 004 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
         {count > 0 && (

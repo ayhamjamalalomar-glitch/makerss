@@ -44,6 +44,11 @@
   --c-rec: #FF453A;
   --c-live: #5ED6B4;
   --c-screen: #050507;
+  /* Hero colors: the film heroes are dark in the dark theme and paper-light in the light theme. */
+  --h-bg: #050507;
+  --h-ink: #F3EFE7;
+  --h-ink-rgb: 243,239,231;
+  --h-veil-rgb: 5,5,7;
 }
 
 [data-theme='light'] {
@@ -64,6 +69,10 @@
   --c-on-accent: #0B0A08;
   --c-live: #1E9E7E;
   --c-screen: #0B0B0D;
+  --h-bg: #F2EEE6;
+  --h-ink: #0B0B0D;
+  --h-ink-rgb: 11,11,13;
+  --h-veil-rgb: 242,238,230;
 
   /* Override Tailwind @theme tokens so text-paper, bg-surface, etc. also flip */
   --color-ink: #F2EEE6;
@@ -78,8 +87,7 @@
 }
 
 
-/* Always-dark sections (film heroes, the crew band, the header over a hero): they keep the
-   darkroom palette in the light theme too, so their text, borders and fades stay right. */
+/* Always-dark overlays (DarkCard): they keep the darkroom palette in the light theme too. */
 .mk-dark {
   --c-bg: #09090B;
   --c-surface: #121216;
@@ -228,3 +236,7 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   body::after, .mk-rec, .mk-marquee, .mk-marquee-rev { animation: none; }
 }
+
+/* Hero background photos: dimmed on the dark screen, washed light like a print on paper in the light theme. */
+[data-theme='light'] .mk-hero-blur { filter: blur(44px) saturate(0.55) brightness(1.15) !important; opacity: 0.6; }
+[data-theme='light'] .mk-hero-photo { filter: saturate(0.85) brightness(1.02) !important; }

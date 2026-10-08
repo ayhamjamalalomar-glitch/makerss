@@ -36,7 +36,7 @@ export function Timecode({ className = '', style }: { className?: string; style?
 /** Red REC light with a timecode, the camera's own signature. */
 export function RecBadge({ light }: { light?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2 font-mono text-[11px] tracking-wider" dir="ltr" style={{ color: light ? 'rgba(243,239,231,0.8)' : 'var(--c-muted)' }}>
+    <span className="inline-flex items-center gap-2 font-mono text-[11px] tracking-wider" dir="ltr" style={{ color: light ? 'rgba(var(--h-ink-rgb),0.8)' : 'var(--c-muted)' }}>
       <span className="mk-rec w-2 h-2 rounded-full" style={{ background: 'var(--c-rec)', boxShadow: '0 0 10px var(--c-rec)' }} />
       REC
       <Timecode />

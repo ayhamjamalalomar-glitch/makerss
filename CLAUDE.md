@@ -105,7 +105,7 @@ Layout width: every page content sits in `max-w-[1120px] mx-auto w-full` with si
 - The makers directory keeps every filter in the URL (`type`, `q`, `s`, `c`, `country`, `f`, `available`, `sort`).
 - Every user-facing string goes through `t('عربي', 'English')`. Arabic is the default language, RTL. Arabic text right, English text left (use `dir="auto"` on user-generated text).
 - Dark is default, light theme via `data-theme="light"`.
-- Always-dark sections (film heroes, the crew band, the header while it sits over a hero, DarkCard) carry the class `mk-dark` (index.css), which keeps the darkroom tokens in the light theme. Any new dark section must use it, or its text, borders and fades take the light theme's colors.
+- Film heroes (landing, profile, projects, project page and its crew band) and the header over them use the hero tokens `--h-bg`, `--h-ink`, `--h-ink-rgb`, `--h-veil-rgb` (index.css): darkroom in the dark theme, paper-light in the light theme (Ayham's call, 2026-10-08). Background photos in heroes take `mk-hero-blur` or `mk-hero-photo` so they wash light in the light theme. Never hardcode #F3EFE7 or rgba(5,5,7,...) in a hero; use the tokens. Media frames (video, posters) and the writing covers stay dark. `mk-dark` is only for overlays that must stay dark in both themes (DarkCard).
 - Reuse primitives from `mk.tsx` instead of new ad-hoc components.
 
 ## 5. Product decisions already made

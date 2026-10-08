@@ -173,15 +173,15 @@ export default function MakerProfile({ username }: { username: string }) {
   return (
     <div className="min-h-screen">
       {/* HERO: opening titles */}
-      <section className="mk-dark relative -mt-16 overflow-hidden" style={{ background: 'var(--c-screen)', color: '#F3EFE7' }}>
-        {backdrop && <img src={backdrop} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(48px) saturate(0.7) brightness(0.45)', transform: 'scale(1.2)' }} />}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(5,5,7,0.55), rgba(5,5,7,0.7) 60%, var(--c-screen))' }} />
+      <section className="relative -mt-16 overflow-hidden" style={{ background: 'var(--h-bg)', color: 'var(--h-ink)' }}>
+        {backdrop && <img src={backdrop} alt="" aria-hidden="true" className="mk-hero-blur absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(48px) saturate(0.7) brightness(0.45)', transform: 'scale(1.2)' }} />}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(var(--h-veil-rgb),0.55), rgba(var(--h-veil-rgb),0.7) 60%, var(--h-bg))' }} />
         <div className="relative max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-24 pb-10">
           {p.status !== 'approved' && isOwner && (
             <div className="mb-5"><Notice>{t('هذه معاينة لصفحتك. لن تظهر للزوار قبل موافقة فريق Makers.', 'This is a preview of your page. Visitors will see it once the Makers team approves it.')} <Link to="/me" className="font-semibold underline">{t('عد إلى التعديل', 'Back to editing')}</Link></Notice></div>
           )}
           <div className="flex items-center justify-between mb-8">
-            <Link to="/makers" className="inline-flex items-center gap-2 text-sm hover:opacity-80" style={{ color: 'rgba(243,239,231,0.7)' }}>
+            <Link to="/makers" className="inline-flex items-center gap-2 text-sm hover:opacity-80" style={{ color: 'rgba(var(--h-ink-rgb),0.7)' }}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="rtl:-scale-x-100" aria-hidden="true"><path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>
               {t('كل الصنّاع', 'All makers')}
             </Link>
@@ -189,7 +189,7 @@ export default function MakerProfile({ username }: { username: string }) {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-7 sm:gap-10 items-start sm:items-end">
-            <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }} className="relative shrink-0 w-[200px] sm:w-[230px] rounded-2xl overflow-hidden" style={{ aspectRatio: '3/4', background: 'var(--c-surface-alt)', boxShadow: '0 30px 80px rgba(0,0,0,0.55)' }}>
+            <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }} className="relative shrink-0 w-[200px] sm:w-[230px] rounded-2xl overflow-hidden" style={{ aspectRatio: '3/4', background: 'var(--c-surface-alt)', boxShadow: '0 30px 80px var(--c-shadow)' }}>
               {p.avatar_url ? <img src={p.avatar_url} alt={displayName(p)} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-display font-black" style={{ fontSize: 72, color: 'var(--c-muted-2)' }}>{displayName(p).charAt(0)}</div>}
               <Corners size={16} inset={10} color="rgba(243,239,231,0.7)" w={1.5} />
               {p.is_founding && (
@@ -212,15 +212,15 @@ export default function MakerProfile({ username }: { username: string }) {
                   {p.is_founding && <VerifiedBadge size={30} title={t('عضو مؤسس', 'Founding member')} />}
                 </motion.span>
               </h1>
-              {altName && <p className="m-0 -mt-2 text-[15px]" style={{ color: 'rgba(243,239,231,0.6)' }}><bdi>{altName}</bdi></p>}
+              {altName && <p className="m-0 -mt-2 text-[15px]" style={{ color: 'rgba(var(--h-ink-rgb),0.6)' }}><bdi>{altName}</bdi></p>}
 
               {/* the slate: facts in cells, like a clapperboard */}
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6 }} className="grid grid-cols-2 md:grid-cols-4 rounded-xl overflow-hidden mt-2" style={{ border: '1px solid rgba(243,239,231,0.16)', background: 'rgba(5,5,7,0.35)', backdropFilter: 'blur(8px)' }}>
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.6 }} className="grid grid-cols-2 md:grid-cols-4 rounded-xl overflow-hidden mt-2" style={{ border: '1px solid rgba(var(--h-ink-rgb),0.16)', background: 'rgba(var(--h-veil-rgb),0.35)', backdropFilter: 'blur(8px)' }}>
                 {slate.map(([k, v], i) => (
-                  <div key={k} className="flex flex-col gap-1 px-4 py-3" style={{ borderInlineStart: i % 2 ? '1px solid rgba(243,239,231,0.16)' : undefined, borderTop: i > 1 ? '1px solid rgba(243,239,231,0.16)' : undefined }}>
-                    <span className="text-[11px]" style={{ color: 'rgba(243,239,231,0.5)' }}>{k}</span>
+                  <div key={k} className="flex flex-col gap-1 px-4 py-3" style={{ borderInlineStart: i % 2 ? '1px solid rgba(var(--h-ink-rgb),0.16)' : undefined, borderTop: i > 1 ? '1px solid rgba(var(--h-ink-rgb),0.16)' : undefined }}>
+                    <span className="text-[11px]" style={{ color: 'rgba(var(--h-ink-rgb),0.5)' }}>{k}</span>
                     <span className="font-display font-semibold text-[15px] truncate flex items-center gap-2">
-                      {i === 3 && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.available ? 'var(--c-live)' : 'rgba(243,239,231,0.35)', boxShadow: p.available ? '0 0 10px var(--c-live)' : 'none' }} />}
+                      {i === 3 && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: p.available ? 'var(--c-live)' : 'rgba(var(--h-ink-rgb),0.35)', boxShadow: p.available ? '0 0 10px var(--c-live)' : 'none' }} />}
                       {v}
                     </span>
                   </div>
@@ -231,15 +231,15 @@ export default function MakerProfile({ username }: { username: string }) {
                 {isOwner ? (
                   <>
                     <Link to="/me" className="font-semibold px-5 rounded-full inline-flex items-center hover:brightness-110" style={{ height: 44, background: 'var(--c-accent)', color: 'var(--c-on-accent)', fontSize: 14 }}>{t('تعديل الملف الشخصي', 'Edit profile')}</Link>
-                    {p.status === 'approved' && <Link to="/projects/new" className="font-semibold px-5 rounded-full inline-flex items-center" style={{ height: 44, border: '1px solid rgba(243,239,231,0.3)', fontSize: 14 }}>{t('+ أضف مشروعاً', '+ Add a project')}</Link>}
+                    {p.status === 'approved' && <Link to="/projects/new" className="font-semibold px-5 rounded-full inline-flex items-center" style={{ height: 44, border: '1px solid rgba(var(--h-ink-rgb),0.3)', fontSize: 14 }}>{t('+ أضف مشروعاً', '+ Add a project')}</Link>}
                   </>
                 ) : p.status === 'approved' && (
                   <button onClick={() => { track('profile', p.id, 'contact'); setContactOpen(true) }} className="font-semibold px-6 rounded-full hover:brightness-110 cursor-pointer" style={{ height: 44, background: 'var(--c-accent)', border: 'none', color: 'var(--c-on-accent)', fontSize: 14 }}>{t('اطلب تعاوناً', 'Request collaboration')}</button>
                 )}
                 {canMessage && (
-                  <button onClick={startChat} disabled={msgBusy} className="font-semibold px-5 rounded-full cursor-pointer disabled:opacity-60 hover:bg-white/10" style={{ height: 44, background: 'transparent', border: '1px solid rgba(243,239,231,0.3)', color: '#F3EFE7', fontSize: 14 }}>{t('راسِل', 'Message')}</button>
+                  <button onClick={startChat} disabled={msgBusy} className="font-semibold px-5 rounded-full cursor-pointer disabled:opacity-60 hover:bg-white/10" style={{ height: 44, background: 'transparent', border: '1px solid rgba(var(--h-ink-rgb),0.3)', color: 'var(--h-ink)', fontSize: 14 }}>{t('راسِل', 'Message')}</button>
                 )}
-                <button onClick={copy} className="font-semibold px-5 rounded-full cursor-pointer inline-flex items-center gap-2 hover:bg-white/10" style={{ height: 44, background: 'transparent', border: '1px solid rgba(243,239,231,0.18)', color: 'rgba(243,239,231,0.8)', fontSize: 14 }}>
+                <button onClick={copy} className="font-semibold px-5 rounded-full cursor-pointer inline-flex items-center gap-2 hover:bg-white/10" style={{ height: 44, background: 'transparent', border: '1px solid rgba(var(--h-ink-rgb),0.18)', color: 'rgba(var(--h-ink-rgb),0.8)', fontSize: 14 }}>
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10V2M5 5l3-3 3 3M3 9v4a1 1 0 001 1h8a1 1 0 001-1V9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   {t('شارك الصفحة', 'Share page')}
                 </button>

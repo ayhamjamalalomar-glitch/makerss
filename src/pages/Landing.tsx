@@ -48,19 +48,19 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
   const stripB = [...faces].reverse().concat(posters)
 
   return (
-    <section className="mk-dark relative -mt-16 overflow-hidden" style={{ minHeight: 'min(92vh, 860px)', background: 'var(--c-screen)', color: '#F3EFE7' }}>
+    <section className="relative -mt-16 overflow-hidden" style={{ minHeight: 'min(92vh, 860px)', background: 'var(--h-bg)', color: 'var(--h-ink)' }}>
       {/* moving film strips behind the title */}
       <div className="absolute inset-0 flex flex-col justify-center gap-6" style={{ transform: 'rotate(-7deg) scale(1.25)', opacity: 0.55 }}>
         {stripA.length > 0 && <FilmStrip images={stripA} speed={90} height={170} />}
         {stripB.length > 0 && <FilmStrip images={stripB} speed={110} reverse height={170} />}
       </div>
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 45%, rgba(5,5,7,0.55) 0%, rgba(5,5,7,0.92) 70%, #050507 100%)' }} />
-      <div className="absolute inset-x-0 bottom-0 h-40" style={{ background: 'linear-gradient(to bottom, rgba(5,5,7,0), var(--c-bg))' }} />
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 45%, rgba(var(--h-veil-rgb),0.55) 0%, rgba(var(--h-veil-rgb),0.92) 70%, var(--h-bg) 100%)' }} />
+      <div className="absolute inset-x-0 bottom-0 h-40" style={{ background: 'linear-gradient(to bottom, rgba(var(--h-veil-rgb),0), var(--c-bg))' }} />
       <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 70% 20%, rgba(var(--c-accent-rgb),0.16), transparent 45%)' }} />
 
       {/* letterbox bars open like a shutter */}
-      <motion.div className="absolute inset-x-0 top-0 z-10" style={{ background: '#050507' }} initial={{ height: '50%' }} animate={{ height: '0%' }} transition={{ duration: 1.1, ease: [0.7, 0, 0.2, 1], delay: 0.1 }} />
-      <motion.div className="absolute inset-x-0 bottom-0 z-10" style={{ background: '#050507' }} initial={{ height: '50%' }} animate={{ height: '0%' }} transition={{ duration: 1.1, ease: [0.7, 0, 0.2, 1], delay: 0.1 }} />
+      <motion.div className="absolute inset-x-0 top-0 z-10" style={{ background: 'var(--h-bg)' }} initial={{ height: '50%' }} animate={{ height: '0%' }} transition={{ duration: 1.1, ease: [0.7, 0, 0.2, 1], delay: 0.1 }} />
+      <motion.div className="absolute inset-x-0 bottom-0 z-10" style={{ background: 'var(--h-bg)' }} initial={{ height: '50%' }} animate={{ height: '0%' }} transition={{ duration: 1.1, ease: [0.7, 0, 0.2, 1], delay: 0.1 }} />
 
       <div className="relative z-[5] max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-28 pb-28 md:pb-20 flex flex-col" style={{ minHeight: 'min(92vh, 860px)' }}>
         <div className="flex items-center justify-between">
@@ -68,7 +68,7 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
         </div>
 
         <div className="relative flex-1 flex flex-col justify-center py-10">
-          <Corners size={26} inset={-2} color="rgba(243,239,231,0.35)" w={1.5} />
+          <Corners size={26} inset={-2} color="rgba(var(--h-ink-rgb),0.35)" w={1.5} />
           <div className="px-5 sm:px-10 py-8 flex flex-col gap-6 max-w-[860px]">
             {/* Arabic needs room above and below the line for its dots and marks, so no clipping mask here. */}
             <h1 className="font-display m-0" style={{ fontSize: 'clamp(32px, 5vw, 64px)', lineHeight: isRtl() ? 1.45 : 1.12, fontWeight: isRtl() ? 700 : 800, letterSpacing: isRtl() ? 0 : '-0.02em' }}>
@@ -78,17 +78,17 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
                 </motion.span>
               ))}
             </h1>
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 0.6 }} className="m-0 max-w-[560px] text-[16px] md:text-[18px]" style={{ lineHeight: 1.8, color: 'rgba(243,239,231,0.78)' }}>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 0.6 }} className="m-0 max-w-[560px] text-[16px] md:text-[18px]" style={{ lineHeight: 1.8, color: 'rgba(var(--h-ink-rgb),0.78)' }}>
               {t('مساحة تتعرّف فيها على من يقف خلف الصورة، وتصل إليه مباشرة.', 'A place to meet the people behind the image and reach them directly.')}
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.35, duration: 0.6 }} className="flex flex-col gap-3 max-w-[620px]">
-              <button type="button" onClick={openPalette} className="group flex items-center gap-3 rounded-2xl px-5 cursor-pointer text-start transition-all hover:border-[color:var(--c-accent)]" style={{ height: 60, background: 'rgba(243,239,231,0.07)', border: '1px solid rgba(243,239,231,0.2)', backdropFilter: 'blur(10px)', color: 'rgba(243,239,231,0.75)' }}>
+              <button type="button" onClick={openPalette} className="group flex items-center gap-3 rounded-2xl px-5 cursor-pointer text-start transition-all hover:border-[color:var(--c-accent)]" style={{ height: 60, background: 'rgba(var(--h-ink-rgb),0.07)', border: '1px solid rgba(var(--h-ink-rgb),0.2)', backdropFilter: 'blur(10px)', color: 'rgba(var(--h-ink-rgb),0.75)' }}>
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ color: 'var(--c-accent)' }} aria-hidden="true"><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.6" /><path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
                 <span className="flex-1 text-[15px] truncate">
                   <span className="hidden sm:inline">{t('ابحث عن مخرج، مصوّر، مونتير، صانع محتوى…', 'Find a director, DOP, editor, creator…')}</span>
                   <span className="sm:hidden">{t('ابحث عن صانع أو مشروع…', 'Search makers or projects…')}</span>
                 </span>
-                <kbd className="hidden sm:inline font-mono text-[10px] px-1.5 py-0.5 rounded" dir="ltr" style={{ border: '1px solid rgba(243,239,231,0.3)' }}>Ctrl K</kbd>
+                <kbd className="hidden sm:inline font-mono text-[10px] px-1.5 py-0.5 rounded" dir="ltr" style={{ border: '1px solid rgba(var(--h-ink-rgb),0.3)' }}>Ctrl K</kbd>
               </button>
             </motion.div>
           </div>
@@ -100,7 +100,7 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
               {t('انضم إلى Makers', 'Join Makers')}
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="rtl:-scale-x-100" aria-hidden="true"><path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </Link>
-            <Link to="/makers" className="inline-flex items-center font-semibold px-6 rounded-full transition-colors hover:bg-white/10" style={{ height: 48, border: '1px solid rgba(243,239,231,0.3)', color: '#F3EFE7' }}>{t('تصفّح الصنّاع', 'Browse makers')}</Link>
+            <Link to="/makers" className="inline-flex items-center font-semibold px-6 rounded-full transition-colors hover:bg-white/10" style={{ height: 48, border: '1px solid rgba(var(--h-ink-rgb),0.3)', color: 'var(--h-ink)' }}>{t('تصفّح الصنّاع', 'Browse makers')}</Link>
           </div>
         </div>
       </div>
@@ -238,15 +238,15 @@ export default function Landing() {
         </section>
 
         {!approved && (
-          <section className="mk-dark relative rounded-3xl overflow-hidden" style={{ background: 'var(--c-screen)', color: '#F3EFE7' }}>
-            <div className="mk-sprockets h-4 mt-3 opacity-70" style={{ backgroundImage: 'radial-gradient(circle, #1a1a1f 3px, transparent 3.5px)' }} />
+          <section className="relative rounded-3xl overflow-hidden" style={{ background: 'var(--h-bg)', color: 'var(--h-ink)' }}>
+            <div className="mk-sprockets h-4 mt-3 opacity-70" style={{ backgroundImage: 'radial-gradient(circle, rgba(var(--h-ink-rgb),0.1) 3px, transparent 3.5px)' }} />
             <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 55% 80% at 85% 50%, rgba(var(--c-accent-rgb),0.2), transparent 70%)' }} />
             <div className="relative px-7 md:px-12 py-14 md:py-16 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
               <div className="flex flex-col gap-5 max-w-[640px]">
               <h2 className="font-display font-black m-0" style={{ fontSize: 'clamp(28px, 4.2vw, 50px)', lineHeight: 1.15 }}>
                 {t('نحن في البداية. كن من الأسماء الأولى.', "We're just getting started. Be one of the first names.")}
               </h2>
-              <p className="m-0 max-w-md text-[15px]" style={{ lineHeight: 1.8, color: 'rgba(243,239,231,0.7)' }}>
+              <p className="m-0 max-w-md text-[15px]" style={{ lineHeight: 1.8, color: 'rgba(var(--h-ink-rgb),0.7)' }}>
                 {t('سجّل، ابنِ ملفك وأضف أعمالك. يراجع فريقنا كل ملف قبل النشر، ويحصل أوائل المنضمّين على شارة «عضو مؤسس» بشكل دائم.', 'Sign up, build your profile and add your work. Our team reviews every profile before it goes live, and the first makers keep a permanent Founding Member badge.')}
               </p>
               </div>
@@ -255,7 +255,7 @@ export default function Landing() {
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="rtl:-scale-x-100" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </Link>
             </div>
-            <div className="mk-sprockets h-4 mb-3 opacity-70" style={{ backgroundImage: 'radial-gradient(circle, #1a1a1f 3px, transparent 3.5px)' }} />
+            <div className="mk-sprockets h-4 mb-3 opacity-70" style={{ backgroundImage: 'radial-gradient(circle, rgba(var(--h-ink-rgb),0.1) 3px, transparent 3.5px)' }} />
           </section>
         )}
       </div>

@@ -92,23 +92,23 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-40 transition-colors duration-300 ${clear ? 'mk-dark' : ''}`}
+      className="fixed top-0 left-0 right-0 z-40 transition-colors duration-300"
       style={{
         height: 64,
-        background: clear ? 'linear-gradient(to bottom, rgba(5,5,7,0.75), rgba(5,5,7,0))' : 'var(--c-overlay)',
+        background: clear ? 'linear-gradient(to bottom, rgba(var(--h-veil-rgb),0.75), rgba(var(--h-veil-rgb),0))' : 'var(--c-overlay)',
         backdropFilter: clear ? 'none' : 'blur(14px)',
         WebkitBackdropFilter: clear ? 'none' : 'blur(14px)',
         borderBottom: `1px solid ${clear ? 'transparent' : 'var(--c-border)'}`,
       }}
     >
       <div className="max-w-[1120px] mx-auto w-full h-full flex items-center px-4 sm:px-8 gap-2.5">
-        <Logo size="sm" color={clear ? '#F3EFE7' : undefined} />
+        <Logo size="sm" color={clear ? 'var(--h-ink)' : undefined} />
 
         <nav className="hidden md:flex items-center gap-1 ms-6" aria-label={t('التنقل الرئيسي', 'Main navigation')}>
           {NAV.map((n) => {
             const on = n.match(path, query)
             return (
-              <Link key={n.to} to={n.to} className="relative px-3 py-2 text-[13px] font-medium transition-colors" style={{ color: on ? 'var(--c-text)' : clear ? 'rgba(243,239,231,0.75)' : 'var(--c-muted)' }}>
+              <Link key={n.to} to={n.to} className="relative px-3 py-2 text-[13px] font-medium transition-colors" style={{ color: on ? 'var(--c-text)' : clear ? 'rgba(var(--h-ink-rgb),0.75)' : 'var(--c-muted)' }}>
                 {t(n.ar, n.en)}
                 {on && <motion.span layoutId="nav-underline" className="absolute start-3 end-3 -bottom-0.5 h-[2px] rounded-full" style={{ background: 'var(--c-accent)' }} />}
               </Link>
@@ -122,21 +122,21 @@ export default function Header() {
           type="button"
           onClick={openPalette}
           className="hidden sm:flex items-center gap-2.5 rounded-full px-3.5 cursor-pointer transition-colors"
-          style={{ height: 38, minWidth: 220, background: clear ? 'rgba(243,239,231,0.08)' : 'var(--c-surface-alt)', border: `1px solid ${clear ? 'rgba(243,239,231,0.18)' : 'var(--c-border-mid)'}`, color: clear ? 'rgba(243,239,231,0.7)' : 'var(--c-muted)' }}
+          style={{ height: 38, minWidth: 220, background: clear ? 'rgba(var(--h-ink-rgb),0.08)' : 'var(--c-surface-alt)', border: `1px solid ${clear ? 'rgba(var(--h-ink-rgb),0.18)' : 'var(--c-border-mid)'}`, color: clear ? 'rgba(var(--h-ink-rgb),0.7)' : 'var(--c-muted)' }}
           aria-label={t('بحث', 'Search')}
         >
           <svg width="14" height="14" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5" /><path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
           <span className="text-[12.5px] flex-1 text-start">{t('ابحث عن صانع أو مشروع', 'Search makers or projects')}</span>
           <kbd className="font-mono text-[10px] px-1.5 py-0.5 rounded" dir="ltr" style={{ border: '1px solid currentColor', opacity: 0.7 }}>Ctrl K</kbd>
         </button>
-        <button type="button" className="flex sm:hidden items-center justify-center rounded-full shrink-0 cursor-pointer" style={{ width: 38, height: 38, background: clear ? 'rgba(243,239,231,0.08)' : 'var(--c-surface-alt)', border: `1px solid ${clear ? 'rgba(243,239,231,0.18)' : 'var(--c-border-mid)'}`, color: clear ? '#F3EFE7' : 'var(--c-muted)' }} onClick={openPalette} aria-label={t('بحث', 'Search')}>
+        <button type="button" className="flex sm:hidden items-center justify-center rounded-full shrink-0 cursor-pointer" style={{ width: 38, height: 38, background: clear ? 'rgba(var(--h-ink-rgb),0.08)' : 'var(--c-surface-alt)', border: `1px solid ${clear ? 'rgba(var(--h-ink-rgb),0.18)' : 'var(--c-border-mid)'}`, color: clear ? 'var(--h-ink)' : 'var(--c-muted)' }} onClick={openPalette} aria-label={t('بحث', 'Search')}>
           <svg width="15" height="15" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5" /><path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>
         <button
           type="button"
           onClick={() => setLang(ar ? 'en' : 'ar')}
           className="flex items-center justify-center font-mono font-semibold shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
-          style={{ background: 'transparent', border: `1px solid ${clear ? 'rgba(243,239,231,0.18)' : 'var(--c-border-mid)'}`, borderRadius: 999, fontSize: 11, color: clear ? '#F3EFE7' : 'var(--c-muted)', height: 38, minWidth: 38, padding: '0 10px' }}
+          style={{ background: 'transparent', border: `1px solid ${clear ? 'rgba(var(--h-ink-rgb),0.18)' : 'var(--c-border-mid)'}`, borderRadius: 999, fontSize: 11, color: clear ? 'var(--h-ink)' : 'var(--c-muted)', height: 38, minWidth: 38, padding: '0 10px' }}
           aria-label={ar ? 'English' : 'العربية'}
         >
           {ar ? 'EN' : 'ع'}
@@ -144,7 +144,7 @@ export default function Header() {
         {!loading && session && <NotificationBell userId={session.user.id} clear={clear} />}
         {!loading && (session ? <AccountMenu /> : (
           <>
-            <Link to="/login" className="hidden sm:inline-flex items-center text-[13px] font-medium px-3 py-2 rounded-full shrink-0 hover:opacity-80" style={{ color: clear ? '#F3EFE7' : 'var(--c-text)' }}>{t('دخول', 'Sign in')}</Link>
+            <Link to="/login" className="hidden sm:inline-flex items-center text-[13px] font-medium px-3 py-2 rounded-full shrink-0 hover:opacity-80" style={{ color: clear ? 'var(--h-ink)' : 'var(--c-text)' }}>{t('دخول', 'Sign in')}</Link>
             <Link to="/join" className="flex items-center gap-2 font-semibold px-4 rounded-full shrink-0 hover:brightness-110 transition" style={{ height: 38, background: 'var(--c-accent)', color: 'var(--c-on-accent)', fontSize: 13 }}>
               {t('انضم', 'Join')}
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="rtl:-scale-x-100" aria-hidden="true"><path d="M2 5h6M5 2l3 3-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
