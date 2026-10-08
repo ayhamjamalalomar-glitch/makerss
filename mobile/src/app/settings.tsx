@@ -119,7 +119,7 @@ export default function Settings() {
         <Row icon="info" title={t('الإصدار', 'Version')} value={Constants.expoConfig?.version || '1.0.0'} />
       </Group>
 
-      <Txt size={12} color={c.muted2} center>© Makers, by intime</Txt>
+      <Txt size={12} color={c.muted2} center>© Makers</Txt>
 
       <Sheet visible={deleting} onClose={() => setDeleting(false)} title={t('حذف الحساب', 'Delete account')}
         footer={<Btn full variant="danger" busy={busy} disabled={confirmText.trim().toUpperCase() !== word.toUpperCase()} onPress={doDelete}>{t('احذف حسابي نهائياً', 'Delete my account for good')}</Btn>}>

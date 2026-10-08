@@ -183,7 +183,7 @@ export default function Home() {
         </View>
       )}
 
-      <Txt size={12} color={c.muted2} center>© Makers, by intime</Txt>
+      <Txt size={12} color={c.muted2} center>© Makers</Txt>
     </ScrollView>
   )
 }

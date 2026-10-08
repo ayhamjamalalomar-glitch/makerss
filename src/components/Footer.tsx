@@ -49,7 +49,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-14 pt-6 flex flex-wrap items-center justify-between gap-4" style={{ borderTop: '1px dashed var(--c-border)' }}>
-          <span className="text-[12px]" style={{ color: 'var(--c-muted-2)' }}>© {new Date().getFullYear()} Makers, by intime</span>
+          <span className="text-[12px]" style={{ color: 'var(--c-muted-2)' }}>© {new Date().getFullYear()} Makers</span>
           <div className="flex items-center gap-3">
             <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label={t('للأعلى', 'Back to top')} style={{ ...iconBtn, opacity: showTop ? 1 : 0.35, pointerEvents: showTop ? 'auto' : 'none' }}>
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>

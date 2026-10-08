@@ -8,7 +8,7 @@ Makers is a talent directory for production people across the Arab world: direct
 
 - Live site: https://makerss.net
 - Owner: Ayham Al-Omar (creative director, co-founder of Intime, Amman). He approves every product and design decision.
-- Footer credit: "© Makers, by intime".
+- Footer credit: "© Makers" (Ayham removed "by intime", 2026-10-08).
 - Approved tagline (AR): «دليل صنّاع الإنتاج في العالم العربي»
 - Approved bio (AR): «كل صورة رأيتها صنعها أحد. Makers دليل مواهب الإنتاج في العالم العربي، مساحة تتعرّف فيها على من يقف خلف الصورة، وتصل إليه مباشرة. كل ملف فيه يراجعه فريقنا بعناية.»
 - Approved bio (EN): "Every image you have ever seen was made by someone. Makers is the talent directory for production across the Arab world, a place to meet the people behind the image and reach them directly. Every profile is carefully reviewed by our team."
