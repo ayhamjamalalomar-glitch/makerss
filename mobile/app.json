@@ -19,7 +19,7 @@
     "android": {
       "package": "net.makerss.app",
       "adaptiveIcon": {
-        "backgroundColor": "#09090B",
+        "backgroundColor": "#F2B33D",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },

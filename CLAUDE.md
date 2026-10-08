@@ -24,6 +24,7 @@ Makers is a talent directory for production people across the Arab world: direct
 7. Never type passwords or sign in for him. He does all sign-ins himself.
 8. The approved design is the **cinematic edition** (live since 2026-09-29, approved by Ayham): darkroom black, bone white type, projector amber accent. Do not redesign; fix and extend inside it. The previous orange design is kept on branch `design-v1-classic` and tag `classic-design-2026-09-29` in case Ayham wants it back.
 9. The official logo is the text wordmark MAKERS / FILMMAKERS / CREATORS in Archivo Black (see `src/components/Logo.tsx`). The old "MK" mark is retired. Do not bring it back.
+   Symbol (approved by Ayham 2026-10-08): the "film strip", three bars at the word lengths of MAKERS, FILMMAKERS, CREATORS between film perforations, the top left perforation in amber. Full mark on a 100 grid, small mark (perforations on one side only) on a 32 grid for 32 px and below. Used for favicon.svg, favicon-32, apple-touch-icon, icon-512, og.png and the app icons (amber ground, ink mark; splash: bone mark on black). Design board: claude.ai artifact "Makers Symbol Directions". Not in the header yet: Ayham decides that later.
 10. Do NOT deploy from Figma Make. A Figma Make deploy once force-pushed over `main` and wiped the backend wiring. All code changes go through git here.
 
 ## 3. Stack
@@ -67,7 +68,7 @@ src/lib/share.ts        shareLink(url, title): native share sheet on phones, cli
 src/components/         (Phase 3) CommandPalette (Ctrl+K or "/", also the mobile search button), ImageCropper + DropZone (photo 3:4, poster 2:3), Reveal (scroll fade-in), StatsCard, EmailPrefs, ReportButton
 src/components/mk.tsx   design primitives: Btn, Card, Chip, Field, TextInput, SelectInput, TextArea, Pill, Avatar, Notice, Spinner, Modal, PageShell, SectionHeader, VerifiedBadge, PosterFallback
 src/components/         Header (search, account menu with icons, appearance light/system/dark and the language switch; visitors get a small EN/ع button instead), Footer (theme toggle). Theme lives in src/lib/theme.ts (useThemeMode, localStorage 'mk-theme': light|dark|system, dark by default), BottomNav (mobile), Logo, ContactForm (collab request), RangeCalendar, WorkThumb, ResendConfirm, DarkCard
-public/                 favicon-32.png, apple-touch-icon.png, icon-512.png, og.png (all generated from the wordmark), robots.txt
+public/                 favicon.svg, favicon-32.png, apple-touch-icon.png, icon-512.png, og.png (from the film strip symbol, see rule 9), robots.txt
 middleware.ts           Vercel Routing Middleware: per-page share previews (title, description, og:image) for /:username, /projects/:id, /opportunities/:id, and /sitemap.xml. Falls through with next() on any error.
 supabase/migrations/    SQL for every schema change made from this repo (applied through the Supabase MCP)
 supabase/functions/send-emails/  Edge Function that drains public.email_outbox through Resend
@@ -166,7 +167,6 @@ Apply schema changes as named migrations (Supabase MCP `apply_migration` or CLI)
 
 ## 8. Open items
 - Footer has no social links yet; waiting for Ayham to give the real Makers accounts.
-- Favicon at 32px shows the full three-line wordmark, which is hard to read. Ayham may want a short version later; ask first.
 
 ## 9. iOS app (`mobile/`)
 
