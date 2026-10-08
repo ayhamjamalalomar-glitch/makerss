@@ -105,6 +105,7 @@ Layout width: every page content sits in `max-w-[1120px] mx-auto w-full` with si
 - The makers directory keeps every filter in the URL (`type`, `q`, `s`, `c`, `country`, `f`, `available`, `sort`).
 - Every user-facing string goes through `t('عربي', 'English')`. Arabic is the default language, RTL. Arabic text right, English text left (use `dir="auto"` on user-generated text).
 - Dark is default, light theme via `data-theme="light"`.
+- Always-dark sections (film heroes, the crew band, the header while it sits over a hero, DarkCard) carry the class `mk-dark` (index.css), which keeps the darkroom tokens in the light theme. Any new dark section must use it, or its text, borders and fades take the light theme's colors.
 - Reuse primitives from `mk.tsx` instead of new ad-hoc components.
 
 ## 5. Product decisions already made

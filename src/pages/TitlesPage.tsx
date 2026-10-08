@@ -47,7 +47,7 @@ export default function TitlesPage() {
   return (
     <div className="min-h-screen">
       {hero ? (
-        <div className="relative overflow-hidden -mt-16" style={{ height: 500, background: 'var(--c-screen)' }}>
+        <div className="mk-dark relative overflow-hidden -mt-16" style={{ height: 500, background: 'var(--c-screen)' }}>
           <img src={posterOf(hero)!} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'brightness(0.4) saturate(0.85)', transform: 'scale(1.05)' }} />
           <div className="absolute inset-0 rtl:scale-x-[-1]" style={{ background: 'linear-gradient(to right, rgba(5,5,7,0.96) 30%, rgba(5,5,7,0.15) 100%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, var(--c-bg) 0%, transparent 50%)' }} />

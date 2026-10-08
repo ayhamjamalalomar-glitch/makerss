@@ -13,7 +13,7 @@ export default function DarkCard({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" style={{ background: 'var(--c-screen)', color: 'var(--c-text)' }}>
+    <div className="mk-dark fixed inset-0 z-50 overflow-y-auto" style={{ background: 'var(--c-screen)', color: 'var(--c-text)' }}>
       <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
         {faces.length > 0 && (
           <div className="absolute inset-0 flex flex-col justify-center gap-6" style={{ transform: 'rotate(-7deg) scale(1.3)', opacity: 0.4 }}>

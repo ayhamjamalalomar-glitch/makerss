@@ -137,7 +137,7 @@ export default function TitlePage({ id }: { id: string }) {
 
   return (
     <div className="min-h-screen">
-      <div className="relative -mt-16" style={{ background: 'var(--c-screen)', color: '#F3EFE7' }}>
+      <div className="mk-dark relative -mt-16" style={{ background: 'var(--c-screen)', color: '#F3EFE7' }}>
         {img && (
           <div className="absolute inset-0 overflow-hidden">
             <img src={img} alt="" aria-hidden="true" className="w-full h-full object-cover" style={{ filter: 'blur(44px) saturate(0.8) brightness(0.32)', transform: 'scale(1.15)' }} />
@@ -248,7 +248,7 @@ export default function TitlePage({ id }: { id: string }) {
       </div>
 
       {credits.length > 0 && (
-        <div id="full-crew" style={{ borderTop: '1px solid var(--c-border)', scrollMarginTop: 70, background: 'var(--c-screen)', color: '#F3EFE7' }}>
+        <div id="full-crew" className="mk-dark" style={{ borderTop: '1px solid var(--c-border)', scrollMarginTop: 70, background: 'var(--c-screen)', color: '#F3EFE7' }}>
           <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-16 grid grid-cols-1 md:grid-cols-[260px_1fr] gap-10 md:gap-16 items-start">
             <div className="flex flex-col gap-2 md:sticky md:top-24">
               <h2 className="font-display font-bold m-0" style={{ fontSize: 'clamp(26px, 3vw, 36px)', lineHeight: 1.15 }}>{t('الطاقم الكامل', 'Full crew')}</h2>

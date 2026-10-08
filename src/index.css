@@ -77,6 +77,34 @@
   --color-orange: #C98A12;
 }
 
+
+/* Always-dark sections (film heroes, the crew band, the header over a hero): they keep the
+   darkroom palette in the light theme too, so their text, borders and fades stay right. */
+.mk-dark {
+  --c-bg: #09090B;
+  --c-surface: #121216;
+  --c-surface-alt: #1A1A1F;
+  --c-text: #F3EFE7;
+  --c-border: #25252C;
+  --c-border-mid: #36363F;
+  --c-muted: #807C74;
+  --c-muted-2: #5B5953;
+  --c-text-2: #BFB9AE;
+  --c-overlay: rgba(9,9,11,0.82);
+  --c-shadow: rgba(0,0,0,0.6);
+  --c-accent: #F2B33D;
+  --c-accent-rgb: 242,179,61;
+  --c-live: #5ED6B4;
+  --color-ink: #09090B;
+  --color-surface: #121216;
+  --color-surface-alt: #1A1A1F;
+  --color-paper: #F3EFE7;
+  --color-border: #25252C;
+  --color-border-light: #36363F;
+  --color-muted: #807C74;
+  --color-orange: #F2B33D;
+}
+
 *,
 *::before,
 *::after {

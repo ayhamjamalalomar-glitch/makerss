@@ -173,7 +173,7 @@ export default function MakerProfile({ username }: { username: string }) {
   return (
     <div className="min-h-screen">
       {/* HERO: opening titles */}
-      <section className="relative -mt-16 overflow-hidden" style={{ background: 'var(--c-screen)', color: '#F3EFE7' }}>
+      <section className="mk-dark relative -mt-16 overflow-hidden" style={{ background: 'var(--c-screen)', color: '#F3EFE7' }}>
         {backdrop && <img src={backdrop} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(48px) saturate(0.7) brightness(0.45)', transform: 'scale(1.2)' }} />}
         <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(5,5,7,0.55), rgba(5,5,7,0.7) 60%, var(--c-screen))' }} />
         <div className="relative max-w-[1120px] mx-auto w-full px-4 sm:px-8 pt-24 pb-10">

@@ -92,7 +92,7 @@ export default function Header() {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-40 transition-colors duration-300"
+      className={`fixed top-0 left-0 right-0 z-40 transition-colors duration-300 ${clear ? 'mk-dark' : ''}`}
       style={{
         height: 64,
         background: clear ? 'linear-gradient(to bottom, rgba(5,5,7,0.75), rgba(5,5,7,0))' : 'var(--c-overlay)',

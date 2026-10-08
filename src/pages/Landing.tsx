@@ -48,7 +48,7 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
   const stripB = [...faces].reverse().concat(posters)
 
   return (
-    <section className="relative -mt-16 overflow-hidden" style={{ minHeight: 'min(92vh, 860px)', background: 'var(--c-screen)', color: '#F3EFE7' }}>
+    <section className="mk-dark relative -mt-16 overflow-hidden" style={{ minHeight: 'min(92vh, 860px)', background: 'var(--c-screen)', color: '#F3EFE7' }}>
       {/* moving film strips behind the title */}
       <div className="absolute inset-0 flex flex-col justify-center gap-6" style={{ transform: 'rotate(-7deg) scale(1.25)', opacity: 0.55 }}>
         {stripA.length > 0 && <FilmStrip images={stripA} speed={90} height={170} />}
@@ -238,7 +238,7 @@ export default function Landing() {
         </section>
 
         {!approved && (
-          <section className="relative rounded-3xl overflow-hidden" style={{ background: 'var(--c-screen)', color: '#F3EFE7' }}>
+          <section className="mk-dark relative rounded-3xl overflow-hidden" style={{ background: 'var(--c-screen)', color: '#F3EFE7' }}>
             <div className="mk-sprockets h-4 mt-3 opacity-70" style={{ backgroundImage: 'radial-gradient(circle, #1a1a1f 3px, transparent 3.5px)' }} />
             <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 55% 80% at 85% 50%, rgba(var(--c-accent-rgb),0.2), transparent 70%)' }} />
             <div className="relative px-7 md:px-12 py-14 md:py-16 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
