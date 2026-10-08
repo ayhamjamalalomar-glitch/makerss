@@ -46,6 +46,13 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
   const posters = useMemo(() => (projects || []).map((p) => posterOf(p)).filter(Boolean) as string[], [projects])
   const stripA = [...posters, ...faces]
   const stripB = [...faces].reverse().concat(posters)
+  // Signed in: the main button leads to the next useful step instead of "Join".
+  const { session, profile } = useAuth()
+  const cta = !session
+    ? { to: '/join', label: t('انضم إلى Makers', 'Join Makers') }
+    : profile?.status === 'approved'
+      ? { to: '/projects/new', label: t('أضف مشروعاً', 'Add a project') }
+      : { to: '/me', label: t('أكمل ملفك', 'Finish your profile') }
 
   return (
     <section className="relative -mt-16 overflow-hidden" style={{ minHeight: 'min(92vh, 860px)', background: 'var(--h-bg)', color: 'var(--h-ink)' }}>
@@ -96,8 +103,8 @@ function Hero({ members, projects }: { members: MemberCard[] | null; projects: P
 
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-wrap gap-2.5">
-            <Link to="/join" className="inline-flex items-center gap-2 font-semibold px-6 rounded-full transition hover:brightness-110" style={{ height: 48, background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>
-              {t('انضم إلى Makers', 'Join Makers')}
+            <Link to={cta.to} className="inline-flex items-center gap-2 font-semibold px-6 rounded-full transition hover:brightness-110" style={{ height: 48, background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>
+              {cta.label}
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="rtl:-scale-x-100" aria-hidden="true"><path d="M2 6h8M7 3l3 3-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </Link>
             <Link to="/makers" className="inline-flex items-center font-semibold px-6 rounded-full transition-colors hover:bg-white/10" style={{ height: 48, border: '1px solid rgba(var(--h-ink-rgb),0.3)', color: 'var(--h-ink)' }}>{t('تصفّح الصنّاع', 'Browse makers')}</Link>
