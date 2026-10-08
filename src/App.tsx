@@ -7,7 +7,6 @@ import Header from './components/Header'
 import BottomNav from './components/BottomNav'
 import Footer from './components/Footer'
 import CommandPalette from './components/CommandPalette'
-import Cursor from './components/Cursor'
 import { motion } from 'framer-motion'
 import { PageSkeleton } from './components/mk'
 import Landing from './pages/Landing'
@@ -92,7 +91,6 @@ export default function App() {
           </main>
           <BottomNav />
           <CommandPalette />
-          <Cursor />
         </>
       )}
     </div>
