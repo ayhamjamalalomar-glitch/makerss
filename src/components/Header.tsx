@@ -3,55 +3,110 @@ import Link, { useRouter } from '../lib/router'
 import { useAuth } from '../lib/auth'
 import { t, useLang } from '../lib/i18n'
 import { displayName } from '../lib/data'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ClipboardCheck, Clapperboard, Inbox, Languages, LogOut, Megaphone, MessageCircle, Monitor, Moon, PenLine, Settings, ShieldCheck, Sun, UserRound } from 'lucide-react'
+import { useThemeMode, type ThemeMode } from '../lib/theme'
 import Logo from './Logo'
 import NotificationBell from './NotificationBell'
 import { useHasDarkHero } from '../lib/hero'
 import { Avatar } from './mk'
 import { useIsWriter } from '../lib/writings'
 
+type MenuIcon = typeof UserRound
+
 function AccountMenu() {
   const { profile, signOut } = useAuth()
+  const { lang, setLang } = useLang()
   const { go } = useRouter()
   const [open, setOpen] = useState(false)
+  const [mode, setMode] = useThemeMode()
   const ref = useRef<HTMLDivElement>(null)
   const writer = useIsWriter()
   useEffect(() => {
+    if (!open) return
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [])
+    document.addEventListener('keydown', k)
+    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('keydown', k) }
+  }, [open])
   if (!profile) return null
   const staff = profile.role === 'admin' || profile.role === 'reviewer'
   const approved = profile.status === 'approved'
-  const item = (to: string, label: string) => (
-    <Link to={to} onClick={() => setOpen(false)} className="block px-4 py-2.5 text-[13px] hover:bg-white/5 transition-colors" style={{ color: 'var(--c-text)' }}>{label}</Link>
+  const ar = lang === 'ar'
+
+  const row = 'flex items-center gap-3 w-full px-4 py-2.5 text-[14px] text-start transition-colors hover:bg-[color:var(--c-surface-alt)]'
+  const Icon = ({ I }: { I: MenuIcon }) => <I size={18} strokeWidth={1.6} className="shrink-0" style={{ color: 'var(--c-muted)' }} aria-hidden="true" />
+  const item = (to: string, I: MenuIcon, label: string) => (
+    <Link to={to} onClick={() => setOpen(false)} className={row} style={{ color: 'var(--c-text)' }}>
+      <Icon I={I} /><span className="truncate">{label}</span>
+    </Link>
   )
+  const sep = <div className="my-1.5" style={{ borderTop: '1px solid var(--c-border)' }} />
+  const modes: [ThemeMode, MenuIcon, string][] = [['light', Sun, t('فاتح', 'Light')], ['system', Monitor, t('حسب الجهاز', 'System')], ['dark', Moon, t('داكن', 'Dark')]]
+
   return (
     <div ref={ref} className="relative shrink-0">
       <button onClick={() => setOpen(!open)} aria-label={t('حسابي', 'My account')} aria-expanded={open} className="rounded-full p-0 cursor-pointer" style={{ background: 'none', border: '2px solid ' + (approved ? 'rgba(var(--c-accent-rgb),0.6)' : 'var(--c-border-mid)') }}>
         <Avatar url={profile.avatar_url} name={profile.full_name} size={32} />
       </button>
-      {open && (
-        <div className="absolute end-0 mt-2 w-60 rounded-xl overflow-hidden py-1.5" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', boxShadow: '0 16px 40px var(--c-shadow)', zIndex: 100 }}>
-          <div className="px-4 py-2.5" style={{ borderBottom: '1px solid var(--c-border)' }}>
-            <div className="text-[13px] font-bold truncate">{displayName(profile)}</div>
-            <div className="text-[11px] truncate" style={{ color: 'var(--c-muted)' }}>{profile.email}</div>
-          </div>
-          {approved && profile.username && item(`/${profile.username}`, t('صفحتي', 'My page'))}
-          {item('/me', t('تعديل الملف الشخصي', 'Edit profile'))}
-          {!approved && item('/me/status', t('حالة الطلب', 'Application status'))}
-          {approved && item('/projects/new', t('أضف مشروعاً', 'Add a project'))}
-          {approved && item('/opportunities/new', t('انشر فرصة', 'Post an opportunity'))}
-          {writer && item('/writing/new', t('اكتب', 'Write'))}
-          {item('/inbox', t('الوارد', 'Inbox'))}
-          {approved && item('/messages', t('الرسائل', 'Messages'))}
-          {staff && item('/admin', t('لوحة الإدارة', 'Admin'))}
-          <button onClick={async () => { setOpen(false); await signOut(); go('/') }} className="block w-full text-start px-4 py-2.5 text-[13px] hover:bg-white/5 cursor-pointer" style={{ background: 'none', border: 'none', borderTop: '1px solid var(--c-border)', color: '#F87171' }}>
-            {t('تسجيل الخروج', 'Sign out')}
-          </button>
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.16, ease: [0.2, 0.7, 0.2, 1] }}
+            className="absolute end-0 mt-2 w-[290px] rounded-2xl overflow-hidden py-1.5"
+            style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', boxShadow: '0 20px 50px var(--c-shadow)', zIndex: 100, transformOrigin: ar ? 'top left' : 'top right' }}
+          >
+            <div className="px-4 pt-2.5 pb-3">
+              <div className="text-[15px] font-bold truncate">{displayName(profile)}</div>
+              <div className="text-[12.5px] truncate mt-0.5" style={{ color: 'var(--c-muted)' }} dir="ltr">{profile.email}</div>
+            </div>
+            {sep}
+            {approved && profile.username && item(`/${profile.username}`, UserRound, t('صفحتي', 'My page'))}
+            {item('/me', Settings, t('الحساب والملف الشخصي', 'Account and profile'))}
+            {!approved && item('/me/status', ClipboardCheck, t('حالة الطلب', 'Application status'))}
+
+            <div className="flex items-center gap-3 px-4 py-2">
+              <Icon I={mode === 'dark' ? Moon : mode === 'system' ? Monitor : Sun} />
+              <span className="text-[14px] flex-1" style={{ color: 'var(--c-text)' }}>{t('المظهر', 'Appearance')}</span>
+              <div className="flex items-center rounded-full p-[3px]" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)' }} role="radiogroup" aria-label={t('المظهر', 'Appearance')}>
+                {modes.map(([m, I, label]) => {
+                  const on = mode === m
+                  return (
+                    <button key={m} type="button" role="radio" aria-checked={on} title={label} aria-label={label} onClick={() => setMode(m)} className="relative flex items-center justify-center rounded-full cursor-pointer" style={{ width: 32, height: 28, background: 'none', border: 'none', color: on ? 'var(--c-text)' : 'var(--c-muted)' }}>
+                      {on && <motion.span layoutId="theme-pill" className="absolute inset-0 rounded-full" style={{ background: 'var(--c-surface)', boxShadow: '0 1px 4px var(--c-shadow)' }} transition={{ type: 'spring', stiffness: 500, damping: 38 }} />}
+                      <I size={15} strokeWidth={1.7} className="relative" aria-hidden="true" />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <button type="button" onClick={() => setLang(ar ? 'en' : 'ar')} className={`${row} cursor-pointer`} style={{ background: 'none', border: 'none', color: 'var(--c-text)' }}>
+              <Icon I={Languages} />
+              <span className="flex-1">{ar ? 'English' : 'العربية'}</span>
+            </button>
+
+            {approved && sep}
+            {approved && item('/projects/new', Clapperboard, t('أضف مشروعاً', 'Add a project'))}
+            {approved && item('/opportunities/new', Megaphone, t('انشر فرصة', 'Post an opportunity'))}
+            {writer && item('/writing/new', PenLine, t('اكتب', 'Write'))}
+
+            {sep}
+            {item('/inbox', Inbox, t('الوارد', 'Inbox'))}
+            {approved && item('/messages', MessageCircle, t('الرسائل', 'Messages'))}
+            {staff && item('/admin', ShieldCheck, t('لوحة الإدارة', 'Admin'))}
+
+            {sep}
+            <button onClick={async () => { setOpen(false); await signOut(); go('/') }} className={`${row} cursor-pointer`} style={{ background: 'none', border: 'none', color: '#E5484D' }}>
+              <LogOut size={18} strokeWidth={1.6} className="shrink-0 rtl:-scale-x-100" aria-hidden="true" />
+              <span>{t('تسجيل الخروج', 'Sign out')}</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -132,6 +187,7 @@ export default function Header() {
         <button type="button" className="flex sm:hidden items-center justify-center rounded-full shrink-0 cursor-pointer" style={{ width: 38, height: 38, background: clear ? 'rgba(var(--h-ink-rgb),0.08)' : 'var(--c-surface-alt)', border: `1px solid ${clear ? 'rgba(var(--h-ink-rgb),0.18)' : 'var(--c-border-mid)'}`, color: clear ? 'var(--h-ink)' : 'var(--c-muted)' }} onClick={openPalette} aria-label={t('بحث', 'Search')}>
           <svg width="15" height="15" viewBox="0 0 18 18" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5" /><path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </button>
+        {!loading && !session && (
         <button
           type="button"
           onClick={() => setLang(ar ? 'en' : 'ar')}
@@ -141,6 +197,7 @@ export default function Header() {
         >
           {ar ? 'EN' : 'ع'}
         </button>
+        )}
         {!loading && session && <NotificationBell userId={session.user.id} clear={clear} />}
         {!loading && (session ? <AccountMenu /> : (
           <>

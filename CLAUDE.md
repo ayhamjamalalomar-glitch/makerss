@@ -66,7 +66,7 @@ src/lib/toast.tsx       ToastProvider + useToast(): short confirmations ("Link c
 src/lib/share.ts        shareLink(url, title): native share sheet on phones, clipboard elsewhere
 src/components/         (Phase 3) CommandPalette (Ctrl+K or "/", also the mobile search button), ImageCropper + DropZone (photo 3:4, poster 2:3), Reveal (scroll fade-in), StatsCard, EmailPrefs, ReportButton
 src/components/mk.tsx   design primitives: Btn, Card, Chip, Field, TextInput, SelectInput, TextArea, Pill, Avatar, Notice, Spinner, Modal, PageShell, SectionHeader, VerifiedBadge, PosterFallback
-src/components/         Header (search, lang toggle, account menu), Footer (theme toggle, stored in localStorage 'mk-theme'), BottomNav (mobile), Logo, ContactForm (collab request), RangeCalendar, WorkThumb, ResendConfirm, DarkCard
+src/components/         Header (search, account menu with icons, appearance light/system/dark and the language switch; visitors get a small EN/ع button instead), Footer (theme toggle). Theme lives in src/lib/theme.ts (useThemeMode, localStorage 'mk-theme': light|dark|system, dark by default), BottomNav (mobile), Logo, ContactForm (collab request), RangeCalendar, WorkThumb, ResendConfirm, DarkCard
 public/                 favicon-32.png, apple-touch-icon.png, icon-512.png, og.png (all generated from the wordmark), robots.txt
 middleware.ts           Vercel Routing Middleware: per-page share previews (title, description, og:image) for /:username, /projects/:id, /opportunities/:id, and /sitemap.xml. Falls through with next() on any error.
 supabase/migrations/    SQL for every schema change made from this repo (applied through the Supabase MCP)

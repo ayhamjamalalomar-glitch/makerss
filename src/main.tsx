@@ -7,6 +7,7 @@ import { LangProvider } from './lib/i18n'
 import { RouterProvider } from './lib/router'
 import { ToastProvider } from './lib/toast'
 import './index.css'
+import './lib/theme'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

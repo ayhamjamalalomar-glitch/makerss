@@ -3,15 +3,7 @@ import Link from '../lib/router'
 import { isRtl, t } from '../lib/i18n'
 import { useAuth } from '../lib/auth'
 import Logo from './Logo'
-
-const THEME_KEY = 'mk-theme'
-
-function applyTheme(light: boolean) {
-  document.documentElement.dataset.theme = light ? 'light' : 'dark'
-}
-
-// Apply the saved theme as early as possible.
-try { if (localStorage.getItem(THEME_KEY) === 'light') applyTheme(true) } catch { /* storage blocked */ }
+import { isLightNow, useThemeMode } from '../lib/theme'
 
 const iconBtn: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 38, borderRadius: 999,
@@ -21,7 +13,8 @@ const iconBtn: CSSProperties = {
 export default function Footer() {
   const { session } = useAuth()
   const [showTop, setShowTop] = useState(false)
-  const [isLight, setIsLight] = useState(() => document.documentElement.dataset.theme === 'light')
+  const [mode, setMode] = useThemeMode()
+  const isLight = mode === 'light' || (mode === 'system' && isLightNow())
 
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 480)
@@ -29,12 +22,7 @@ export default function Footer() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const toggleTheme = () => {
-    const next = !isLight
-    setIsLight(next)
-    applyTheme(next)
-    try { localStorage.setItem(THEME_KEY, next ? 'light' : 'dark') } catch { /* ignore */ }
-  }
+  const toggleTheme = () => setMode(isLight ? 'dark' : 'light')
 
   const credits: [string, { label: string; to: string }[]][] = [
     [t('المنصة', 'Platform'), [{ label: t('الرئيسية', 'Home'), to: '/' }, { label: t('الصنّاع', 'Makers'), to: '/makers' }, { label: t('صنّاع المحتوى', 'Creators'), to: '/makers?type=creator' }, { label: t('المشاريع', 'Projects'), to: '/projects' }, { label: t('كتابات', 'Writing'), to: '/writing' }]],
