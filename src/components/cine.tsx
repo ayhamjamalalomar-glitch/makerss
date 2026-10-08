@@ -239,7 +239,7 @@ export function CastCard({ m, specialties, width, rank, place }: { m: MemberCard
           </span>
           {place && <span className="text-[10.5px] truncate" style={{ color: 'rgba(243,239,231,0.5)' }}>{place}</span>}
         </span>
-        {rank !== undefined && <span className="absolute top-2.5 end-2.5 font-mono text-[11px] font-semibold px-2 py-1 rounded-md" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)' }} dir="ltr">#{pad(rank)}</span>}
+        {rank !== undefined && <span className="absolute top-2.5 end-2.5 font-mono text-[11px] font-semibold px-2 py-1 rounded-md" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}><bdi dir="ltr">#{pad(rank)}</bdi></span>}
       </motion.div>
     </Link>
   )
