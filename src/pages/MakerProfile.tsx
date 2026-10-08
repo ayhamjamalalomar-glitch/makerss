@@ -189,12 +189,12 @@ export default function MakerProfile({ username }: { username: string }) {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-7 sm:gap-10 items-start sm:items-end">
-            <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }} className="relative shrink-0 w-[200px] sm:w-[230px] rounded-2xl overflow-hidden" style={{ aspectRatio: '3/4', background: 'var(--c-surface-alt)', boxShadow: '0 30px 80px var(--c-shadow)' }}>
+            <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }} className={`relative shrink-0 w-[200px] sm:w-[230px] rounded-2xl overflow-hidden ${p.is_founding ? 'mk-founder mk-founder-lg' : ''}`} style={{ aspectRatio: '3/4', background: 'var(--c-surface-alt)', boxShadow: p.is_founding ? undefined : '0 30px 80px var(--c-shadow)' }}>
               {p.avatar_url ? <img src={p.avatar_url} alt={displayName(p)} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-display font-black" style={{ fontSize: 72, color: 'var(--c-muted-2)' }}>{displayName(p).charAt(0)}</div>}
-              <Corners size={16} inset={10} color="rgba(243,239,231,0.7)" w={1.5} />
+              <Corners size={16} inset={10} color={p.is_founding ? '#F2C766' : 'rgba(243,239,231,0.7)'} w={1.5} />
               {p.is_founding && (
-                <div className="absolute bottom-0 inset-x-0 flex items-center justify-center gap-1.5 py-2 text-[11px] font-semibold" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)' }}>
-                  <svg width="9" height="9" viewBox="0 0 8 8" fill="none" aria-hidden="true"><path d="M1.5 4L3 5.5L6.5 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+                <div className="mk-founder-chip absolute bottom-0 inset-x-0 flex items-center justify-center gap-1.5 py-2 text-[11.5px] font-semibold" style={{ borderRadius: 0 }}>
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 .8l1.6 3.3 3.6.5-2.6 2.5.6 3.6L6 9l-3.2 1.7.6-3.6L.8 4.6l3.6-.5z" /></svg>
                   {t('عضو مؤسس', 'Founding member')}
                 </div>
               )}

@@ -199,6 +199,16 @@ function RankNumeral({ n }: { n: number }) {
   )
 }
 
+/** Gold "founder" chip for the first makers on the platform. */
+export function FounderChip({ big = false }: { big?: boolean }) {
+  return (
+    <span className={`mk-founder-chip inline-flex items-center gap-1 rounded-full font-semibold ${big ? 'px-3 py-1.5 text-[12px]' : 'px-2 py-1 text-[10.5px]'}`}>
+      <svg width={big ? 11 : 9} height={big ? 11 : 9} viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M6 .8l1.6 3.3 3.6.5-2.6 2.5.6 3.6L6 9l-3.2 1.7.6-3.6L.8 4.6l3.6-.5z" /></svg>
+      {t('مؤسس', 'Founder')}
+    </span>
+  )
+}
+
 /** A maker as a casting card: portrait in black and white that comes to color on hover. */
 export function CastCard({ m, specialties, width, rank, place }: { m: MemberCard; specialties: Specialty[]; width?: number; rank?: number; place?: string }) {
   const tilt = useTilt(5)
@@ -207,23 +217,23 @@ export function CastCard({ m, specialties, width, rank, place }: { m: MemberCard
   const audience = totalFollowers(m)
   return (
     <Link to={`/${m.username}`} className="group shrink-0 flex flex-col gap-2.5 text-start" style={{ width }}>
-      <motion.div className="relative rounded-xl overflow-hidden w-full" style={{ aspectRatio: '3/4', background: 'var(--c-surface-alt)', ...tilt.style }} onPointerMove={tilt.onMove} onPointerLeave={tilt.onLeave}>
+      <motion.div className={`relative rounded-xl overflow-hidden w-full ${m.is_founding ? 'mk-founder' : ''}`} style={{ aspectRatio: '3/4', background: 'var(--c-surface-alt)', ...tilt.style }} onPointerMove={tilt.onMove} onPointerLeave={tilt.onLeave}>
         {m.avatar_url ? (
           <img src={m.avatar_url} alt={displayName(m)} loading="lazy" draggable={false} className="w-full h-full object-cover transition-all duration-700 grayscale-[0.85] contrast-[1.05] group-hover:grayscale-0 group-hover:scale-[1.04]" />
         ) : (
           <div className="w-full h-full flex items-center justify-center font-display font-black" style={{ fontSize: 56, color: 'var(--c-muted-2)' }}>{displayName(m).charAt(0)}</div>
         )}
         <span className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(5,5,7,0.9) 0%, rgba(5,5,7,0) 45%)' }} />
-        <span className="absolute top-2.5 start-2.5 end-2.5 flex items-center justify-between">
-          {m.available ? (
-            <span className="flex items-center gap-1.5 rounded-full px-2 py-1 font-mono text-[10px]" style={{ background: 'rgba(5,5,7,0.7)', color: 'var(--c-live)', backdropFilter: 'blur(6px)' }}>
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--c-live)', boxShadow: '0 0 8px var(--c-live)' }} />{t('متاح', 'Available')}
+        <span className="absolute top-2.5 start-2.5 flex items-center gap-1.5">
+          {m.is_founding && <FounderChip />}
+          {m.available && (
+            <span className="flex items-center gap-1.5 rounded-full px-2 py-1 font-mono text-[10px]" style={{ background: 'rgba(5,5,7,0.7)', color: 'var(--c-live)', backdropFilter: 'blur(6px)' }} title={t('متاح', 'Available')}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--c-live)', boxShadow: '0 0 8px var(--c-live)' }} />{!m.is_founding && t('متاح', 'Available')}
             </span>
-          ) : <span />}
-          {m.is_founding && <VerifiedBadge size={20} title={t('عضو مؤسس', 'Founding member')} />}
+          )}
         </span>
         <span className="absolute bottom-3 start-3 end-3 flex flex-col gap-0.5 text-white">
-          <span className="font-display font-bold leading-tight truncate" style={{ fontSize: 15 }}>{displayName(m)}</span>
+          <span className="flex items-center gap-1.5 min-w-0"><span className="font-display font-bold leading-tight truncate" style={{ fontSize: 15 }}>{displayName(m)}</span>{m.is_founding && <span className="shrink-0"><VerifiedBadge size={15} title={t('عضو مؤسس', 'Founding member')} /></span>}</span>
           <span className="font-mono text-[10.5px] truncate" style={{ color: 'rgba(243,239,231,0.7)' }}>
             {role}{creator && audience > 0 ? ` · ${formatFollowers(audience)}` : ''}
           </span>
