@@ -49,6 +49,9 @@ export default function App() {
   let bare: ReactElement | null = null
   if (first === 'join') bare = <JoinPage />
   else if (first === 'login') bare = <LoginPage />
+  // The writing editor is a page of its own, like a blank sheet: no site header or footer.
+  else if (first === 'writing' && second === 'new') bare = <WritingEditor />
+  else if (first === 'writing' && second && third === 'edit') bare = <WritingEditor id={second} />
 
   let page: ReactElement
   if (!first) page = <Landing />
@@ -59,8 +62,6 @@ export default function App() {
   else if (first === 'projects') page = <TitlesPage />
   else if (first === 'opportunities' && second === 'new') page = <OpenCallEditor />
   else if (first === 'opportunities') page = <OpenProjects openId={second || undefined} />
-  else if (first === 'writing' && second === 'new') page = <WritingEditor />
-  else if (first === 'writing' && second && third === 'edit') page = <WritingEditor id={second} />
   else if (first === 'writing' && second) page = <WritingPage id={second} />
   else if (first === 'writing' || first === 'writings') page = <WritingsPage />
   else if (first === 'me' && second === 'status') page = <StatusPage />
@@ -68,6 +69,7 @@ export default function App() {
   else if (first === 'inbox') page = <InboxPage />
   else if (first === 'messages') page = <MessagesPage />
   else if (first === 'admin') page = <Admin />
+  else if (!RESERVED_PATHS.includes(first) && second && !third) page = <WritingPage username={first} slug={second} />
   else if (!RESERVED_PATHS.includes(first)) page = <MakerProfile username={first} />
   else page = <Landing />
 

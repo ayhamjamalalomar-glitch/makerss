@@ -5,6 +5,7 @@ import { t, useLang } from '../lib/i18n'
 import { displayName } from '../lib/data'
 import { motion } from 'framer-motion'
 import Logo from './Logo'
+import NotificationBell from './NotificationBell'
 import { useHasDarkHero } from '../lib/hero'
 import { Avatar } from './mk'
 import { useIsWriter } from '../lib/writings'
@@ -140,6 +141,7 @@ export default function Header() {
         >
           {ar ? 'EN' : 'ع'}
         </button>
+        {!loading && session && <NotificationBell userId={session.user.id} clear={clear} />}
         {!loading && (session ? <AccountMenu /> : (
           <>
             <Link to="/login" className="hidden sm:inline-flex items-center text-[13px] font-medium px-3 py-2 rounded-full shrink-0 hover:opacity-80" style={{ color: clear ? '#F3EFE7' : 'var(--c-text)' }}>{t('دخول', 'Sign in')}</Link>

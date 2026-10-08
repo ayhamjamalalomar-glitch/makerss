@@ -3,7 +3,7 @@ import Link from '../lib/router'
 import { t } from '../lib/i18n'
 import { displayName } from '../lib/data'
 import { formatDateAr } from '../lib/constants'
-import { excerpt, writingKindLabel, writingPath, writingTag, type Writing } from '../lib/writings'
+import { excerpt, podcastEmbed, videoEmbed, writingKindLabel, writingPath, writingTag, type Block, type Writing } from '../lib/writings'
 
 // One cover style for every writing: the title set big on the dark screen, the kind in amber,
 // the author at the foot. Members only type the title; the cover is drawn from it.
@@ -97,10 +97,10 @@ function inline(text: string): ReactNode[] {
   return out
 }
 
-type Block = { type: 'h2' | 'h3' | 'p' | 'quote'; text: string } | { type: 'list'; items: string[] }
+type MdBlock = { type: 'h2' | 'h3' | 'p' | 'quote'; text: string } | { type: 'list'; items: string[] }
 
-export function parseArticle(src: string): Block[] {
-  const blocks: Block[] = []
+export function parseArticle(src: string): MdBlock[] {
+  const blocks: MdBlock[] = []
   const chunks = src.replace(/\r\n?/g, '\n').split(/\n{2,}/)
   for (const raw of chunks) {
     const chunk = raw.replace(/^\n+|\s+$/g, '')
@@ -149,4 +149,151 @@ export function ArticleBody({ body }: { body: string }) {
       })}
     </div>
   )
+}
+
+// ── Article blocks (new editor) ──────────────────────────────
+
+const ytThumbFrame = { aspectRatio: '16/9', border: 'none' } as const
+
+export function ArticleBlocks({ blocks }: { blocks: Block[] }) {
+  return (
+    <div dir="auto" className="flex flex-col gap-6" style={{ fontSize: 17.5, lineHeight: 2.05, color: 'var(--c-text-2)' }}>
+      {blocks.map((b, i) => <BlockView key={b.id || i} b={b} />)}
+    </div>
+  )
+}
+
+export function BlockView({ b }: { b: Block }) {
+  switch (b.type) {
+    case 'h2': return <h2 className="font-display m-0 mt-4" style={{ fontSize: 26, lineHeight: 1.4, fontWeight: 800, color: 'var(--c-text)' }}>{b.text}</h2>
+    case 'h3': return <h3 className="font-display m-0 mt-2" style={{ fontSize: 20, lineHeight: 1.45, fontWeight: 700, color: 'var(--c-text)' }}>{b.text}</h3>
+    case 'quote': return <blockquote className="m-0 py-1" style={{ borderInlineStart: '3px solid var(--c-accent)', paddingInlineStart: 22, fontSize: 21, lineHeight: 1.8, fontWeight: 500, color: 'var(--c-text)' }}>{inline(b.text)}</blockquote>
+    case 'ul': return (
+      <ul className="m-0 flex flex-col gap-2" style={{ paddingInlineStart: 22 }}>
+        {b.items.map((it, j) => <li key={j} style={{ listStyle: 'none', position: 'relative' }}><span aria-hidden="true" className="absolute rotate-45" style={{ width: 6, height: 6, background: 'var(--c-accent)', insetInlineStart: -18, top: '0.9em' }} />{inline(it)}</li>)}
+      </ul>
+    )
+    case 'ol': return (
+      <ol className="m-0 flex flex-col gap-2" style={{ paddingInlineStart: 28 }}>
+        {b.items.map((it, j) => <li key={j} style={{ listStyle: 'none', position: 'relative' }}><span aria-hidden="true" className="absolute font-mono text-[13px]" style={{ insetInlineStart: -28, top: '0.35em', color: 'var(--c-accent)' }}>{String(j + 1).padStart(2, '0')}</span>{inline(it)}</li>)}
+      </ol>
+    )
+    case 'image': return (
+      <figure className="m-0 flex flex-col gap-2">
+        <img src={b.url} alt={b.caption || ''} loading="lazy" className="w-full rounded-xl block" style={{ border: '1px solid var(--c-border)' }} />
+        {b.caption && <figcaption className="text-[13px] text-center" style={{ color: 'var(--c-muted)' }}>{b.caption}</figcaption>}
+      </figure>
+    )
+    case 'video': {
+      const src = videoEmbed(b.url)
+      return src ? <iframe src={src} title="video" className="w-full rounded-xl block" style={ytThumbFrame} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen loading="lazy" referrerPolicy="strict-origin-when-cross-origin" /> : null
+    }
+    case 'podcast': {
+      const e = podcastEmbed(b.url)
+      if (!e) return null
+      return e.height ? <iframe src={e.src} title="podcast" className="w-full rounded-xl block" style={{ height: e.height, border: 'none' }} allow="autoplay; clipboard-write; encrypted-media" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms" />
+        : <iframe src={e.src} title="podcast" className="w-full rounded-xl block" style={ytThumbFrame} allow="autoplay; encrypted-media; fullscreen" allowFullScreen loading="lazy" />
+    }
+    case 'button': return (
+      <a href={b.url} target="_blank" rel="noopener noreferrer nofollow ugc" className="self-center inline-flex items-center gap-2 font-semibold px-7 py-3.5 rounded-full text-[15px] transition hover:brightness-110" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', lineHeight: 1.4 }}>
+        {b.label}
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="rtl:-scale-x-100" aria-hidden="true"><path d="M3 9l6-6M4.5 3H9v4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </a>
+    )
+    case 'divider': return <div className="flex justify-center gap-3 py-2" aria-hidden="true">{[0, 1, 2].map((k) => <span key={k} className="w-1.5 h-1.5 rotate-45" style={{ background: 'var(--c-accent)' }} />)}</div>
+    default: return <p className="m-0 whitespace-pre-line">{inline((b as { text: string }).text)}</p>
+  }
+}
+
+// ── Share image ──────────────────────────────────────────────
+// Drawn in the browser (canvas shapes Arabic correctly) in the same style as the cover, 1200 x 630.
+
+const RTL_RE = /[֐-ࣿ]/
+function wrap(ctx: CanvasRenderingContext2D, text: string, width: number) {
+  const words = text.split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+  let line = ''
+  for (const w of words) {
+    const next = line ? `${line} ${w}` : w
+    if (ctx.measureText(next).width > width && line) { lines.push(line); line = w } else line = next
+  }
+  if (line) lines.push(line)
+  return lines
+}
+
+export async function renderShareImage(w: { kind: Writing['kind']; title: string; author: string }): Promise<Blob | null> {
+  const W = 1200, H = 630, PAD = 84
+  try {
+    await Promise.all([
+      document.fonts.load(`800 80px Alexandria`, w.title),
+      document.fonts.load(`400 26px "Readex Pro"`, w.author),
+      document.fonts.load(`600 20px "JetBrains Mono"`, 'ARTICLE'),
+      document.fonts.load(`400 20px "Archivo Black"`, 'MAKERS'),
+    ])
+  } catch { /* draw with what is loaded */ }
+  const c = document.createElement('canvas')
+  c.width = W; c.height = H
+  const ctx = c.getContext('2d')
+  if (!ctx) return null
+  ctx.fillStyle = '#050507'
+  ctx.fillRect(0, 0, W, H)
+  const g = ctx.createRadialGradient(W, 0, 0, W, 0, W * 0.75)
+  g.addColorStop(0, 'rgba(242,179,61,0.24)')
+  g.addColorStop(0.4, 'rgba(242,179,61,0.06)')
+  g.addColorStop(1, 'rgba(242,179,61,0)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, W, H)
+  const fade = ctx.createLinearGradient(0, H * 0.5, 0, H)
+  fade.addColorStop(0, 'rgba(0,0,0,0)')
+  fade.addColorStop(1, 'rgba(0,0,0,0.4)')
+  ctx.fillStyle = fade
+  ctx.fillRect(0, 0, W, H)
+
+  ctx.textBaseline = 'alphabetic'
+  ctx.direction = 'ltr'
+  ;(ctx as unknown as { letterSpacing: string }).letterSpacing = '5px'
+  ctx.font = '600 20px "JetBrains Mono", monospace'
+  ctx.fillStyle = '#F2B33D'
+  ctx.textAlign = 'left'
+  ctx.fillText(writingTag(w.kind), PAD, PAD + 10)
+  ;(ctx as unknown as { letterSpacing: string }).letterSpacing = '2px'
+  ctx.font = '400 20px "Archivo Black", sans-serif'
+  ctx.fillStyle = 'rgba(243,239,231,0.6)'
+  ctx.textAlign = 'right'
+  ctx.fillText('MAKERS', W - PAD, PAD + 10)
+  ;(ctx as unknown as { letterSpacing: string }).letterSpacing = '0px'
+
+  const rtl = RTL_RE.test(w.title)
+  ctx.direction = rtl ? 'rtl' : 'ltr'
+  ctx.textAlign = rtl ? 'right' : 'left'
+  const x = rtl ? W - PAD : PAD
+  let size = 96
+  let lines: string[] = []
+  for (; size >= 44; size -= 4) {
+    ctx.font = `800 ${size}px Alexandria, "Readex Pro", sans-serif`
+    lines = wrap(ctx, w.title, W - PAD * 2)
+    if (lines.length <= 3) break
+  }
+  if (lines.length > 4) { lines = lines.slice(0, 4); lines[3] = `${lines[3]}…` }
+  const lh = size * 1.22
+  const bottom = H - PAD - 64
+  ctx.fillStyle = '#F3EFE7'
+  lines.forEach((l, i) => ctx.fillText(l, x, bottom - (lines.length - 1 - i) * lh))
+
+  ctx.fillStyle = '#F2B33D'
+  const lineW = 64
+  const ay = H - PAD + 4
+  if (rtl) ctx.fillRect(W - PAD - lineW, ay - 9, lineW, 3)
+  else ctx.fillRect(PAD, ay - 9, lineW, 3)
+  ctx.font = '400 26px "Readex Pro", Alexandria, sans-serif'
+  ctx.fillStyle = 'rgba(243,239,231,0.78)'
+  ctx.direction = RTL_RE.test(w.author) ? 'rtl' : 'ltr'
+  ctx.fillText(w.author, rtl ? W - PAD - lineW - 22 : PAD + lineW + 22, ay)
+  ctx.fillStyle = 'rgba(243,239,231,0.45)'
+  ctx.font = '400 20px "Readex Pro", sans-serif'
+  ctx.direction = 'ltr'
+  ctx.textAlign = rtl ? 'left' : 'right'
+  ctx.fillText('makerss.net', rtl ? PAD : W - PAD, ay)
+
+  return new Promise((res) => c.toBlob((b) => res(b), 'image/png'))
 }

@@ -30,6 +30,8 @@ function render(kind: string, p: Payload, ar: boolean): Push | null {
       return { title: t('فرصتك منشورة', 'Your open call is live'), body: s(p.title), url: `/call/${s(p.call_id)}` }
     case 'call_rejected':
       return { title: t('فرصتك لم تُنشر', 'Your open call was not published'), body: s(p.title), url: '/calls' }
+    case 'credit_added':
+      return { title: t('أضافك أحد إلى مشروع', 'You were credited on a project'), body: t(`${s(p.by)} أضافك إلى «${s(p.title)}»`, `${s(p.by)} credited you on "${s(p.title)}"`), url: '/account' }
     case 'writing_approved':
       return { title: t('كتابتك منشورة', 'Your writing is live'), body: s(p.title), url: '/account' }
     case 'writing_rejected':

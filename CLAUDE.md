@@ -89,8 +89,8 @@ supabase/functions/send-emails/  Edge Function that drains public.email_outbox t
 | `/inbox` | InboxPage: collab requests (`RequestsInbox`) + open call applications |
 | `/messages` | MessagesPage: tabs "المحادثات" and "طلبات التعاون" (`?tab=collab`), collab cards inside threads with Accept / Decline |
 | `/writing` | WritingsPage: published writings, filter by kind (`?kind=article|script|storyboard`) |
-| `/writing/new`, `/writing/:id/edit` | WritingEditor (writers only) |
-| `/writing/:id` | WritingPage: article reader, or script/storyboard with its PDF |
+| `/writing/new`, `/writing/:id/edit` | WritingEditor (writers only), a full page without the site header or footer |
+| `/writing/:id`, `/:username/:slug` | WritingPage: article reader, or script/storyboard with its PDF. `/writing/<id>` switches the address bar to the short link |
 | `/admin` | Admin (members review, new calls, writings, projects, stats); `/admin?tab=writings` opens the writings review |
 | `/:username` | MakerProfile: tabs Overview (badges + up to 5 featured works), Works (all), About (long text up to 5000 chars); short bio clamped to 2 lines |
 
@@ -201,8 +201,22 @@ Backend (migration `20261008100000_writings.sql`, applied in parts):
 - Storage bucket `writings`: private, PDF only, 20 MB. Files at `<uid>/<uuid>.pdf`; read with a signed link (`writingFileUrl`), allowed for the owner, staff, or a published writing (members only when visibility is 'members').
 - Emails: writing_approved, writing_rejected, writer_trusted, admin_writing_needed (send-emails v2). Pushes: writing_approved, writing_rejected, writer_trusted (send-push v3).
 
-Frontend: `src/lib/writings.ts` (data), `src/components/writing.tsx` (cover, card, safe article renderer: `## `, `### `, `> `, `- `, `**bold**`, rendered as React, never HTML), pages `WritingsPage`, `WritingPage`, `WritingEditor` (unsent new article kept in localStorage 'mk-writing-draft'). Also: profile tab "كتابات", landing rail "من دفتر الكتّاب", header nav and account menu "اكتب", admin tab "الكتابات", share previews and sitemap in `middleware.ts`.
+Frontend: `src/lib/writings.ts` (data), `src/components/writing.tsx` (cover, card, safe article renderer: `## `, `### `, `> `, `- `, `**bold**`, rendered as React, never HTML), pages `WritingsPage`, `WritingPage`, `WritingEditor`. Also: profile tab "كتابات", landing rail "من دفتر الكتّاب", header nav and account menu "اكتب", admin tab "الكتابات", share previews and sitemap in `middleware.ts`.
 
 - Exceptions (2026-10-08): table `writer_grants` lets the team give writing permission to a member without a writing specialty; `is_writer` checks it, admins switch it with `admin_set_writer(p_user, p_on, p_note)`. First exception: Mohammad Labbad (approved by Ayham). The site asks the server through `useIsWriter()` (my_writer_status), so menus follow the exception too.
 
+- v2 (2026-10-08, migration `20261008130000_writings_v2`, decisions from Ayham):
+  - Short link makerss.net/<username>/<slug>: slug = the first three words of the title in Latin letters (`private.writing_slug`), unique per writer, fixed after the first save (trigger `writings_slug_guard`). `writingPath()` builds links; middleware previews and the sitemap use it.
+  - The reader shows the title only on the cover (h1 kept as sr-only).
+  - Share image: `renderShareImage()` in `src/components/writing.tsx` draws the cover (1200x630, canvas, so Arabic is shaped right) after every save, uploads it to bucket `writing-media` and stores it with `set_writing_cover`; `writings.cover_url` is the og:image. Older writings get one on the author's next visit.
+  - Editor (`WritingEditor` + `src/components/BlockEditor.tsx`): title, standfirst and author first, then blocks. Elements panel (side on desktop, + button sheet on phones): text, heading, subheading, bullet list, numbered list, quote, divider, bold, image (upload to `writing-media`), video (YouTube, Vimeo), podcast (Spotify, Apple Podcasts, YouTube), button with a link. Stored in `writings.blocks` (jsonb); the server checks every block (`private.writing_blocks_text`) and keeps the plain text in `body`. No drafts (Ayham's call); leaving with unsent work asks first. No review notice in the editor; the toast after sending says it goes live after review.
+
 Not in the iOS app yet.
+
+## 12. Notifications (2026-10-08)
+
+- Bell in the header (`src/components/NotificationBell.tsx`), live over realtime, for members and the team. Opening it marks everything read.
+- Table `notifications` (own rows readable), filled by `private.notify`, which `enqueue_push` and `notify_staff` now call for every event, whatever the push or email settings. New messages in one conversation fold into one unread row with a count. New trigger `credits_notify`: someone credited you on a project (`credit_added`). RPCs `unread_notifications_count()`, `mark_notifications_read(p_ids)`.
+- Internal SQL helpers now go in schema `private` (not exposed by the API), so they need no revoke.
+- Emails: nothing has been sent yet because `RESEND_API_KEY` is not set on the send-emails function. Ayham sets it himself in the Supabase dashboard (never ask him for it). Until then the bell is the only notice on the website.
+- Supabase MCP note: statements containing DROP, DELETE, REVOKE or TRUNCATE wait for the owner's approval and time out when nobody approves. Prefer create-or-replace and private schemas.

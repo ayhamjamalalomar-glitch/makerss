@@ -21,6 +21,9 @@ export interface Writing {
   title: string
   summary: string | null
   body?: string | null
+  blocks?: Block[] | null
+  slug: string | null
+  cover_url: string | null
   file_path: string | null
   file_name: string | null
   visibility: 'public' | 'members'
@@ -45,10 +48,119 @@ export const writingKindLabel = (k: WritingKind) => {
 export const writingTag = (k: WritingKind) => WRITING_KINDS.find((x) => x.key === k)?.tag || ''
 
 const OWNER = `owner:profiles!writings_owner_id_fkey(${CARD_COLUMNS})`
-const LIST_SELECT = `id, owner_id, kind, title, summary, file_path, file_name, visibility, completed, status, review_note, published_at, created_at, updated_at, ${OWNER}`
-const FULL_SELECT = `id, owner_id, kind, title, summary, body, file_path, file_name, visibility, completed, status, review_note, published_at, created_at, updated_at, ${OWNER}`
+const LIST_SELECT = `id, owner_id, kind, title, summary, slug, cover_url, file_path, file_name, visibility, completed, status, review_note, published_at, created_at, updated_at, ${OWNER}`
+const FULL_SELECT = `id, owner_id, kind, title, summary, body, blocks, slug, cover_url, file_path, file_name, visibility, completed, status, review_note, published_at, created_at, updated_at, ${OWNER}`
 
-export const writingPath = (w: Pick<Writing, 'id'>) => `/writing/${w.id}`
+/** Short link: makerss.net/<username>/<first words of the title>. Falls back to /writing/<id>. */
+export const writingPath = (w: Pick<Writing, 'id'> & { slug?: string | null; owner?: { username?: string | null } | null }) =>
+  w.slug && w.owner?.username ? `/${w.owner.username}/${w.slug}` : `/writing/${w.id}`
+
+// ── Article blocks ───────────────────────────────────────────
+export type Block =
+  | { id: string; type: 'p' | 'h2' | 'h3' | 'quote'; text: string }
+  | { id: string; type: 'ul' | 'ol'; items: string[] }
+  | { id: string; type: 'image'; url: string; caption?: string }
+  | { id: string; type: 'video' | 'podcast'; url: string }
+  | { id: string; type: 'button'; label: string; url: string }
+  | { id: string; type: 'divider' }
+export type BlockType = Block['type']
+
+export const newId = () => Math.random().toString(36).slice(2, 10)
+
+export function newBlock(type: BlockType): Block {
+  const id = newId()
+  switch (type) {
+    case 'ul': case 'ol': return { id, type, items: [''] }
+    case 'image': return { id, type, url: '', caption: '' }
+    case 'video': case 'podcast': return { id, type, url: '' }
+    case 'button': return { id, type, label: '', url: '' }
+    case 'divider': return { id, type }
+    default: return { id, type, text: '' }
+  }
+}
+
+/** Plain text of the blocks (what the server keeps in body). */
+export function blocksText(blocks: Block[]) {
+  return blocks.map((b) => {
+    if ('text' in b) return b.text
+    if ('items' in b) return b.items.join('\n')
+    if (b.type === 'image') return b.caption || ''
+    if (b.type === 'button') return b.label
+    return ''
+  }).filter((x) => x.trim()).join('\n\n').trim()
+}
+
+/** Turn an older markdown-style article into blocks, so it opens in the block editor. */
+export function blocksFromBody(body: string): Block[] {
+  const out: Block[] = []
+  for (const raw of body.replace(/\r\n?/g, '\n').split(/\n{2,}/)) {
+    const lines = raw.split('\n').filter((l) => l.trim())
+    if (!lines.length) continue
+    if (lines.every((l) => /^[-•]\s+/.test(l))) { out.push({ id: newId(), type: 'ul', items: lines.map((l) => l.replace(/^[-•]\s+/, '')) }); continue }
+    if (lines.every((l) => /^>\s?/.test(l))) { out.push({ id: newId(), type: 'quote', text: lines.map((l) => l.replace(/^>\s?/, '')).join('\n') }); continue }
+    if (lines.length === 1 && /^###\s+/.test(lines[0])) { out.push({ id: newId(), type: 'h3', text: lines[0].replace(/^###\s+/, '') }); continue }
+    if (lines.length === 1 && /^##\s+/.test(lines[0])) { out.push({ id: newId(), type: 'h2', text: lines[0].replace(/^##\s+/, '') }); continue }
+    out.push({ id: newId(), type: 'p', text: lines.join('\n') })
+  }
+  return out
+}
+
+/** Drop empty blocks and the local ids before saving. */
+export function cleanBlocks(blocks: Block[]) {
+  return blocks
+    .map((b) => ('items' in b ? { ...b, items: b.items.map((x) => x.trim()).filter(Boolean) } : b))
+    .filter((b) => {
+      if ('text' in b) return b.text.trim().length > 0
+      if ('items' in b) return b.items.length > 0
+      if (b.type === 'image' || b.type === 'video' || b.type === 'podcast') return !!b.url.trim()
+      if (b.type === 'button') return !!b.url.trim() && !!b.label.trim()
+      return true
+    })
+    .map((b) => {
+      const { id: _id, ...rest } = b
+      return 'text' in rest ? { ...rest, text: rest.text.trim() } : rest
+    })
+}
+
+/** YouTube or Vimeo link to an embeddable player address. */
+export function videoEmbed(url: string): string | null {
+  const yt = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i)
+  if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}?rel=0`
+  const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)/i)
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}?title=0&byline=0&portrait=0`
+  return null
+}
+
+/** Spotify, Apple Podcasts or YouTube episode link to an embeddable player. */
+export function podcastEmbed(url: string): { src: string; height: number } | null {
+  const sp = url.match(/open\.spotify\.com\/(episode|show)\/([A-Za-z0-9]+)/i)
+  if (sp) return { src: `https://open.spotify.com/embed/${sp[1]}/${sp[2]}`, height: 232 }
+  if (/^https:\/\/podcasts\.apple\.com\//i.test(url)) return { src: url.replace('https://podcasts.apple.com/', 'https://embed.podcasts.apple.com/'), height: 175 }
+  const v = videoEmbed(url)
+  if (v && !v.includes('vimeo')) return { src: v, height: 0 }
+  return null
+}
+
+export const MEDIA_BASE = 'https://ggtdseujebmfugwcbnyk.supabase.co/storage/v1/object/public/writing-media/'
+
+/** Upload an image for an article (or the share image). Returns its public address. */
+export async function uploadWritingMedia(uid: string, file: Blob, ext: string) {
+  const path = `${uid}/${crypto.randomUUID()}.${ext}`
+  const { error } = await supabase.storage.from('writing-media').upload(path, file, { contentType: file.type || `image/${ext}`, upsert: false })
+  if (error) throw error
+  return MEDIA_BASE + path
+}
+
+export async function setWritingCover(id: string, url: string) {
+  await supabase.rpc('set_writing_cover', { p_id: id, p_url: url })
+}
+
+export async function getWritingBySlug(username: string, slug: string) {
+  const { data: prof } = await supabase.from('profiles').select('id').ilike('username', username).maybeSingle()
+  if (!prof) return null
+  const { data } = await supabase.from('writings').select(FULL_SELECT).eq('owner_id', (prof as { id: string }).id).eq('slug', slug.toLowerCase()).maybeSingle()
+  return (data as unknown as Writing) || null
+}
 
 /** Client hint only (the server decides): an approved member with a writing specialty. */
 export const isWriterProfile = (p: Pick<Profile, 'status' | 'specialty_ids'> | null | undefined) =>
@@ -116,6 +228,7 @@ export interface WritingInput {
   title: string
   summary: string
   body: string
+  blocks?: unknown[] | null
   file_path: string | null
   file_name: string | null
   visibility: 'public' | 'members'
@@ -141,6 +254,11 @@ export function writingError(e: unknown) {
   if (m.includes('only finished work')) return t('ننشر السيناريوهات والستوري بورد المنجزة فقط. أكّد أن العمل مكتمل.', 'We only publish finished scripts and storyboards. Confirm the work is complete.')
   if (m.includes('too many writings')) return t('وصلت إلى حد خمس كتابات جديدة في اليوم. أكمل غداً.', 'You reached five new writings today. Continue tomorrow.')
   if (m.includes('hidden by the team')) return t('أخفى فريق Makers هذه الكتابة، ولا يمكن تعديلها.', 'The Makers team hid this writing. It cannot be edited.')
+  if (m.includes('bad image')) return t('صورة غير صالحة. ارفعها من جديد.', 'An image is not valid. Upload it again.')
+  if (m.includes('bad video')) return t('رابط الفيديو يجب أن يكون من YouTube أو Vimeo.', 'Video links must be from YouTube or Vimeo.')
+  if (m.includes('bad podcast')) return t('رابط البودكاست يجب أن يكون من Spotify أو Apple Podcasts أو YouTube.', 'Podcast links must be from Spotify, Apple Podcasts or YouTube.')
+  if (m.includes('bad link') || m.includes('bad button')) return t('كل زر يحتاج نصاً قصيراً ورابطاً يبدأ بـ https.', 'Each button needs a short label and a link starting with https.')
+  if (m.includes('too many blocks') || m.includes('block too long') || m.includes('bad list')) return t('المقال طويل جداً. قسّمه إلى مقالين.', 'The article is too long. Split it in two.')
   if (m.includes('bad file')) return t('ارفع ملف PDF من جديد.', 'Upload the PDF again.')
   if (m.includes('writing_content')) return t(`المقال يحتاج ${WRITING_LIMITS.bodyMin} حرفاً على الأقل.`, `An article needs at least ${WRITING_LIMITS.bodyMin} characters.`)
   if (m.includes('title')) return t('العنوان بين 3 و140 حرفاً.', 'The title must be 3 to 140 characters.')

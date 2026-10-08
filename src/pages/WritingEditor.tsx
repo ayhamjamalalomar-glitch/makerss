@@ -3,30 +3,22 @@ import Link, { useRouter } from '../lib/router'
 import { t, useLang } from '../lib/i18n'
 import { useAuth } from '../lib/auth'
 import { useToast } from '../lib/toast'
-import { PageHeader } from '../components/cine'
-import { Btn, Chip, Field, Notice, Spinner, TextArea, TextInput } from '../components/mk'
-import { ArticleBody, WritingCover } from '../components/writing'
+import { displayName } from '../lib/data'
+import { formatDateAr } from '../lib/constants'
+import { Avatar, Chip, Notice, Spinner } from '../components/mk'
+import { ArticleBlocks, renderShareImage, WritingCover } from '../components/writing'
+import BlockEditor, { AutoText, ELEMENTS, ElementIcon, type BlockEditorApi } from '../components/BlockEditor'
 import {
-  getWriting, myWriterStatus, removeWritingFile, saveWriting, uploadWritingPdf, writingError,
-  WRITING_KINDS, WRITING_LIMITS, type Writing, type WriterStatus, type WritingKind,
+  blocksFromBody, blocksText, cleanBlocks, getWriting, listWritings, myWriterStatus, newBlock, removeWritingFile, saveWriting,
+  setWritingCover, uploadWritingMedia, uploadWritingPdf, writingError, writingPath,
+  WRITING_KINDS, WRITING_LIMITS, type Block, type BlockType, type Writing, type WriterStatus, type WritingKind,
 } from '../lib/writings'
 
-const DRAFT_KEY = 'mk-writing-draft'
+// The writing editor: a page of its own, like a blank sheet. Title, standfirst and author first,
+// then the article built from blocks (text, headings, lists, quote, image, video, podcast, button).
+// Scripts and storyboards upload a finished PDF instead.
+
 const box = { background: 'var(--c-surface)', border: '1px solid var(--c-border)' } as const
-
-interface Draft { kind: WritingKind; title: string; summary: string; body: string }
-const readDraft = (): Draft | null => {
-  try { const v = localStorage.getItem(DRAFT_KEY); return v ? (JSON.parse(v) as Draft) : null } catch { return null }
-}
-const writeDraft = (d: Draft | null) => {
-  try { if (d) localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); else localStorage.removeItem(DRAFT_KEY) } catch { /* storage off */ }
-}
-
-const KIND_HINT: Record<WritingKind, [string, string]> = {
-  article: ['تكتبه هنا على Makers: رأي، تجربة، درس من موقع التصوير.', 'Written here on Makers: a view, an experience, a lesson from set.'],
-  script: ['سيناريو منجز ترفعه ملف PDF.', 'A finished screenplay, uploaded as a PDF.'],
-  storyboard: ['ستوري بورد منجز ترفعه ملف PDF.', 'A finished storyboard, uploaded as a PDF.'],
-}
 
 export default function WritingEditor({ id }: { id?: string }) {
   useLang()
@@ -35,82 +27,91 @@ export default function WritingEditor({ id }: { id?: string }) {
   const { session, profile, loading } = useAuth()
   const [status, setStatus] = useState<WriterStatus | null>(null)
   const [existing, setExisting] = useState<Writing | null | undefined>(id ? undefined : null)
+  const [first, setFirst] = useState(false)
 
-  const [draft] = useState(() => (!id ? readDraft() : null))
-  const [kind, setKind] = useState<WritingKind>(draft?.kind || 'article')
-  const [title, setTitle] = useState(draft?.title || '')
-  const [summary, setSummary] = useState(draft?.summary || '')
-  const [body, setBody] = useState(draft?.body || '')
+  const [kind, setKind] = useState<WritingKind>('article')
+  const [title, setTitle] = useState('')
+  const [summary, setSummary] = useState('')
+  const [blocks, setBlocks] = useState<Block[]>(() => [newBlock('p')])
   const [file, setFile] = useState<File | null>(null)
   const [filePath, setFilePath] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
   const [visibility, setVisibility] = useState<'public' | 'members'>('public')
   const [completed, setCompleted] = useState(false)
   const [preview, setPreview] = useState(false)
+  const [sheet, setSheet] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const area = useRef<HTMLTextAreaElement>(null)
+  const [dirty, setDirty] = useState(false)
+  const api = useRef<BlockEditorApi | null>(null)
 
   useEffect(() => { if (session) myWriterStatus().then(setStatus) }, [session])
+  useEffect(() => {
+    if (id || !profile) return
+    listWritings({ owner: profile.id, all: true, limit: 1 }).then((l) => setFirst(l.length === 0)).catch(() => null)
+  }, [id, profile])
 
   useEffect(() => {
     if (!id) return
     getWriting(id).then((w) => {
       setExisting(w)
       if (!w) return
-      setKind(w.kind); setTitle(w.title); setSummary(w.summary || ''); setBody(w.body || '')
+      setKind(w.kind); setTitle(w.title); setSummary(w.summary || '')
+      setBlocks(Array.isArray(w.blocks) && w.blocks.length ? (w.blocks as Block[]).map((b) => ({ ...b, id: Math.random().toString(36).slice(2, 10) })) : w.body ? blocksFromBody(w.body) : [newBlock('p')])
       setFilePath(w.file_path); setFileName(w.file_name); setVisibility(w.visibility); setCompleted(w.completed)
     })
   }, [id])
 
-  // Keep an unsent new article in this browser, so a closed tab does not lose it.
+  // Leaving with unsent work asks first.
   useEffect(() => {
-    if (id) return
-    const h = setTimeout(() => writeDraft(title || summary || body ? { kind, title, summary, body } : null), 600)
-    return () => clearTimeout(h)
-  }, [id, kind, title, summary, body])
+    if (!dirty) return
+    const h = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', h)
+    return () => window.removeEventListener('beforeunload', h)
+  }, [dirty])
 
-  if (loading || (session && !status) || existing === undefined) return <Spinner />
+  useEffect(() => {
+    document.title = `${t('اكتب', 'Write')} | Makers`
+    return () => { document.title = 'Makers · دليل صنّاع الإنتاج العرب' }
+  }, [])
+
+  const edit = <T,>(fn: (v: T) => void) => (v: T) => { fn(v); setDirty(true) }
+
+  if (loading || (session && !status) || existing === undefined) return <div className="min-h-screen" style={{ background: 'var(--c-bg)' }}><Spinner /></div>
   if (!session || !profile) {
-    return <Wrap><Notice>{t('سجّل الدخول لتكتب على Makers.', 'Sign in to write on Makers.')} <Link to={`/login?next=${id ? `/writing/${id}/edit` : '/writing/new'}`} className="font-semibold underline">{t('دخول', 'Sign in')}</Link></Notice></Wrap>
+    return <Shell><div className="max-w-[640px] mx-auto px-4 py-16"><Notice>{t('سجّل الدخول لتكتب على Makers.', 'Sign in to write on Makers.')} <Link to={`/login?next=${id ? `/writing/${id}/edit` : '/writing/new'}`} className="font-semibold underline">{t('دخول', 'Sign in')}</Link></Notice></div></Shell>
   }
   if (!status?.writer) {
     return (
-      <Wrap>
-        <PageHeader title={t('اكتب على Makers', 'Write on Makers')} />
-        <Notice>
-          {profile.status !== 'approved'
-            ? t('تفتح الكتابة بعد موافقة فريق Makers على صفحتك.', 'Writing opens once the Makers team approves your page.')
-            : t('النشر في الكتابات لأصحاب تخصصات الكتابة: كاتب محتوى، كاتب سيناريو، رسام ستوري بورد. إن كان هذا تخصصك أضفه إلى صفحتك.', 'Writing is for members with a writing specialty: content writer, screenwriter, storyboard artist. If that is you, add it to your page.')}
-          {' '}{profile.status === 'approved' && <Link to="/me" className="font-semibold underline">{t('عدّل صفحتك', 'Edit your page')}</Link>}
-        </Notice>
-      </Wrap>
+      <Shell>
+        <div className="max-w-[640px] mx-auto px-4 py-16">
+          <Notice>
+            {profile.status !== 'approved'
+              ? t('تفتح الكتابة بعد موافقة فريق Makers على صفحتك.', 'Writing opens once the Makers team approves your page.')
+              : t('النشر في الكتابات لأصحاب تخصصات الكتابة: كاتب محتوى، كاتب سيناريو، رسام ستوري بورد. إن كان هذا تخصصك أضفه إلى صفحتك.', 'Writing is for members with a writing specialty: content writer, screenwriter, storyboard artist. If that is you, add it to your page.')}
+            {' '}{profile.status === 'approved' && <Link to="/me" className="font-semibold underline">{t('عدّل صفحتك', 'Edit your page')}</Link>}
+          </Notice>
+        </div>
+      </Shell>
     )
   }
-  if (id && (!existing || existing.owner_id !== profile.id)) return <Wrap><Notice tone="error">{t('لا يمكنك تعديل هذه الكتابة.', 'You cannot edit this writing.')}</Notice></Wrap>
-  if (existing?.status === 'hidden') return <Wrap><Notice tone="error">{t('أخفى فريق Makers هذه الكتابة، ولا يمكن تعديلها.', 'The Makers team hid this writing. It cannot be edited.')}</Notice></Wrap>
+  if (id && (!existing || existing.owner_id !== profile.id)) return <Shell><div className="max-w-[640px] mx-auto px-4 py-16"><Notice tone="error">{t('لا يمكنك تعديل هذه الكتابة.', 'You cannot edit this writing.')}</Notice></div></Shell>
+  if (existing?.status === 'hidden') return <Shell><div className="max-w-[640px] mx-auto px-4 py-16"><Notice tone="error">{t('أخفى فريق Makers هذه الكتابة، ولا يمكن تعديلها.', 'The Makers team hid this writing. It cannot be edited.')}</Notice></div></Shell>
 
   const isArticle = kind === 'article'
-  const left = Math.max(0, 5 - status.reviewed)
-
-  const wrap = (before: string, after = '', line = false) => {
-    const el = area.current
-    if (!el) return
-    const { selectionStart: a, selectionEnd: b, value } = el
-    let next: string
-    let caret: number
-    if (line) {
-      const start = value.lastIndexOf('\n', a - 1) + 1
-      next = value.slice(0, start) + before + value.slice(start)
-      caret = b + before.length
-    } else {
-      const sel = value.slice(a, b) || t('نص', 'text')
-      next = value.slice(0, a) + before + sel + after + value.slice(b)
-      caret = a + before.length + sel.length + after.length
-    }
-    setBody(next)
-    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(caret, caret) })
+  const kindWord = WRITING_KINDS.find((k) => k.key === kind)!
+  const heading = id
+    ? t(`تعديل ${kindWord.ar}`, `Edit ${kindWord.en.toLowerCase()}`)
+    : isArticle
+      ? first ? t('اكتب مقالك الأول', 'Write your first article') : t('مقال جديد', 'New article')
+      : kind === 'script' ? t('سيناريو جديد', 'New script') : t('ستوري بورد جديد', 'New storyboard')
+  const textLen = blocksText(blocks).length
+  const author = displayName(profile)
+  const leave = () => {
+    if (dirty && !window.confirm(t('لم تُنشر هذه الكتابة بعد. تخرج وتتركها؟', 'This is not published yet. Leave anyway?'))) return
+    go(id && existing ? writingPath(existing) : '/writing')
   }
+  const insert = (type: BlockType) => { setPreview(false); setSheet(false); api.current?.insert(type); setDirty(true) }
 
   const pickFile = (f: File | null | undefined) => {
     setError(null)
@@ -118,13 +119,14 @@ export default function WritingEditor({ id }: { id?: string }) {
     if (f.type !== 'application/pdf' && !/\.pdf$/i.test(f.name)) return setError(t('الملف يجب أن يكون PDF.', 'The file must be a PDF.'))
     if (f.size > WRITING_LIMITS.pdfBytes) return setError(t('حجم الملف أكبر من 20 ميغابايت.', 'The file is larger than 20 MB.'))
     setFile(f)
+    setDirty(true)
   }
 
   const submit = async () => {
     setError(null)
     const tt = title.trim()
     if (tt.length < 3) return setError(t('اكتب عنواناً من 3 أحرف على الأقل.', 'Write a title of at least 3 characters.'))
-    if (isArticle && body.trim().length < WRITING_LIMITS.bodyMin) return setError(t(`المقال يحتاج ${WRITING_LIMITS.bodyMin} حرفاً على الأقل. كتبت ${body.trim().length}.`, `An article needs at least ${WRITING_LIMITS.bodyMin} characters. You have ${body.trim().length}.`))
+    if (isArticle && textLen < WRITING_LIMITS.bodyMin) return setError(t(`المقال يحتاج ${WRITING_LIMITS.bodyMin} حرفاً على الأقل. كتبت ${textLen}.`, `An article needs at least ${WRITING_LIMITS.bodyMin} characters. You have ${textLen}.`))
     if (!isArticle && !file && !filePath) return setError(t('ارفع ملف PDF للعمل.', 'Upload the PDF of the work.'))
     if (!isArticle && !completed) return setError(t('أكّد أن العمل منجز ومكتمل. لا ننشر الأعمال غير المكتملة.', 'Confirm the work is finished. We do not publish unfinished work.'))
 
@@ -134,12 +136,21 @@ export default function WritingEditor({ id }: { id?: string }) {
       if (!isArticle && file) uploaded = await uploadWritingPdf(profile.id, file)
       const path = isArticle ? null : uploaded || filePath
       const name = isArticle ? null : file ? file.name.slice(0, 200) : fileName
-      const newId = await saveWriting(id || null, { kind, title: tt, summary: summary.trim(), body: isArticle ? body : '', file_path: path, file_name: name, visibility: isArticle ? 'public' : visibility, completed: !isArticle && completed })
-      // The old PDF is no longer used once a new one is saved, or the writing became an article.
+      const clean = isArticle ? cleanBlocks(blocks) : null
+      const newId = await saveWriting(id || null, {
+        kind, title: tt, summary: summary.trim(), body: isArticle ? blocksText(blocks) : '', blocks: clean,
+        file_path: path, file_name: name, visibility: isArticle ? 'public' : visibility, completed: !isArticle && completed,
+      })
       if (filePath && filePath !== path) await removeWritingFile(filePath)
-      if (!id) writeDraft(null)
-      toast(status.trusted ? t('نُشرت كتابتك', 'Your writing is live') : t('وصلت كتابتك إلى الفريق للمراجعة', 'Sent to the team for review'))
-      go(`/writing/${newId}`)
+      // Share image for WhatsApp, X and the rest: the cover with the title, drawn here and stored with the writing.
+      try {
+        const png = await renderShareImage({ kind, title: tt, author })
+        if (png) await setWritingCover(newId, await uploadWritingMedia(profile.id, png, 'png'))
+      } catch { /* the reader page makes it on the author's next visit */ }
+      setDirty(false)
+      toast(status.trusted ? t('نُشرت كتابتك', 'Your writing is live') : t('وصلت كتابتك، ويصلك إشعار عند نشرها', 'Sent. You will be notified when it goes live'))
+      const saved = await getWriting(newId)
+      go(saved ? writingPath(saved) : `/writing/${newId}`)
     } catch (e) {
       if (uploaded) await removeWritingFile(uploaded)
       setBusy(false)
@@ -148,143 +159,195 @@ export default function WritingEditor({ id }: { id?: string }) {
   }
 
   return (
-    <Wrap>
-      <PageHeader title={id ? t('عدّل الكتابة', 'Edit writing') : t('اكتب على Makers', 'Write on Makers')} />
-
-      {status.trusted ? (
-        <Notice tone="success">{t('تُنشر كتاباتك مباشرة. نثق بك، فالتزم بسياسات Makers وأخلاقيات المهنة: أعمالك أنت فقط، واذكر مصادرك، واحترم حقوق الآخرين.', 'You publish directly. Keep to the Makers policies and the ethics of the craft: your own work only, credit your sources, respect other people\'s rights.')}</Notice>
-      ) : (
-        <Notice>{t(`يراجع فريق Makers أول خمس كتابات لكل كاتب قبل نشرها. بقي لك ${left} ${left === 1 ? 'كتابة' : 'كتابات'} قبل أن تُنشر كتاباتك مباشرة.`, `The Makers team reviews each writer's first five pieces before they go live. ${left} left before you publish directly.`)}{id && existing?.status === 'published' ? ' ' + t('أي تعديل يعيدها إلى المراجعة.', 'Any edit sends it back to review.') : ''}</Notice>
-      )}
-
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
-        <div className="flex-1 min-w-0 w-full flex flex-col gap-6">
-          <Field label={t('نوع الكتابة', 'Kind')}>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {WRITING_KINDS.map((k) => (
-                <button key={k.key} type="button" onClick={() => setKind(k.key)} aria-pressed={kind === k.key} className="text-start rounded-xl p-4 flex flex-col gap-1 cursor-pointer transition-colors" style={{ background: kind === k.key ? 'rgba(var(--c-accent-rgb),0.10)' : 'var(--c-surface)', border: `1px solid ${kind === k.key ? 'var(--c-accent)' : 'var(--c-border)'}`, color: 'var(--c-text)' }}>
-                  <span className="font-bold text-[14px]">{t(k.ar, k.en)}</span>
-                  <span className="text-[12px] leading-relaxed" style={{ color: 'var(--c-muted)' }}>{t(...KIND_HINT[k.key])}</span>
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          {!isArticle && (
-            <div className="rounded-xl p-4 flex gap-3 items-start" style={{ background: 'rgba(255,69,58,0.08)', border: '1px solid rgba(255,69,58,0.35)' }}>
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="shrink-0 mt-0.5" aria-hidden="true"><path d="M10 2.5l8 14H2l8-14z" stroke="#FF8A80" strokeWidth="1.5" strokeLinejoin="round" /><path d="M10 8v4M10 14.5v.5" stroke="#FF8A80" strokeWidth="1.6" strokeLinecap="round" /></svg>
-              <div className="flex flex-col gap-1 text-[13px] leading-relaxed" style={{ color: '#FFB4AD' }}>
-                <strong>{t('تنبيه: ننشر الأعمال المنجزة فقط', 'Notice: finished work only')}</strong>
-                <span>{t('شارك السيناريو أو الستوري بورد بعد اكتماله فقط. لا ترفع فكرة قيد التطوير أو مشروعاً لم يُنتج بعد وتخشى عليه، فالملف المنشور يقرؤه غيرك. ارفع عملك أنت فقط، أو عملاً تملك إذن نشره.', 'Share a script or storyboard only once it is complete. Do not upload an idea in development or an unproduced project you want to protect: a published file is read by others. Upload only your own work, or work you have permission to publish.')}</span>
-              </div>
-            </div>
+    <Shell>
+      {/* top bar */}
+      <div className="sticky top-0 z-30" style={{ background: 'var(--c-overlay)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: '1px solid var(--c-border)' }}>
+        <div className="max-w-[1240px] mx-auto px-3 sm:px-6 h-[60px] flex items-center gap-2 sm:gap-3">
+          <button type="button" onClick={leave} aria-label={t('خروج', 'Close')} className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer shrink-0" style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)', color: 'var(--c-muted)' }}>
+            <ElementIcon size={16} d="M5 5l10 10M15 5L5 15" />
+          </button>
+          <span className="font-display font-bold text-[15px] truncate">{heading}</span>
+          <div className="hidden sm:flex gap-1 p-1 rounded-full ms-2" style={{ background: 'var(--c-surface-alt)' }}>
+            {WRITING_KINDS.map((k) => (
+              <button key={k.key} type="button" onClick={() => { setKind(k.key); setDirty(true) }} className="text-[12.5px] px-3 py-1.5 rounded-full cursor-pointer" style={{ border: 'none', background: kind === k.key ? 'var(--c-accent)' : 'transparent', color: kind === k.key ? 'var(--c-on-accent)' : 'var(--c-muted)', fontWeight: kind === k.key ? 600 : 400 }}>
+                {t(k.ar, k.en)}
+              </button>
+            ))}
+          </div>
+          <span className="flex-1" />
+          {isArticle && (
+            <button type="button" onClick={() => setPreview(!preview)} className="h-9 px-3.5 rounded-full text-[13px] cursor-pointer flex items-center gap-1.5" style={{ background: preview ? 'var(--c-surface-alt)' : 'transparent', border: '1px solid var(--c-border-mid)', color: 'var(--c-text)' }}>
+              <ElementIcon size={15} d={preview ? 'M12.5 4.5l-7 7L4 16l4.5-1.5 7-7zM11 6l3 3' : 'M2.5 10s3-5.5 7.5-5.5S17.5 10 17.5 10s-3 5.5-7.5 5.5S2.5 10 2.5 10zM10 12.2a2.2 2.2 0 100-4.4 2.2 2.2 0 000 4.4z'} />
+              <span className="hidden sm:inline">{preview ? t('رجوع للكتابة', 'Back to writing') : t('معاينة', 'Preview')}</span>
+            </button>
           )}
+          <button type="button" disabled={busy} onClick={submit} className="h-9 px-5 rounded-full text-[13px] font-semibold cursor-pointer disabled:opacity-50" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', border: 'none' }}>
+            {busy ? t('جارٍ النشر…', 'Publishing…') : id ? t('احفظ', 'Save') : t('انشر', 'Publish')}
+          </button>
+        </div>
+        <div className="sm:hidden flex gap-1 px-3 pb-2 overflow-x-auto">
+          {WRITING_KINDS.map((k) => <Chip key={k.key} on={kind === k.key} onClick={() => { setKind(k.key); setDirty(true) }} className="!py-1.5 !text-[12px]">{t(k.ar, k.en)}</Chip>)}
+        </div>
+      </div>
 
-          <Field label={t('العنوان', 'Title')} hint={<span className="font-mono" dir="ltr">{[...title].length}/{WRITING_LIMITS.title}</span>}>
-            <TextInput dir="auto" value={title} maxLength={WRITING_LIMITS.title} onChange={(e) => setTitle(e.target.value.replace(/\n/g, ' '))} placeholder={t('عنوان واضح يلفت القارئ', 'A clear title that pulls the reader in')} />
-          </Field>
-
-          <Field label={isArticle ? t('سطر تعريفي (اختياري)', 'Standfirst (optional)') : t('نبذة عن العمل', 'About the work')} hint={<span className="font-mono" dir="ltr">{summary.length}/{WRITING_LIMITS.summary}</span>}>
-            <TextArea dir="auto" rows={3} maxLength={WRITING_LIMITS.summary} value={summary} onChange={(e) => setSummary(e.target.value)} placeholder={isArticle ? t('جملة أو جملتان تظهران تحت العنوان', 'One or two lines under the title') : t('عن ماذا يدور العمل، نوعه ومدته، وهل أُنتج', 'What it is about, its format and length, and whether it was produced')} />
-          </Field>
-
-          {isArticle ? (
-            <Field label={t('المقال', 'Article')} hint={<span className="font-mono" dir="ltr" style={{ color: body.trim().length < WRITING_LIMITS.bodyMin ? 'var(--c-muted-2)' : 'var(--c-live)' }}>{body.trim().length < WRITING_LIMITS.bodyMin ? `${body.trim().length}/${WRITING_LIMITS.bodyMin}` : body.trim().length.toLocaleString('en')}</span>}>
-              <div className="rounded-xl overflow-hidden" style={box}>
-                <div className="flex items-center gap-1 px-2 py-1.5 flex-wrap" style={{ borderBottom: '1px solid var(--c-border)' }}>
-                  {!preview && (
-                    <>
-                      <ToolBtn onClick={() => wrap('## ', '', true)} label={t('عنوان فرعي', 'Heading')}>H</ToolBtn>
-                      <ToolBtn onClick={() => wrap('**', '**')} label={t('عريض', 'Bold')}><strong>B</strong></ToolBtn>
-                      <ToolBtn onClick={() => wrap('> ', '', true)} label={t('اقتباس', 'Quote')}>”</ToolBtn>
-                      <ToolBtn onClick={() => wrap('- ', '', true)} label={t('قائمة', 'List')}>•</ToolBtn>
-                    </>
-                  )}
-                  <span className="flex-1" />
-                  <Chip on={!preview} onClick={() => setPreview(false)} className="!py-1 !px-3 !text-[12px]">{t('كتابة', 'Write')}</Chip>
-                  <Chip on={preview} onClick={() => setPreview(true)} className="!py-1 !px-3 !text-[12px]">{t('معاينة', 'Preview')}</Chip>
-                </div>
-                {preview ? (
-                  <div className="p-5 md:p-7 min-h-[420px]">{body.trim() ? <ArticleBody body={body} /> : <span className="text-sm" style={{ color: 'var(--c-muted)' }}>{t('لا يوجد نص بعد.', 'Nothing written yet.')}</span>}</div>
-                ) : (
-                  <textarea
-                    ref={area}
-                    dir="auto"
-                    value={body}
-                    maxLength={WRITING_LIMITS.body}
-                    onChange={(e) => setBody(e.target.value)}
-                    placeholder={t('ابدأ الكتابة هنا…\n\nسطر فارغ يبدأ فقرة جديدة. استعمل الأزرار فوق للعنوان الفرعي والاقتباس.', 'Start writing here…\n\nA blank line starts a new paragraph. Use the buttons above for headings and quotes.')}
-                    className="w-full block p-5 md:p-6 outline-none resize-y"
-                    style={{ minHeight: 420, background: 'transparent', border: 'none', color: 'var(--c-text)', fontSize: 16, fontWeight: 400, lineHeight: 1.95 }}
-                  />
-                )}
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 flex gap-10 items-start">
+        {/* elements panel */}
+        {isArticle && !preview && (
+          <aside className="hidden lg:flex flex-col gap-5 w-[220px] shrink-0 sticky top-[84px] py-8 max-h-[calc(100vh-84px)] overflow-y-auto">
+            <Elements onPick={insert} onBold={() => { api.current?.bold(); setDirty(true) }} />
+            <div className="flex flex-col gap-2 pt-4" style={{ borderTop: '1px solid var(--c-border)' }}>
+              <span className="text-[11px]" style={{ color: 'var(--c-muted)' }}>{t('الغلاف يُصنع من العنوان', 'The cover is made from the title')}</span>
+              <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--c-border)' }}>
+                <WritingCover w={{ kind, title: title.trim() || t('عنوان كتابتك', 'Your title'), owner: profile }} />
               </div>
-            </Field>
+            </div>
+          </aside>
+        )}
+
+        <main className="flex-1 min-w-0 max-w-[740px] mx-auto py-8 sm:py-12 pb-40 flex flex-col gap-8">
+          {preview && isArticle ? (
+            <>
+              <WritingCover w={{ kind, title: title.trim() || t('عنوان كتابتك', 'Your title'), owner: profile }} ratio="16/9" wide className="rounded-2xl" style={{ border: '1px solid var(--c-border)' }} />
+              {summary.trim() && <p dir="auto" className="m-0" style={{ fontSize: 20, lineHeight: 1.85, color: 'var(--c-text-2)' }}>{summary}</p>}
+              <AuthorLine name={author} avatar={profile.avatar_url} fullName={profile.full_name} />
+              <div style={{ height: 1, background: 'var(--c-border)' }} />
+              <ArticleBlocks blocks={cleanBlocks(blocks).map((b, i) => ({ ...b, id: String(i) }) as Block)} />
+            </>
           ) : (
             <>
-              <Field label={t('ملف العمل (PDF)', 'The work (PDF)')} hint={t('حتى 20 ميغابايت', 'Up to 20 MB')}>
-                <label
-                  className="rounded-xl p-6 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-colors"
-                  style={{ background: 'var(--c-surface)', border: '1.5px dashed var(--c-border-mid)', minHeight: 130 }}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); pickFile(e.dataTransfer.files?.[0]) }}
-                >
-                  <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { pickFile(e.target.files?.[0]); e.target.value = '' }} />
-                  <span className="font-mono text-[11px] px-2 py-0.5 rounded" dir="ltr" style={{ border: '1px solid var(--c-border-mid)', color: 'var(--c-accent)' }}>PDF</span>
-                  {file || fileName ? (
-                    <>
-                      <span dir="auto" className="text-sm font-semibold break-all">{file?.name || fileName}</span>
-                      <span className="text-xs" style={{ color: 'var(--c-muted)' }}>{file ? `${(file.size / 1024 / 1024).toFixed(1)} MB · ` : ''}{t('اضغط لتبديل الملف', 'Click to replace')}</span>
-                    </>
-                  ) : (
-                    <span className="text-sm" style={{ color: 'var(--c-muted)' }}>{t('اسحب الملف هنا أو اضغط لاختياره', 'Drop the file here or click to choose')}</span>
-                  )}
-                </label>
-              </Field>
+              <header className="flex flex-col gap-4">
+                <AutoText value={title} onChange={edit((v: string) => setTitle(v.replace(/\n/g, ' ')))} maxLength={WRITING_LIMITS.title} placeholder={isArticle ? t('عنوان المقال', 'Article title') : t('عنوان العمل', 'Title of the work')}
+                  className="font-display" style={{ fontSize: 'clamp(30px, 5vw, 44px)', fontWeight: 800, lineHeight: 1.25, letterSpacing: '-0.02em' }} />
+                <AutoText value={summary} onChange={edit(setSummary)} maxLength={WRITING_LIMITS.summary}
+                  placeholder={isArticle ? t('سطر تعريفي يظهر تحت العنوان (اختياري)', 'A line under the title (optional)') : t('عن ماذا يدور العمل، نوعه ومدته، وهل أُنتج', 'What it is about, its format and length, and whether it was produced')}
+                  style={{ fontSize: 20, lineHeight: 1.85, color: 'var(--c-text-2)' }} />
+                <AuthorLine name={author} avatar={profile.avatar_url} fullName={profile.full_name} />
+              </header>
+              <div style={{ height: 1, background: 'var(--c-border)' }} />
 
-              <Field label={t('من يقرأ الملف', 'Who can read the file')}>
-                <div className="flex gap-2 flex-wrap">
-                  <Chip on={visibility === 'public'} onClick={() => setVisibility('public')}>{t('الجميع', 'Everyone')}</Chip>
-                  <Chip on={visibility === 'members'} onClick={() => setVisibility('members')}>{t('أعضاء Makers فقط', 'Makers members only')}</Chip>
-                </div>
-              </Field>
-
-              <label className="flex gap-3 items-start rounded-xl p-4 cursor-pointer" style={{ ...box, borderColor: completed ? 'var(--c-accent)' : 'var(--c-border)' }}>
-                <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} className="mt-1 w-4 h-4 shrink-0" style={{ accentColor: 'var(--c-accent)' }} />
-                <span className="text-[13.5px] leading-relaxed">
-                  {t('أؤكد أن هذا العمل منجز ومكتمل، وأنه من كتابتي أو أملك حق نشره، وأتحمّل مسؤولية مشاركته.', 'I confirm this work is finished and complete, that I wrote it or have the right to publish it, and that I am responsible for sharing it.')}
-                </span>
-              </label>
+              {isArticle ? (
+                <BlockEditor blocks={blocks} onChange={edit(setBlocks)} uid={profile.id} apiRef={api} />
+              ) : (
+                <PdfSection file={file} fileName={fileName} onPick={pickFile} visibility={visibility} setVisibility={edit(setVisibility)} completed={completed} setCompleted={edit(setCompleted)} />
+              )}
             </>
           )}
 
           {error && <Notice tone="error">{error}</Notice>}
-
-          <div className="flex gap-2 flex-wrap">
-            <Btn disabled={busy} onClick={submit}>{busy ? t('جارٍ الإرسال…', 'Sending…') : status.trusted ? t('انشر', 'Publish') : t('أرسل للمراجعة', 'Send for review')}</Btn>
-            <Btn variant="outline" disabled={busy} onClick={() => go(id ? `/writing/${id}` : '/writing')}>{t('إلغاء', 'Cancel')}</Btn>
-          </div>
-        </div>
-
-        <aside className="w-full lg:w-[300px] shrink-0 lg:sticky lg:top-24 flex flex-col gap-2.5">
-          <span className="text-xs" style={{ color: 'var(--c-muted)' }}>{t('الغلاف يُصنع من العنوان تلقائياً', 'The cover is made from your title')}</span>
-          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--c-border)' }}>
-            <WritingCover w={{ kind, title: title.trim() || t('عنوان كتابتك', 'Your title'), owner: profile }} />
-          </div>
-        </aside>
+          {isArticle && !preview && (
+            <span className="font-mono text-[11px]" dir="ltr" style={{ color: textLen < WRITING_LIMITS.bodyMin ? 'var(--c-muted-2)' : 'var(--c-live)' }}>
+              {textLen < WRITING_LIMITS.bodyMin ? `${textLen}/${WRITING_LIMITS.bodyMin}` : textLen.toLocaleString('en')}
+            </span>
+          )}
+        </main>
       </div>
-    </Wrap>
+
+      {/* phones: elements open from a round button */}
+      {isArticle && !preview && (
+        <>
+          <button type="button" onClick={() => setSheet(true)} aria-label={t('أضف عنصراً', 'Add an element')} className="lg:hidden fixed bottom-6 end-5 z-40 w-14 h-14 rounded-full flex items-center justify-center cursor-pointer" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+            <ElementIcon size={22} d="M10 4v12M4 10h12" />
+          </button>
+          {sheet && (
+            <div className="lg:hidden fixed inset-0 z-50 flex items-end" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={() => setSheet(false)}>
+              <div className="w-full rounded-t-2xl p-5 pb-8 max-h-[75vh] overflow-y-auto" style={{ background: 'var(--c-surface)', borderTop: '1px solid var(--c-border)' }} onClick={(e) => e.stopPropagation()}>
+                <Elements onPick={insert} onBold={() => { setSheet(false); api.current?.bold(); setDirty(true) }} grid />
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </Shell>
   )
 }
 
-function ToolBtn({ children, onClick, label }: { children: React.ReactNode; onClick: () => void; label: string }) {
+function Shell({ children }: { children: React.ReactNode }) {
+  return <div className="min-h-screen" style={{ background: 'var(--c-bg)', color: 'var(--c-text)' }}>{children}</div>
+}
+
+function AuthorLine({ name, avatar, fullName }: { name: string; avatar: string | null; fullName: string | null }) {
   return (
-    <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={onClick} title={label} aria-label={label} className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer text-[14px] hover:bg-white/5" style={{ background: 'none', border: 'none', color: 'var(--c-text)' }}>
-      {children}
+    <div className="flex items-center gap-3">
+      <Avatar url={avatar} name={fullName} size={40} />
+      <span className="flex flex-col">
+        <span className="text-sm font-bold">{name}</span>
+        <span className="text-xs" style={{ color: 'var(--c-muted)' }}>{formatDateAr(new Date().toISOString())}</span>
+      </span>
+    </div>
+  )
+}
+
+function Elements({ onPick, onBold, grid }: { onPick: (t: BlockType) => void; onBold: () => void; grid?: boolean }) {
+  const item = (e: (typeof ELEMENTS)[number]) => (
+    <button key={e.type} type="button" onMouseDown={(ev) => ev.preventDefault()} onClick={() => onPick(e.type)}
+      className={`flex items-center gap-3 rounded-lg cursor-pointer text-start transition-colors hover:bg-white/5 ${grid ? 'flex-col justify-center py-3 px-2 text-center' : 'px-2.5 py-2'}`}
+      style={{ background: grid ? 'var(--c-surface-alt)' : 'none', border: 'none', color: 'var(--c-text)', fontSize: grid ? 12 : 13.5 }}>
+      <span style={{ color: 'var(--c-muted)' }}><ElementIcon d={e.icon} /></span>
+      {t(e.ar, e.en)}
     </button>
   )
+  const label = (s: string) => <span className="text-[11px] px-2.5" style={{ color: 'var(--c-muted)', letterSpacing: '0.04em' }}>{s}</span>
+  const wrap = grid ? 'grid grid-cols-3 gap-2' : 'flex flex-col'
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        {label(t('أساسي', 'Basic'))}
+        <div className={wrap}>
+          {ELEMENTS.filter((e) => e.group === 'basic').map(item)}
+          <button type="button" onMouseDown={(ev) => ev.preventDefault()} onClick={onBold} className={`flex items-center gap-3 rounded-lg cursor-pointer text-start transition-colors hover:bg-white/5 ${grid ? 'flex-col justify-center py-3 px-2 text-center' : 'px-2.5 py-2'}`} style={{ background: grid ? 'var(--c-surface-alt)' : 'none', border: 'none', color: 'var(--c-text)', fontSize: grid ? 12 : 13.5 }}>
+            <span className="w-[18px] text-center font-bold" style={{ color: 'var(--c-muted)' }}>B</span>
+            {t('خط عريض', 'Bold')}
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {label(t('وسائط', 'Media'))}
+        <div className={wrap}>{ELEMENTS.filter((e) => e.group === 'media').map(item)}</div>
+      </div>
+    </div>
+  )
 }
 
-function Wrap({ children }: { children: React.ReactNode }) {
-  return <div className="max-w-[1120px] mx-auto w-full px-4 sm:px-8 py-8 sm:py-10 flex flex-col gap-6">{children}</div>
+function PdfSection({ file, fileName, onPick, visibility, setVisibility, completed, setCompleted }: {
+  file: File | null; fileName: string | null; onPick: (f: File | null | undefined) => void
+  visibility: 'public' | 'members'; setVisibility: (v: 'public' | 'members') => void; completed: boolean; setCompleted: (v: boolean) => void
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="rounded-xl p-4 flex gap-3 items-start" style={{ background: 'rgba(255,69,58,0.08)', border: '1px solid rgba(255,69,58,0.35)' }}>
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="shrink-0 mt-0.5" aria-hidden="true"><path d="M10 2.5l8 14H2l8-14z" stroke="#FF8A80" strokeWidth="1.5" strokeLinejoin="round" /><path d="M10 8v4M10 14.5v.5" stroke="#FF8A80" strokeWidth="1.6" strokeLinecap="round" /></svg>
+        <div className="flex flex-col gap-1 text-[13px] leading-relaxed" style={{ color: '#FFB4AD' }}>
+          <strong>{t('تنبيه: ننشر الأعمال المنجزة فقط', 'Notice: finished work only')}</strong>
+          <span>{t('شارك السيناريو أو الستوري بورد بعد اكتماله فقط. لا ترفع فكرة قيد التطوير أو مشروعاً لم يُنتج بعد وتخشى عليه، فالملف المنشور يقرؤه غيرك. ارفع عملك أنت فقط، أو عملاً تملك إذن نشره.', 'Share a script or storyboard only once it is complete. Do not upload an idea in development or an unproduced project you want to protect: a published file is read by others. Upload only your own work, or work you have permission to publish.')}</span>
+        </div>
+      </div>
+
+      <label className="rounded-xl p-8 flex flex-col items-center justify-center gap-2 text-center cursor-pointer" style={{ background: 'var(--c-surface)', border: '1.5px dashed var(--c-border-mid)', minHeight: 150 }}
+        onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); onPick(e.dataTransfer.files?.[0]) }}>
+        <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { onPick(e.target.files?.[0]); e.target.value = '' }} />
+        <span className="font-mono text-[11px] px-2 py-0.5 rounded" dir="ltr" style={{ border: '1px solid var(--c-border-mid)', color: 'var(--c-accent)' }}>PDF</span>
+        {file || fileName ? (
+          <>
+            <span dir="auto" className="text-sm font-semibold break-all">{file?.name || fileName}</span>
+            <span className="text-xs" style={{ color: 'var(--c-muted)' }}>{file ? `${(file.size / 1024 / 1024).toFixed(1)} MB · ` : ''}{t('اضغط لتبديل الملف', 'Click to replace')}</span>
+          </>
+        ) : (
+          <span className="text-sm" style={{ color: 'var(--c-muted)' }}>{t('اسحب الملف هنا أو اضغط لاختياره، حتى 20 ميغابايت', 'Drop the file here or click to choose, up to 20 MB')}</span>
+        )}
+      </label>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold">{t('من يقرأ الملف', 'Who can read the file')}</span>
+        <div className="flex gap-2 flex-wrap">
+          <Chip on={visibility === 'public'} onClick={() => setVisibility('public')}>{t('الجميع', 'Everyone')}</Chip>
+          <Chip on={visibility === 'members'} onClick={() => setVisibility('members')}>{t('أعضاء Makers فقط', 'Makers members only')}</Chip>
+        </div>
+      </div>
+
+      <label className="flex gap-3 items-start rounded-xl p-4 cursor-pointer" style={{ ...box, borderColor: completed ? 'var(--c-accent)' : 'var(--c-border)' }}>
+        <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} className="mt-1 w-4 h-4 shrink-0" style={{ accentColor: 'var(--c-accent)' }} />
+        <span className="text-[13.5px] leading-relaxed">{t('أؤكد أن هذا العمل منجز ومكتمل، وأنه من كتابتي أو أملك حق نشره، وأتحمّل مسؤولية مشاركته.', 'I confirm this work is finished and complete, that I wrote it or have the right to publish it, and that I am responsible for sharing it.')}</span>
+      </label>
+    </div>
+  )
 }

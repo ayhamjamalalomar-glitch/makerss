@@ -8,10 +8,10 @@ import { shareLink } from '../lib/share'
 import { useToast } from '../lib/toast'
 import ReportButton from '../components/ReportButton'
 import { Avatar, Btn, Modal, Notice, PageShell, Skeleton } from '../components/mk'
-import { ArticleBody, WritingCover, writingStatusLabel } from '../components/writing'
-import { deleteWriting, excerpt, getWriting, readingMinutes, writingFileUrl, writingKindLabel, type Writing } from '../lib/writings'
+import { ArticleBlocks, ArticleBody, renderShareImage, WritingCover, writingStatusLabel } from '../components/writing'
+import { deleteWriting, excerpt, getWriting, getWritingBySlug, readingMinutes, setWritingCover, uploadWritingMedia, writingFileUrl, writingKindLabel, writingPath, type Block, type Writing } from '../lib/writings'
 
-export default function WritingPage({ id }: { id: string }) {
+export default function WritingPage({ id, username, slug }: { id?: string; username?: string; slug?: string }) {
   useLang()
   const { profile, loading: authLoading } = useAuth()
   const { go } = useRouter()
@@ -23,17 +23,34 @@ export default function WritingPage({ id }: { id: string }) {
 
   useEffect(() => {
     setW(undefined)
-    getWriting(id).then((x) => {
+    const load = id ? getWriting(id) : username && slug ? getWritingBySlug(username, slug) : Promise.resolve(null)
+    load.then((x) => {
       setW(x)
-      if (x) document.title = `${x.title} | Makers`
+      if (!x) return
+      document.title = `${x.title} | Makers`
+      // Show the short link in the address bar (makerss.net/<username>/<slug>).
+      const short = writingPath(x)
+      if (short !== window.location.pathname && !short.startsWith('/writing/')) window.history.replaceState(null, '', short + window.location.search)
     })
     return () => { document.title = 'Makers · دليل صنّاع الإنتاج العرب' }
-  }, [id])
+  }, [id, username, slug])
 
   const isOwner = !!w && !!profile && profile.id === w.owner_id
   const member = profile?.status === 'approved'
   const staff = profile?.role === 'admin' || profile?.role === 'reviewer'
   const gated = !!w && w.kind !== 'article' && w.visibility === 'members' && !member && !isOwner && !staff
+
+  // Older writings have no share image yet: the author's own visit makes one.
+  useEffect(() => {
+    if (!w || !isOwner || w.cover_url || !profile) return
+    let live = true
+    ;(async () => {
+      const png = await renderShareImage({ kind: w.kind, title: w.title, author: displayName(w.owner || profile) })
+      if (!png || !live) return
+      try { await setWritingCover(w.id, await uploadWritingMedia(profile.id, png, 'png')) } catch { /* try again next visit */ }
+    })()
+    return () => { live = false }
+  }, [w, isOwner, profile])
 
   // The PDF link is signed per visit; storage rules decide who can open it.
   useEffect(() => {
@@ -64,7 +81,7 @@ export default function WritingPage({ id }: { id: string }) {
     )
   }
 
-  const url = `${SITE_URL}/writing/${w.id}`
+  const url = `${SITE_URL}${writingPath(w)}`
   const share = async () => {
     const r = await shareLink(url, w.title)
     if (r === 'copied') toast(t('تم نسخ الرابط', 'Link copied'))
@@ -82,7 +99,7 @@ export default function WritingPage({ id }: { id: string }) {
   }
 
   const author = w.owner
-  const meta = [writingKindLabel(w.kind), formatDateAr(w.published_at || w.created_at), w.kind === 'article' ? t(`${readingMinutes(w.body)} دقائق قراءة`, `${readingMinutes(w.body)} min read`) : ''].filter(Boolean).join(' · ')
+  const meta = [writingKindLabel(w.kind), formatDateAr(w.published_at || w.created_at), w.kind === 'article' ? readTime(readingMinutes(w.body)) : ''].filter(Boolean).join(' · ')
 
   return (
     <article className="flex flex-col">
@@ -103,8 +120,9 @@ export default function WritingPage({ id }: { id: string }) {
 
         <header className="flex flex-col gap-4">
           <span className="text-[13px]" style={{ color: 'var(--c-accent)' }}>{meta}</span>
-          <h1 dir="auto" className="font-display m-0" style={{ fontSize: 'clamp(28px, 4.4vw, 44px)', fontWeight: 800, lineHeight: 1.25, letterSpacing: '-0.02em' }}>{w.title}</h1>
-          {w.summary && <p dir="auto" className="m-0" style={{ fontSize: 18, lineHeight: 1.9, color: 'var(--c-muted)' }}>{w.summary}</p>}
+          {/* The cover already shows the title big; the h1 stays for search engines and screen readers. */}
+          <h1 dir="auto" className="sr-only">{w.title}</h1>
+          {w.summary && <p dir="auto" className="m-0" style={{ fontSize: 20, lineHeight: 1.85, color: 'var(--c-text-2)' }}>{w.summary}</p>}
           {author && (
             <Link to={`/${author.username}`} className="flex items-center gap-3 self-start group">
               <Avatar url={author.avatar_url} name={author.full_name} size={42} />
@@ -119,7 +137,7 @@ export default function WritingPage({ id }: { id: string }) {
         <div style={{ height: 1, background: 'var(--c-border)' }} />
 
         {w.kind === 'article' ? (
-          <ArticleBody body={w.body || ''} />
+          Array.isArray(w.blocks) && w.blocks.length ? <ArticleBlocks blocks={w.blocks as Block[]} /> : <ArticleBody body={w.body || ''} />
         ) : (
           <section className="flex flex-col gap-4">
             <div className="flex items-center gap-2 text-[13px]" style={{ color: 'var(--c-live)' }}>
@@ -181,3 +199,5 @@ export default function WritingPage({ id }: { id: string }) {
     </article>
   )
 }
+
+const readTime = (n: number) => t(n === 1 ? 'دقيقة قراءة' : n === 2 ? 'دقيقتان قراءة' : n <= 10 ? `${n} دقائق قراءة` : `${n} دقيقة قراءة`, `${n} min read`)
