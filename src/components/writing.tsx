@@ -3,7 +3,7 @@ import Link from '../lib/router'
 import { t } from '../lib/i18n'
 import { displayName } from '../lib/data'
 import { formatDateAr } from '../lib/constants'
-import { excerpt, podcastEmbed, videoEmbed, writingKindLabel, writingPath, writingTag, type Block, type Writing } from '../lib/writings'
+import { blockSize, excerpt, podcastEmbed, videoEmbed, writingKindLabel, writingPath, writingTag, type Block, type Writing } from '../lib/writings'
 
 // One cover style for every writing: the title set big on the dark screen, the kind in amber,
 // the author at the foot. Members only type the title; the cover is drawn from it.
@@ -157,7 +157,7 @@ const ytThumbFrame = { aspectRatio: '16/9', border: 'none' } as const
 
 export function ArticleBlocks({ blocks }: { blocks: Block[] }) {
   return (
-    <div dir="auto" className="flex flex-col gap-6" style={{ fontSize: 17.5, lineHeight: 2.05, color: 'var(--c-text-2)' }}>
+    <div dir="auto" className="flex flex-col gap-6" style={{ fontSize: 18, lineHeight: 2.05, color: 'var(--c-text-2)' }}>
       {blocks.map((b, i) => <BlockView key={b.id || i} b={b} />)}
     </div>
   )
@@ -165,16 +165,17 @@ export function ArticleBlocks({ blocks }: { blocks: Block[] }) {
 
 export function BlockView({ b }: { b: Block }) {
   switch (b.type) {
-    case 'h2': return <h2 className="font-display m-0 mt-4" style={{ fontSize: 26, lineHeight: 1.4, fontWeight: 800, color: 'var(--c-text)' }}>{b.text}</h2>
-    case 'h3': return <h3 className="font-display m-0 mt-2" style={{ fontSize: 20, lineHeight: 1.45, fontWeight: 700, color: 'var(--c-text)' }}>{b.text}</h3>
-    case 'quote': return <blockquote className="m-0 py-1" style={{ borderInlineStart: '3px solid var(--c-accent)', paddingInlineStart: 22, fontSize: 21, lineHeight: 1.8, fontWeight: 500, color: 'var(--c-text)' }}>{inline(b.text)}</blockquote>
+    case 'p': return <p className="m-0 whitespace-pre-line" style={{ fontSize: blockSize(b) }}>{inline(b.text)}</p>
+    case 'h2': return <h2 className="font-display m-0 mt-4" style={{ fontSize: blockSize(b), lineHeight: 1.4, fontWeight: 800, color: 'var(--c-text)' }}>{b.text}</h2>
+    case 'h3': return <h3 className="font-display m-0 mt-2" style={{ fontSize: blockSize(b), lineHeight: 1.45, fontWeight: 700, color: 'var(--c-text)' }}>{b.text}</h3>
+    case 'quote': return <blockquote className="m-0 py-1" style={{ borderInlineStart: '3px solid var(--c-accent)', paddingInlineStart: 22, fontSize: blockSize(b), lineHeight: 1.8, fontWeight: 500, color: 'var(--c-text)' }}>{inline(b.text)}</blockquote>
     case 'ul': return (
-      <ul className="m-0 flex flex-col gap-2" style={{ paddingInlineStart: 22 }}>
+      <ul className="m-0 flex flex-col gap-2" style={{ paddingInlineStart: 22, fontSize: blockSize(b) }}>
         {b.items.map((it, j) => <li key={j} style={{ listStyle: 'none', position: 'relative' }}><span aria-hidden="true" className="absolute rotate-45" style={{ width: 6, height: 6, background: 'var(--c-accent)', insetInlineStart: -18, top: '0.9em' }} />{inline(it)}</li>)}
       </ul>
     )
     case 'ol': return (
-      <ol className="m-0 flex flex-col gap-2" style={{ paddingInlineStart: 28 }}>
+      <ol className="m-0 flex flex-col gap-2" style={{ paddingInlineStart: 28, fontSize: blockSize(b) }}>
         {b.items.map((it, j) => <li key={j} style={{ listStyle: 'none', position: 'relative' }}><span aria-hidden="true" className="absolute font-mono text-[13px]" style={{ insetInlineStart: -28, top: '0.35em', color: 'var(--c-accent)' }}>{String(j + 1).padStart(2, '0')}</span>{inline(it)}</li>)}
       </ol>
     )

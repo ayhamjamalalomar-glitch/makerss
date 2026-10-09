@@ -211,6 +211,7 @@ Frontend: `src/lib/writings.ts` (data), `src/components/writing.tsx` (cover, car
   - The reader shows the title only on the cover (h1 kept as sr-only).
   - Share image: `renderShareImage()` in `src/components/writing.tsx` draws the cover (1200x630, canvas, so Arabic is shaped right) after every save, uploads it to bucket `writing-media` and stores it with `set_writing_cover`; `writings.cover_url` is the og:image. Older writings get one on the author's next visit.
   - Editor (`WritingEditor` + `src/components/BlockEditor.tsx`): title, standfirst and author first, then blocks. Elements panel (side on desktop, + button sheet on phones): text, heading, subheading, bullet list, numbered list, quote, divider, bold, image (upload to `writing-media`), video (YouTube, Vimeo), podcast (Spotify, Apple Podcasts, YouTube), button with a link. Stored in `writings.blocks` (jsonb); the server checks every block (`private.writing_blocks_text`) and keeps the plain text in `body`. No drafts (Ayham's call); leaving with unsent work asks first. No review notice in the editor; the toast after sending says it goes live after review.
+  - 2026-10-09 (Ayham): clicking a text or list type in the panel while on a line turns that block into the type (clicking its own type turns it back to text); media and divider still add below. A "Text size" control (minus, number, plus, px) sets `size` on text and list blocks, 12 to 48 (`BLOCK_SIZE` defaults, `blockSize()`); the server checks it (migration `20261009100000_writing_block_size`).
 
 Not in the iOS app yet.
 

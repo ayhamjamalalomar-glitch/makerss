@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
 import { AnimatePresence, motion } from 'framer-motion'
 import { t } from '../lib/i18n'
 import { toJpeg } from '../lib/image'
-import { newBlock, newId, podcastEmbed, uploadWritingMedia, videoEmbed, type Block, type BlockType } from '../lib/writings'
+import { BLOCK_SIZE, SIZE_MAX, SIZE_MIN, blockSize, isSized, newBlock, newId, podcastEmbed, uploadWritingMedia, videoEmbed, type Block, type BlockType } from '../lib/writings'
 import { BlockView } from './writing'
 
 // The article editor: a column of blocks that look like the published article while you type.
@@ -28,7 +28,7 @@ export function ElementIcon({ d, size = 18 }: { d: string; size?: number }) {
 
 const isText = (b: Block): b is Extract<Block, { text: string }> => 'text' in b
 const TEXT_STYLE: Record<'p' | 'h2' | 'h3' | 'quote', CSSProperties> = {
-  p: { fontSize: 17.5, lineHeight: 2.05, color: 'var(--c-text-2)' },
+  p: { fontSize: 18, lineHeight: 2.05, color: 'var(--c-text-2)' },
   h2: { fontSize: 26, lineHeight: 1.4, fontWeight: 800, color: 'var(--c-text)', fontFamily: "'Alexandria', 'Readex Pro', sans-serif" },
   h3: { fontSize: 20, lineHeight: 1.45, fontWeight: 700, color: 'var(--c-text)', fontFamily: "'Alexandria', 'Readex Pro', sans-serif" },
   quote: { fontSize: 21, lineHeight: 1.8, fontWeight: 500, color: 'var(--c-text)' },
@@ -69,8 +69,28 @@ export function AutoText({ value, onChange, placeholder, style, className = '', 
   )
 }
 
+const TEXTY = ['p', 'h2', 'h3', 'quote'] as const
+const LISTY = ['ul', 'ol'] as const
+const isTexty = (t: string): t is (typeof TEXTY)[number] => (TEXTY as readonly string[]).includes(t)
+const isListy = (t: string): t is (typeof LISTY)[number] => (LISTY as readonly string[]).includes(t)
+
+/** Turn a text or list block into another text or list type, keeping its words. */
+function convertBlock(b: Block, type: BlockType): Block {
+  const words = 'text' in b ? b.text : 'items' in b ? b.items.filter((x) => x.trim()).join('\n') : ''
+  if (isListy(type)) {
+    const items = 'items' in b ? b.items : words.split('\n').map((x) => x.trim()).filter(Boolean)
+    return { id: b.id, type, items: items.length ? items : [''] }
+  }
+  return { id: b.id, type: type as (typeof TEXTY)[number], text: words }
+}
+
+/** What the writer is on right now, for the side panel. */
+export type ActiveBlock = { type: BlockType; size: number | null } | null
+
 export interface BlockEditorApi {
+  /** On a text or list block this changes its type; otherwise it adds the element below. */
   insert: (type: BlockType) => void
+  setSize: (n: number) => void
   bold: () => void
   /** While an element from the panel is dragged: show where it would land (null clears). */
   hover: (x: number, y: number) => boolean
@@ -79,9 +99,26 @@ export interface BlockEditorApi {
   clear: () => void
 }
 
-export default function BlockEditor({ blocks, onChange, uid, apiRef }: { blocks: Block[]; onChange: (b: Block[]) => void; uid: string; apiRef: { current: BlockEditorApi | null } }) {
+export default function BlockEditor({ blocks, onChange, uid, apiRef, onActive }: { blocks: Block[]; onChange: (b: Block[]) => void; uid: string; apiRef: { current: BlockEditorApi | null }; onActive?: (a: ActiveBlock) => void }) {
   const refs = useRef(new Map<string, HTMLTextAreaElement | HTMLInputElement>())
   const [focusId, setFocusId] = useState<string | null>(null)
+
+  // Leaving the article (to the title, say) lets go of the block; the side panel tools keep it.
+  useEffect(() => {
+    const h = (e: FocusEvent) => {
+      const el = e.target as HTMLElement | null
+      if (!el || box.current?.contains(el) || el.closest?.('[data-editor-tools]')) return
+      setFocusId(null)
+    }
+    document.addEventListener('focusin', h)
+    return () => document.removeEventListener('focusin', h)
+  }, [])
+  const activeBlock = focusId ? blocks.find((b) => b.id === focusId) : undefined
+  const activeKey = activeBlock ? `${activeBlock.type}:${isSized(activeBlock) ? blockSize(activeBlock) : ''}` : ''
+  useEffect(() => {
+    onActive?.(activeBlock ? { type: activeBlock.type, size: isSized(activeBlock) ? blockSize(activeBlock) : null } : null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeKey])
   const pending = useRef<{ id: string; at?: 'start' | 'end' } | null>(null)
   const latest = useRef(blocks)
   latest.current = blocks
@@ -223,7 +260,25 @@ export default function BlockEditor({ blocks, onChange, uid, apiRef }: { blocks:
     return !!r && x > r.left - 90 && x < r.right + 90 && y > r.top - 60 && y < r.bottom + 80
   }
   apiRef.current = {
-    insert: (type) => insertAfter(focusId && latest.current.some((b) => b.id === focusId) ? focusId : null, newBlock(type)),
+    insert: (type) => {
+      const cur = focusId ? latest.current.find((b) => b.id === focusId) : undefined
+      if (cur && (isTexty(cur.type) || isListy(cur.type)) && (isTexty(type) || isListy(type))) {
+        // Pressing the type it already is turns it back into plain text.
+        const target: BlockType = cur.type === type ? 'p' : type
+        if (target === cur.type) { pending.current = { id: listFocusId(cur), at: 'end' }; return }
+        const nb = convertBlock(cur, target)
+        set(latest.current.map((b) => (b.id === cur.id ? nb : b)))
+        pending.current = { id: listFocusId(nb), at: 'end' }
+        return
+      }
+      insertAfter(cur ? cur.id : null, newBlock(type))
+    },
+    setSize: (n) => {
+      const cur = focusId ? latest.current.find((b) => b.id === focusId) : undefined
+      if (!cur || !isSized(cur)) return
+      const size = Math.round(Math.min(SIZE_MAX, Math.max(SIZE_MIN, n)) * 2) / 2
+      patch(cur.id, { size: size === BLOCK_SIZE[cur.type] ? undefined : size } as Partial<Block>)
+    },
     bold: () => {
       const el = focusId ? refs.current.get(focusId) : null
       if (!el || !(el instanceof HTMLTextAreaElement)) return
@@ -284,7 +339,7 @@ export default function BlockEditor({ blocks, onChange, uid, apiRef }: { blocks:
             >
               {isText(b) ? (
                 <div style={b.type === 'quote' ? { borderInlineStart: '3px solid var(--c-accent)', paddingInlineStart: 22 } : undefined}>
-                  <AutoText inputRef={reg(b.id)} value={b.text} maxLength={6000} onChange={(v) => patch(b.id, { text: v })} onKeyDown={textKeys(b)} onFocus={() => setFocusId(b.id)} placeholder={t(...PLACEHOLDER[b.type])} style={TEXT_STYLE[b.type]} />
+                  <AutoText inputRef={reg(b.id)} value={b.text} maxLength={6000} onChange={(v) => patch(b.id, { text: v })} onKeyDown={textKeys(b)} onFocus={() => setFocusId(b.id)} placeholder={t(...PLACEHOLDER[b.type])} style={{ ...TEXT_STYLE[b.type], fontSize: blockSize(b) }} />
                 </div>
               ) : b.type === 'ul' || b.type === 'ol' ? (
                 <ListEdit b={b} reg={reg} onFocus={() => setFocusId(b.id)} onChange={(items) => patch(b.id, { items })} onEmpty={() => remove(b.id)} onExit={() => insertAfter(b.id, newBlock('p'))} />
@@ -454,8 +509,8 @@ function ListEdit({ b, reg, onFocus, onChange, onEmpty, onExit }: {
       {b.items.map((it, i) => (
         <div key={i} className="relative">
           {b.type === 'ol'
-            ? <span aria-hidden="true" className="absolute font-mono text-[13px]" style={{ insetInlineStart: -28, top: 9, color: 'var(--c-accent)' }}>{String(i + 1).padStart(2, '0')}</span>
-            : <span aria-hidden="true" className="absolute rotate-45" style={{ width: 6, height: 6, background: 'var(--c-accent)', insetInlineStart: -18, top: 15 }} />}
+            ? <span aria-hidden="true" className="absolute font-mono text-[13px]" style={{ insetInlineStart: -28, top: blockSize(b) * 1.025 - 9, color: 'var(--c-accent)' }}>{String(i + 1).padStart(2, '0')}</span>
+            : <span aria-hidden="true" className="absolute rotate-45" style={{ width: 6, height: 6, background: 'var(--c-accent)', insetInlineStart: -18, top: blockSize(b) * 1.025 - 3 }} />}
           <input
             ref={reg(`${b.id}:${i}`)}
             data-item={`${b.id}:${i}`}
@@ -481,7 +536,7 @@ function ListEdit({ b, reg, onFocus, onChange, onEmpty, onExit }: {
               }
             }}
             className="w-full bg-transparent outline-none border-none p-0"
-            style={{ fontSize: 17.5, lineHeight: 2.05, color: 'var(--c-text-2)', background: 'transparent', border: 'none', borderRadius: 0, height: 'auto', outline: 'none' }}
+            style={{ fontSize: blockSize(b), lineHeight: 2.05, color: 'var(--c-text-2)', background: 'transparent', border: 'none', borderRadius: 0, height: 'auto', outline: 'none' }}
           />
         </div>
       ))}

@@ -57,13 +57,25 @@ export const writingPath = (w: Pick<Writing, 'id'> & { slug?: string | null; own
 
 // ── Article blocks ───────────────────────────────────────────
 export type Block =
-  | { id: string; type: 'p' | 'h2' | 'h3' | 'quote'; text: string }
-  | { id: string; type: 'ul' | 'ol'; items: string[] }
+  | { id: string; type: 'p' | 'h2' | 'h3' | 'quote'; text: string; size?: number }
+  | { id: string; type: 'ul' | 'ol'; items: string[]; size?: number }
   | { id: string; type: 'image'; url: string; caption?: string }
   | { id: string; type: 'video' | 'podcast'; url: string }
   | { id: string; type: 'button'; label: string; url: string }
   | { id: string; type: 'divider' }
 export type BlockType = Block['type']
+
+// Text size of a block in px: a default per type, or the writer's own number (12 to 48).
+export const BLOCK_SIZE: Record<'p' | 'h2' | 'h3' | 'quote' | 'ul' | 'ol', number> = { p: 18, h2: 26, h3: 20, quote: 21, ul: 18, ol: 18 }
+export const SIZE_MIN = 12
+export const SIZE_MAX = 48
+export const isSized = (b: Block): b is Extract<Block, { text: string }> | Extract<Block, { items: string[] }> => b.type in BLOCK_SIZE
+/** The size a block shows at, always inside the allowed range. */
+export function blockSize(b: Block): number {
+  if (!isSized(b)) return BLOCK_SIZE.p
+  const n = Number(b.size)
+  return Number.isFinite(n) && n >= SIZE_MIN && n <= SIZE_MAX ? n : BLOCK_SIZE[b.type]
+}
 
 export const newId = () => Math.random().toString(36).slice(2, 10)
 
@@ -257,6 +269,7 @@ export function writingError(e: unknown) {
   if (m.includes('bad image')) return t('صورة غير صالحة. ارفعها من جديد.', 'An image is not valid. Upload it again.')
   if (m.includes('bad video')) return t('رابط الفيديو يجب أن يكون من YouTube أو Vimeo.', 'Video links must be from YouTube or Vimeo.')
   if (m.includes('bad podcast')) return t('رابط البودكاست يجب أن يكون من Spotify أو Apple Podcasts أو YouTube.', 'Podcast links must be from Spotify, Apple Podcasts or YouTube.')
+  if (m.includes('bad size')) return t('حجم النص يجب أن يكون بين 12 و48.', 'Text size must be between 12 and 48.')
   if (m.includes('bad link') || m.includes('bad button')) return t('كل زر يحتاج نصاً قصيراً ورابطاً يبدأ بـ https.', 'Each button needs a short label and a link starting with https.')
   if (m.includes('too many blocks') || m.includes('block too long') || m.includes('bad list')) return t('المقال طويل جداً. قسّمه إلى مقالين.', 'The article is too long. Split it in two.')
   if (m.includes('bad file')) return t('ارفع ملف PDF من جديد.', 'Upload the PDF again.')

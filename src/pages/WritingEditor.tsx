@@ -7,7 +7,7 @@ import { displayName } from '../lib/data'
 import { formatDateAr } from '../lib/constants'
 import { Avatar, Chip, Notice, Spinner } from '../components/mk'
 import { ArticleBlocks, renderShareImage, WritingCover } from '../components/writing'
-import BlockEditor, { AutoText, ELEMENTS, ElementIcon, type BlockEditorApi } from '../components/BlockEditor'
+import BlockEditor, { AutoText, ELEMENTS, ElementIcon, type ActiveBlock, type BlockEditorApi } from '../components/BlockEditor'
 import {
   blocksFromBody, blocksText, cleanBlocks, getWriting, listWritings, myWriterStatus, newBlock, removeWritingFile, saveWriting,
   setWritingCover, uploadWritingMedia, uploadWritingPdf, writingError, writingPath,
@@ -44,6 +44,7 @@ export default function WritingEditor({ id }: { id?: string }) {
   const [error, setError] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
   const api = useRef<BlockEditorApi | null>(null)
+  const [active, setActive] = useState<ActiveBlock>(null)
 
   useEffect(() => { if (session) myWriterStatus().then(setStatus) }, [session])
   useEffect(() => {
@@ -193,8 +194,8 @@ export default function WritingEditor({ id }: { id?: string }) {
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 flex gap-10 items-start">
         {/* elements panel */}
         {isArticle && !preview && (
-          <aside className="hidden lg:flex flex-col gap-5 w-[220px] shrink-0 sticky top-[84px] py-8 max-h-[calc(100vh-84px)] overflow-y-auto no-scrollbar">
-            <Elements onPick={insert} onBold={() => { api.current?.bold(); setDirty(true) }} api={api} />
+          <aside data-editor-tools className="hidden lg:flex flex-col gap-5 w-[220px] shrink-0 sticky top-[84px] py-8 max-h-[calc(100vh-84px)] overflow-y-auto no-scrollbar">
+            <Elements onPick={insert} onBold={() => { api.current?.bold(); setDirty(true) }} api={api} active={active} onSize={(n) => { api.current?.setSize(n); setDirty(true) }} />
             <div className="flex flex-col gap-2 pt-4" style={{ borderTop: '1px solid var(--c-border)' }}>
               <span className="text-[11px]" style={{ color: 'var(--c-muted)' }}>{t('الغلاف يُصنع من العنوان', 'The cover is made from the title')}</span>
               <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--c-border)' }}>
@@ -226,7 +227,7 @@ export default function WritingEditor({ id }: { id?: string }) {
               <div style={{ height: 1, background: 'var(--c-border)' }} />
 
               {isArticle ? (
-                <BlockEditor blocks={blocks} onChange={edit(setBlocks)} uid={profile.id} apiRef={api} />
+                <BlockEditor blocks={blocks} onChange={edit(setBlocks)} uid={profile.id} apiRef={api} onActive={setActive} />
               ) : (
                 <PdfSection file={file} fileName={fileName} onPick={pickFile} visibility={visibility} setVisibility={edit(setVisibility)} completed={completed} setCompleted={edit(setCompleted)} />
               )}
@@ -245,13 +246,13 @@ export default function WritingEditor({ id }: { id?: string }) {
       {/* phones: elements open from a round button */}
       {isArticle && !preview && (
         <>
-          <button type="button" onClick={() => setSheet(true)} aria-label={t('أضف عنصراً', 'Add an element')} className="lg:hidden fixed bottom-6 end-5 z-40 w-14 h-14 rounded-full flex items-center justify-center cursor-pointer" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+          <button type="button" data-editor-tools onMouseDown={(ev) => ev.preventDefault()} onClick={() => setSheet(true)} aria-label={t('أضف عنصراً', 'Add an element')} className="lg:hidden fixed bottom-6 end-5 z-40 w-14 h-14 rounded-full flex items-center justify-center cursor-pointer" style={{ background: 'var(--c-accent)', color: 'var(--c-on-accent)', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
             <ElementIcon size={22} d="M10 4v12M4 10h12" />
           </button>
           {sheet && (
-            <div className="lg:hidden fixed inset-0 z-50 flex items-end" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={() => setSheet(false)}>
+            <div data-editor-tools className="lg:hidden fixed inset-0 z-50 flex items-end" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={() => setSheet(false)}>
               <div className="w-full rounded-t-2xl p-5 pb-8 max-h-[75vh] overflow-y-auto" style={{ background: 'var(--c-surface)', borderTop: '1px solid var(--c-border)' }} onClick={(e) => e.stopPropagation()}>
-                <Elements onPick={insert} onBold={() => { setSheet(false); api.current?.bold(); setDirty(true) }} grid />
+                <Elements onPick={insert} onBold={() => { setSheet(false); api.current?.bold(); setDirty(true) }} grid active={active} onSize={(n) => { api.current?.setSize(n); setDirty(true) }} />
               </div>
             </div>
           )}
@@ -277,7 +278,7 @@ function AuthorLine({ name, avatar, fullName }: { name: string; avatar: string |
   )
 }
 
-function Elements({ onPick, onBold, grid, api }: { onPick: (t: BlockType) => void; onBold: () => void; grid?: boolean; api?: { current: BlockEditorApi | null } }) {
+function Elements({ onPick, onBold, grid, api, active, onSize }: { onPick: (t: BlockType) => void; onBold: () => void; grid?: boolean; api?: { current: BlockEditorApi | null }; active?: ActiveBlock; onSize?: (n: number) => void }) {
   // Drag an element from the panel into the article: a small card follows the pointer and a line shows where it lands.
   const dragged = useRef(false)
   const [ghost, setGhost] = useState<{ e: (typeof ELEMENTS)[number]; x: number; y: number; over: boolean } | null>(null)
@@ -308,9 +309,10 @@ function Elements({ onPick, onBold, grid, api }: { onPick: (t: BlockType) => voi
   const item = (e: (typeof ELEMENTS)[number]) => (
     <button key={e.type} type="button" onMouseDown={(ev) => ev.preventDefault()} onClick={() => { if (!dragged.current) onPick(e.type) }}
       onPointerDown={grid || !api ? undefined : (ev) => startPanelDrag(ev, e)}
+      aria-pressed={active?.type === e.type}
       className={`flex items-center gap-3 rounded-lg text-start transition-colors hover:bg-white/5 ${grid ? 'cursor-pointer flex-col justify-center py-3 px-2 text-center' : 'cursor-grab active:cursor-grabbing px-2.5 py-2'}`}
-      style={{ background: grid ? 'var(--c-surface-alt)' : 'none', border: 'none', color: 'var(--c-text)', fontSize: grid ? 12 : 13.5 }}>
-      <span style={{ color: 'var(--c-muted)' }}><ElementIcon d={e.icon} /></span>
+      style={{ background: active?.type === e.type ? 'rgba(var(--c-accent-rgb),0.12)' : grid ? 'var(--c-surface-alt)' : 'none', border: 'none', color: active?.type === e.type ? 'var(--c-accent)' : 'var(--c-text)', fontSize: grid ? 12 : 13.5 }}>
+      <span style={{ color: active?.type === e.type ? 'var(--c-accent)' : 'var(--c-muted)' }}><ElementIcon d={e.icon} /></span>
       {t(e.ar, e.en)}
     </button>
   )
@@ -325,7 +327,8 @@ function Elements({ onPick, onBold, grid, api }: { onPick: (t: BlockType) => voi
           {t(ghost.e.ar, ghost.e.en)}
         </div>
       )}
-      {!grid && <span className="text-[11.5px] leading-relaxed px-2.5" style={{ color: 'var(--c-muted-2)' }}>{t('اضغط لإضافة عنصر، أو اسحبه إلى المكان الذي تريده في المقال.', 'Click to add, or drag an element to where you want it.')}</span>}
+      {!grid && <span className="text-[11.5px] leading-relaxed px-2.5" style={{ color: 'var(--c-muted-2)' }}>{t('وأنت على سطر، اضغط نوعاً لتحويله (عنوان، اقتباس، قائمة). أو اسحب العنصر إلى المكان الذي تريده.', 'On a line, click a type to turn it into that (heading, quote, list). Or drag an element to where you want it.')}</span>}
+      {onSize && <SizeControl active={active ?? null} onSize={onSize} />}
       <div className="flex flex-col gap-1.5">
         {label(t('أساسي', 'Basic'))}
         <div className={wrap}>
@@ -384,6 +387,41 @@ function PdfSection({ file, fileName, onPick, visibility, setVisibility, complet
         <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} className="mt-1 w-4 h-4 shrink-0" style={{ accentColor: 'var(--c-accent)' }} />
         <span className="text-[13.5px] leading-relaxed">{t('أؤكد أن هذا العمل منجز ومكتمل، وأنه من كتابتي أو أملك حق نشره، وأتحمّل مسؤولية مشاركته.', 'I confirm this work is finished and complete, that I wrote it or have the right to publish it, and that I am responsible for sharing it.')}</span>
       </label>
+    </div>
+  )
+}
+
+/** Text size of the block you are on, in px: minus, the number, plus. */
+function SizeControl({ active, onSize }: { active: ActiveBlock; onSize: (n: number) => void }) {
+  const size = active?.size ?? null
+  const [draft, setDraft] = useState('')
+  useEffect(() => { setDraft(size == null ? '' : String(size)) }, [size])
+  const off = size == null
+  const btn = 'w-8 h-8 rounded-md flex items-center justify-center cursor-pointer disabled:opacity-30 disabled:cursor-default'
+  const commit = () => { const n = Number(draft); if (Number.isFinite(n) && n > 0) onSize(n); else setDraft(size == null ? '' : String(size)) }
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[11px] px-2.5" style={{ color: 'var(--c-muted)', letterSpacing: '0.04em' }}>{t('حجم النص', 'Text size')}</span>
+      <div className="flex items-center gap-1.5 px-2.5" dir="ltr">
+        <button type="button" className={btn} disabled={off} onMouseDown={(ev) => ev.preventDefault()} onClick={() => size != null && onSize(size - 1)} aria-label={t('أصغر', 'Smaller')} style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)', color: 'var(--c-text)' }}>
+          <ElementIcon size={14} d="M5 10h10" />
+        </button>
+        <input
+          type="number" inputMode="decimal" min={12} max={48} step={1} disabled={off}
+          value={draft} placeholder="–"
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); commit() } }}
+          aria-label={t('حجم النص بالبكسل', 'Text size in px')}
+          className="w-14 h-8 rounded-md text-center font-mono text-[13px] outline-none disabled:opacity-40"
+          style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border-mid)', color: 'var(--c-text)' }}
+        />
+        <button type="button" className={btn} disabled={off} onMouseDown={(ev) => ev.preventDefault()} onClick={() => size != null && onSize(size + 1)} aria-label={t('أكبر', 'Larger')} style={{ background: 'var(--c-surface-alt)', border: '1px solid var(--c-border)', color: 'var(--c-text)' }}>
+          <ElementIcon size={14} d="M10 5v10M5 10h10" />
+        </button>
+        <span className="font-mono text-[11px]" style={{ color: 'var(--c-muted-2)' }}>px</span>
+      </div>
+      {off && <span className="text-[11px] px-2.5" style={{ color: 'var(--c-muted-2)' }}>{t('اضغط على سطر لتغيير حجمه.', 'Click a line to change its size.')}</span>}
     </div>
   )
 }
