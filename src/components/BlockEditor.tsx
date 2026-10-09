@@ -4,6 +4,7 @@ import { t } from '../lib/i18n'
 import { toJpeg } from '../lib/image'
 import { BLOCK_SIZE, SIZE_MAX, SIZE_MIN, blockSize, isSized, lineAsMedia, newBlock, newId, podcastEmbed, uploadWritingMedia, videoEmbed, type Block, type BlockType } from '../lib/writings'
 import { BlockView } from './writing'
+import RichLine, { caretRange, placeCaret, splitMarks } from './RichLine'
 
 // The article editor: a column of blocks that look like the published article while you type.
 // Text blocks are plain textareas (no HTML is ever stored); **bold** is the only inline mark.
@@ -102,7 +103,7 @@ export interface BlockEditorApi {
 }
 
 export default function BlockEditor({ blocks, onChange, uid, apiRef, onActive }: { blocks: Block[]; onChange: (b: Block[]) => void; uid: string; apiRef: { current: BlockEditorApi | null }; onActive?: (a: ActiveBlock) => void }) {
-  const refs = useRef(new Map<string, HTMLTextAreaElement | HTMLInputElement>())
+  const refs = useRef(new Map<string, HTMLTextAreaElement | HTMLInputElement | HTMLDivElement>())
   const [focusId, setFocusId] = useState<string | null>(null)
 
   // Leaving the article (to the title, say) lets go of the block; the side panel tools keep it.
@@ -131,6 +132,7 @@ export default function BlockEditor({ blocks, onChange, uid, apiRef, onActive }:
     const el = refs.current.get(p.id)
     if (!el) return
     pending.current = null
+    if (el instanceof HTMLDivElement) { placeCaret(el, p.at === 'start' ? 'start' : 'end'); return }
     el.focus()
     const pos = p.at === 'start' ? 0 : el.value.length
     el.setSelectionRange(pos, pos)
@@ -165,15 +167,15 @@ export default function BlockEditor({ blocks, onChange, uid, apiRef, onActive }:
     pending.current = { id: listFocusId(b), at: 'start' }
   }
 
-  const reg = (id: string) => (el: HTMLTextAreaElement | HTMLInputElement | null) => { if (el) refs.current.set(id, el); else refs.current.delete(id) }
+  const reg = (id: string) => (el: HTMLTextAreaElement | HTMLInputElement | HTMLDivElement | null) => { if (el) refs.current.set(id, el); else refs.current.delete(id) }
 
-  const textKeys = (b: Extract<Block, { text: string }>) => (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const textKeys = (b: Extract<Block, { text: string }>) => (e: KeyboardEvent<HTMLDivElement>) => {
     const el = e.currentTarget
+    const [ca, cz] = caretRange(el) ?? [0, 0]
     if (e.key === 'Enter' && !e.shiftKey && b.type !== 'quote') {
       e.preventDefault()
-      const pos = el.selectionStart
-      const before = b.text.slice(0, pos)
-      const after = b.text.slice(el.selectionEnd)
+      const before = splitMarks(b.text, ca)[0]
+      const after = splitMarks(b.text, cz)[1]
       const nb: Block = { id: newId(), type: 'p', text: after }
       // A line that is only a video or podcast link turns into the player.
       const media = b.type === 'p' && !after.trim() ? lineAsMedia(before) : null
@@ -182,7 +184,7 @@ export default function BlockEditor({ blocks, onChange, uid, apiRef, onActive }:
       list.splice(i + 1, 0, nb)
       set(list)
       pending.current = { id: nb.id, at: 'start' }
-    } else if (e.key === 'Backspace' && el.selectionStart === 0 && el.selectionEnd === 0) {
+    } else if (e.key === 'Backspace' && ca === 0 && cz === 0) {
       const list = latest.current
       const i = list.findIndex((x) => x.id === b.id)
       if (i <= 0) return
@@ -198,13 +200,13 @@ export default function BlockEditor({ blocks, onChange, uid, apiRef, onActive }:
   }
 
   // Pasting several lines makes one block per line; a line that is only a video or podcast link becomes the player.
-  const textPaste = (b: Extract<Block, { text: string }>) => (e: ClipboardEvent<HTMLTextAreaElement>) => {
+  const textPaste = (b: Extract<Block, { text: string }>) => (e: ClipboardEvent<HTMLDivElement>) => {
     if (b.type === 'quote') return
     const pasted = e.clipboardData.getData('text/plain').replace(/\r\n?/g, '\n')
     if (!pasted.includes('\n') && !(lineAsMedia(pasted) && !b.text.trim())) return
     e.preventDefault()
-    const el = e.currentTarget
-    const whole = b.text.slice(0, el.selectionStart) + pasted + b.text.slice(el.selectionEnd)
+    const [pa, pz] = caretRange(e.currentTarget) ?? [0, 0]
+    const whole = splitMarks(b.text, pa)[0] + pasted + splitMarks(b.text, pz)[1]
     const lines = whole.split('\n').filter((l) => l.trim())
     if (!lines.length) return
     const made: Block[] = lines.map((l, i) => lineAsMedia(l) ?? (i === 0 ? { ...b, text: l } : { id: newId(), type: 'p', text: l }))
@@ -305,13 +307,11 @@ export default function BlockEditor({ blocks, onChange, uid, apiRef, onActive }:
     },
     bold: () => {
       const el = focusId ? refs.current.get(focusId) : null
-      if (!el || !(el instanceof HTMLTextAreaElement)) return
       const b = latest.current.find((x) => x.id === focusId)
-      if (!b || !isText(b)) return
-      const { selectionStart: a, selectionEnd: z, value } = el
-      const sel = value.slice(a, z) || t('نص عريض', 'bold text')
-      patch(b.id, { text: value.slice(0, a) + '**' + sel + '**' + value.slice(z) })
-      pending.current = { id: b.id, at: 'end' }
+      if (!el || !(el instanceof HTMLDivElement) || !b || (b.type !== 'p' && b.type !== 'quote')) return
+      // Bold shows at once on the selected words (Ctrl/Cmd+B works too).
+      if (document.activeElement !== el) el.focus()
+      document.execCommand('bold')
     },
     hover: (x, y) => {
       if (!inside(x, y)) { setDrop(null); return false }
@@ -363,7 +363,7 @@ export default function BlockEditor({ blocks, onChange, uid, apiRef, onActive }:
             >
               {isText(b) ? (
                 <div style={b.type === 'quote' ? { borderInlineStart: '3px solid var(--c-accent)', paddingInlineStart: 22 } : undefined}>
-                  <AutoText inputRef={reg(b.id)} value={b.text} maxLength={6000} onChange={(v) => patch(b.id, { text: v })} onKeyDown={textKeys(b)} onPaste={textPaste(b)} onFocus={() => setFocusId(b.id)} placeholder={t(...PLACEHOLDER[b.type])} style={{ ...TEXT_STYLE[b.type], fontSize: blockSize(b) }} />
+                  <RichLine inputRef={reg(b.id)} value={b.text} maxLength={6000} multiline={b.type === 'quote'} onChange={(v) => patch(b.id, { text: v })} onKeyDown={textKeys(b)} onPaste={textPaste(b)} onFocus={() => setFocusId(b.id)} placeholder={t(...PLACEHOLDER[b.type])} style={{ ...TEXT_STYLE[b.type], fontSize: blockSize(b) }} />
                 </div>
               ) : b.type === 'ul' || b.type === 'ol' ? (
                 <ListEdit b={b} reg={reg} onFocus={() => setFocusId(b.id)} onChange={(items) => patch(b.id, { items })} onEmpty={() => remove(b.id)} onExit={() => insertAfter(b.id, newBlock('p'))} />

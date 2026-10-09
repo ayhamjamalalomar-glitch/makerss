@@ -7,6 +7,7 @@ import { displayName } from '../lib/data'
 import { formatDateAr } from '../lib/constants'
 import { Avatar, Chip, Notice, Spinner } from '../components/mk'
 import { ArticleBlocks, renderShareImage, WritingCover } from '../components/writing'
+import { cleanMarks } from '../components/RichLine'
 import BlockEditor, { AutoText, ELEMENTS, ElementIcon, type ActiveBlock, type BlockEditorApi } from '../components/BlockEditor'
 import {
   blocksFromBody, blocksText, cleanBlocks, getWriting, listWritings, myWriterStatus, newBlock, removeWritingFile, saveWriting, splitLines,
@@ -58,7 +59,7 @@ export default function WritingEditor({ id }: { id?: string }) {
       setExisting(w)
       if (!w) return
       setKind(w.kind); setTitle(w.title); setSummary(w.summary || '')
-      setBlocks(Array.isArray(w.blocks) && w.blocks.length ? splitLines((w.blocks as Block[]).map((b) => ({ ...b, id: Math.random().toString(36).slice(2, 10) }))) : w.body ? blocksFromBody(w.body) : [newBlock('p')])
+      setBlocks(Array.isArray(w.blocks) && w.blocks.length ? tidyMarks(splitLines((w.blocks as Block[]).map((b) => ({ ...b, id: Math.random().toString(36).slice(2, 10) })))) : w.body ? blocksFromBody(w.body) : [newBlock('p')])
       setFilePath(w.file_path); setFileName(w.file_name); setVisibility(w.visibility); setCompleted(w.completed)
     })
   }, [id])
@@ -424,4 +425,9 @@ function SizeControl({ active, onSize }: { active: ActiveBlock; onSize: (n: numb
       {off && <span className="text-[11px] px-2.5" style={{ color: 'var(--c-muted-2)' }}>{t('اضغط على سطر لتغيير حجمه.', 'Click a line to change its size.')}</span>}
     </div>
   )
+}
+
+/** Clear stray ** pairs left in text blocks by the older bold button. */
+function tidyMarks(blocks: Block[]): Block[] {
+  return blocks.map((b) => ('text' in b && (b.type === 'p' || b.type === 'quote') ? { ...b, text: cleanMarks(b.text) } : b))
 }

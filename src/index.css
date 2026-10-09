@@ -263,3 +263,7 @@ body::after {
   color: #1A1205;
   box-shadow: 0 2px 10px rgba(242,179,61,0.35);
 }
+
+/* Article editor lines (contenteditable): placeholder and bold */
+.mk-rich:empty::before { content: attr(data-placeholder); color: var(--c-muted-2); pointer-events: none; }
+.mk-rich strong, .mk-rich b { font-weight: 700; color: var(--c-text); }
