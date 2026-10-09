@@ -112,7 +112,28 @@ export function blocksFromBody(body: string): Block[] {
     if (lines.every((l) => /^>\s?/.test(l))) { out.push({ id: newId(), type: 'quote', text: lines.map((l) => l.replace(/^>\s?/, '')).join('\n') }); continue }
     if (lines.length === 1 && /^###\s+/.test(lines[0])) { out.push({ id: newId(), type: 'h3', text: lines[0].replace(/^###\s+/, '') }); continue }
     if (lines.length === 1 && /^##\s+/.test(lines[0])) { out.push({ id: newId(), type: 'h2', text: lines[0].replace(/^##\s+/, '') }); continue }
-    out.push({ id: newId(), type: 'p', text: lines.join('\n') })
+    for (const l of lines) out.push(lineAsMedia(l) ?? { id: newId(), type: 'p', text: l })
+  }
+  return out
+}
+
+/** A line that is only a link to a video or a podcast becomes that element. */
+export function lineAsMedia(line: string): Block | null {
+  const u = line.trim()
+  if (!/^https?:\/\/\S+$/i.test(u)) return null
+  if (videoEmbed(u)) return { id: newId(), type: 'video', url: u }
+  if (/^https:\/\/(open\.spotify\.com\/(episode|show)\/|podcasts\.apple\.com\/)/i.test(u)) return { id: newId(), type: 'podcast', url: u }
+  return null
+}
+
+/** One block per line: plain text blocks holding several lines are split, so every line can be moved, styled or have an element put between. */
+export function splitLines(blocks: Block[]): Block[] {
+  const out: Block[] = []
+  for (const b of blocks) {
+    if (b.type !== 'p' || !b.text.includes('\n')) { out.push(b); continue }
+    const lines = b.text.split('\n').filter((l) => l.trim())
+    if (!lines.length) { out.push({ ...b, text: '' }); continue }
+    lines.forEach((l, i) => out.push(lineAsMedia(l) ?? { ...b, id: i === 0 ? b.id : newId(), text: l }))
   }
   return out
 }

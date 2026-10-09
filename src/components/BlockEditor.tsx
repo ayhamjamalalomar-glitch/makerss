@@ -1,8 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ClipboardEvent, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { t } from '../lib/i18n'
 import { toJpeg } from '../lib/image'
-import { BLOCK_SIZE, SIZE_MAX, SIZE_MIN, blockSize, isSized, newBlock, newId, podcastEmbed, uploadWritingMedia, videoEmbed, type Block, type BlockType } from '../lib/writings'
+import { BLOCK_SIZE, SIZE_MAX, SIZE_MIN, blockSize, isSized, lineAsMedia, newBlock, newId, podcastEmbed, uploadWritingMedia, videoEmbed, type Block, type BlockType } from '../lib/writings'
 import { BlockView } from './writing'
 
 // The article editor: a column of blocks that look like the published article while you type.
@@ -41,9 +41,10 @@ const PLACEHOLDER: Record<'p' | 'h2' | 'h3' | 'quote', [string, string]> = {
 }
 
 /** Textarea that grows with its text. */
-export function AutoText({ value, onChange, placeholder, style, className = '', onKeyDown, onFocus, inputRef, maxLength }: {
+export function AutoText({ value, onChange, placeholder, style, className = '', onKeyDown, onFocus, onPaste, inputRef, maxLength }: {
   value: string; onChange: (v: string) => void; placeholder?: string; style?: CSSProperties; className?: string
-  onKeyDown?: (e: KeyboardEvent<HTMLTextAreaElement>) => void; onFocus?: () => void; inputRef?: (el: HTMLTextAreaElement | null) => void; maxLength?: number
+  onKeyDown?: (e: KeyboardEvent<HTMLTextAreaElement>) => void; onFocus?: () => void; onPaste?: (e: ClipboardEvent<HTMLTextAreaElement>) => void
+  inputRef?: (el: HTMLTextAreaElement | null) => void; maxLength?: number
 }) {
   const el = useRef<HTMLTextAreaElement | null>(null)
   useLayoutEffect(() => {
@@ -63,6 +64,7 @@ export function AutoText({ value, onChange, placeholder, style, className = '', 
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={onKeyDown}
       onFocus={onFocus}
+      onPaste={onPaste}
       className={`w-full block resize-none outline-none bg-transparent border-none p-0 overflow-hidden ${className}`}
       style={{ color: 'var(--c-text)', background: 'transparent', border: 'none', borderRadius: 0, boxShadow: 'none', outline: 'none', ...style }}
     />
@@ -173,7 +175,9 @@ export default function BlockEditor({ blocks, onChange, uid, apiRef, onActive }:
       const before = b.text.slice(0, pos)
       const after = b.text.slice(el.selectionEnd)
       const nb: Block = { id: newId(), type: 'p', text: after }
-      const list = latest.current.map((x) => (x.id === b.id ? { ...x, text: before } : x)) as Block[]
+      // A line that is only a video or podcast link turns into the player.
+      const media = b.type === 'p' && !after.trim() ? lineAsMedia(before) : null
+      const list = latest.current.map((x) => (x.id === b.id ? (media ? { ...media, id: b.id } : { ...x, text: before }) : x)) as Block[]
       const i = list.findIndex((x) => x.id === b.id)
       list.splice(i + 1, 0, nb)
       set(list)
@@ -191,6 +195,26 @@ export default function BlockEditor({ blocks, onChange, uid, apiRef, onActive }:
         pending.current = { id: prev.id, at: 'end' }
       }
     }
+  }
+
+  // Pasting several lines makes one block per line; a line that is only a video or podcast link becomes the player.
+  const textPaste = (b: Extract<Block, { text: string }>) => (e: ClipboardEvent<HTMLTextAreaElement>) => {
+    if (b.type === 'quote') return
+    const pasted = e.clipboardData.getData('text/plain').replace(/\r\n?/g, '\n')
+    if (!pasted.includes('\n') && !(lineAsMedia(pasted) && !b.text.trim())) return
+    e.preventDefault()
+    const el = e.currentTarget
+    const whole = b.text.slice(0, el.selectionStart) + pasted + b.text.slice(el.selectionEnd)
+    const lines = whole.split('\n').filter((l) => l.trim())
+    if (!lines.length) return
+    const made: Block[] = lines.map((l, i) => lineAsMedia(l) ?? (i === 0 ? { ...b, text: l } : { id: newId(), type: 'p', text: l }))
+    if (made[0].id !== b.id) made[0] = { ...made[0], id: b.id }
+    const list = [...latest.current]
+    const i = list.findIndex((x) => x.id === b.id)
+    list.splice(i, 1, ...made)
+    set(list)
+    const last = made[made.length - 1]
+    pending.current = 'text' in last ? { id: last.id, at: 'end' } : null
   }
 
   // ── drag and drop ──
@@ -339,7 +363,7 @@ export default function BlockEditor({ blocks, onChange, uid, apiRef, onActive }:
             >
               {isText(b) ? (
                 <div style={b.type === 'quote' ? { borderInlineStart: '3px solid var(--c-accent)', paddingInlineStart: 22 } : undefined}>
-                  <AutoText inputRef={reg(b.id)} value={b.text} maxLength={6000} onChange={(v) => patch(b.id, { text: v })} onKeyDown={textKeys(b)} onFocus={() => setFocusId(b.id)} placeholder={t(...PLACEHOLDER[b.type])} style={{ ...TEXT_STYLE[b.type], fontSize: blockSize(b) }} />
+                  <AutoText inputRef={reg(b.id)} value={b.text} maxLength={6000} onChange={(v) => patch(b.id, { text: v })} onKeyDown={textKeys(b)} onPaste={textPaste(b)} onFocus={() => setFocusId(b.id)} placeholder={t(...PLACEHOLDER[b.type])} style={{ ...TEXT_STYLE[b.type], fontSize: blockSize(b) }} />
                 </div>
               ) : b.type === 'ul' || b.type === 'ol' ? (
                 <ListEdit b={b} reg={reg} onFocus={() => setFocusId(b.id)} onChange={(items) => patch(b.id, { items })} onEmpty={() => remove(b.id)} onExit={() => insertAfter(b.id, newBlock('p'))} />

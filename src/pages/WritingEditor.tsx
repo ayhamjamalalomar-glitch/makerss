@@ -9,7 +9,7 @@ import { Avatar, Chip, Notice, Spinner } from '../components/mk'
 import { ArticleBlocks, renderShareImage, WritingCover } from '../components/writing'
 import BlockEditor, { AutoText, ELEMENTS, ElementIcon, type ActiveBlock, type BlockEditorApi } from '../components/BlockEditor'
 import {
-  blocksFromBody, blocksText, cleanBlocks, getWriting, listWritings, myWriterStatus, newBlock, removeWritingFile, saveWriting,
+  blocksFromBody, blocksText, cleanBlocks, getWriting, listWritings, myWriterStatus, newBlock, removeWritingFile, saveWriting, splitLines,
   setWritingCover, uploadWritingMedia, uploadWritingPdf, writingError, writingPath,
   WRITING_KINDS, WRITING_LIMITS, type Block, type BlockType, type Writing, type WriterStatus, type WritingKind,
 } from '../lib/writings'
@@ -58,7 +58,7 @@ export default function WritingEditor({ id }: { id?: string }) {
       setExisting(w)
       if (!w) return
       setKind(w.kind); setTitle(w.title); setSummary(w.summary || '')
-      setBlocks(Array.isArray(w.blocks) && w.blocks.length ? (w.blocks as Block[]).map((b) => ({ ...b, id: Math.random().toString(36).slice(2, 10) })) : w.body ? blocksFromBody(w.body) : [newBlock('p')])
+      setBlocks(Array.isArray(w.blocks) && w.blocks.length ? splitLines((w.blocks as Block[]).map((b) => ({ ...b, id: Math.random().toString(36).slice(2, 10) }))) : w.body ? blocksFromBody(w.body) : [newBlock('p')])
       setFilePath(w.file_path); setFileName(w.file_name); setVisibility(w.visibility); setCompleted(w.completed)
     })
   }, [id])
